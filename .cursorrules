@@ -1,0 +1,524 @@
+# Finance Tracker — Golden Cage Rules
+# React + Firebase personal finance app rewrite
+# Discipline source: root-cause-first + ssot-enforcer
+# https://github.com/cohen-liel/agent-skills
+
+You are an AI coding agent working on a **greenfield rewrite** of a personal finance app.
+Your job is to produce **clean, maintainable, mobile-first code** — not fast patches.
+These rules are **non-negotiable**. If a user request conflicts with them, explain the conflict and propose a compliant alternative before writing code.
+
+---
+
+## 0. Prime Directives
+
+1. **One responsibility, one owner.** Every rule, calculation, constant, route, schema, and state transition has exactly one authoritative module. UI formats; it does not decide.
+2. **Fix mechanisms, not symptoms.** Never silence errors to make builds pass. Trace the contract violation to its owner and fix it there.
+3. **Smallest correct diff.** Do not refactor, rename, or "improve" unrelated code. Match existing conventions in the file you touch.
+4. **Mobile-first always.** Every screen, layout, and interaction must work on small touch screens and be ready for Capacitor/PWA packaging.
+5. **No spaghetti.** If a change requires crossing layer boundaries, stop and place it in the correct layer first.
+
+**Agent-skills pairing:** Use root-cause-first for failures. When the proven cause is duplicated or scattered truth, consolidate via the SSOT registry (Section 2 + Section 6), then verify against the original symptom.
+
+---
+
+## 1. Architecture — Layered Golden Cage
+
+### Layer map (strict top → bottom)
+
+```
+src/
+├── app/                  # App shell: router, providers, global layout only
+├── pages/                # Route-level composition; no business logic, no Firebase
+├── features/
+│   └── <feature>/
+│       ├── components/   # Presentational UI only
+│       ├── hooks/        # Feature orchestration; calls services/domain, not Firestore directly
+│       └── index.ts      # Public feature surface
+├── domain/               # Pure business logic: calculations, validators, policies (NO React, NO Firebase)
+├── services/             # IO boundary: Firebase repos, auth, external APIs
+├── config/               # Env-derived config, feature flags, collection names, routes registry
+├── types/                # Shared TypeScript types, enums, branded IDs
+├── lib/                  # Framework-agnostic utilities (dates, money formatting helpers)
+└── test/                 # Shared test utilities, factories, mocks
+```
+
+### Allowed dependency direction (never violate)
+
+```
+pages → features → hooks → services + domain
+components → hooks + domain (read-only) + lib (formatting only)
+services → domain + config + types
+domain → types + lib (pure helpers only)
+config → (nothing app-specific)
+```
+
+### Forbidden cross-layer imports
+
+| From | Must NEVER import |
+|---|---|
+| `components/` | `services/`, `firebase/*`, Firestore SDK, env secrets |
+| `pages/` | `services/`, Firestore SDK, raw domain orchestration |
+| `domain/` | `react`, `firebase`, `services/`, UI components |
+| `services/` | React components, JSX, CSS, page layouts |
+| `hooks/` | Firestore SDK directly (must go through `services/`) |
+
+### Layer responsibilities
+
+| Layer | Owns | Must NOT own |
+|---|---|---|
+| **components/** | JSX, styles, local UI state (open/closed, focus), event emission | Firebase calls, business rules, aggregations, validation policy |
+| **hooks/** | Compose services + domain; expose loading/error/data to UI | Inline calculations, hardcoded thresholds, direct Firestore queries |
+| **domain/** | Budget math, category rules, transaction invariants, recurrence logic, money/currency policy | Network IO, React state, browser APIs |
+| **services/** | CRUD, queries, auth, mapping DTO ↔ domain, error translation, rate fetch/storage | Business policy decisions, JSX, formatting for display |
+| **config/** | Routes, collection paths, env keys, rate fetch schedule, app constants registry | Feature-specific logic |
+| **pages/** | Route wiring, feature composition, layout slots | Data fetching logic, domain rules |
+
+---
+
+## 2. SSOT — Single Source of Truth Registry
+
+Before writing or editing code, **search for an existing owner**. If one exists, import it. If none exists, create the smallest central owner in the correct layer — do not inline.
+
+### SSOT owners (mandatory)
+
+| Responsibility | Owner location |
+|---|---|
+| Money arithmetic & rounding | `domain/money/` |
+| Original amount + currency schema | `domain/money/types.ts` + `types/` |
+| Currency conversion math | `domain/money/convert.ts` |
+| Display amount resolution (incl. roundtrip) | `domain/money/display.ts` |
+| Exchange rate selection policy (current-day, USD fallback) | `domain/money/rates.ts` |
+| Global rate fetch schedule (12:00 daily) | `config/rates.ts` |
+| Cross-rate base currency (USD) | `domain/money/constants.ts` |
+| Global rate fetch + storage IO | `services/rates/rateFetchService.ts`, `services/rates/rateRepository.ts` |
+| Budget rules & thresholds | `domain/budget/` |
+| Category taxonomy & defaults | `domain/categories/` |
+| Transaction validation | `domain/transactions/` |
+| Recurrence / schedule rules | `domain/recurrence/` |
+| Account type behavior | `domain/accounts/` |
+| Display formatting (currency, dates) | `lib/format/` — **format only, never re-decide rules** |
+| Firestore collection paths | `config/firebase/collections.ts` |
+| Route paths & nav registry | `config/routes.ts` |
+| Auth states & guards | `domain/auth/` + `services/auth/` |
+| Feature flags / env config | `config/env.ts` |
+| Shared types & enums | `types/` |
+| Firebase query shapes | `services/<entity>/` — one repository per aggregate root |
+| User display-currency preference (client-only) | `app/providers/` or feature hook state — **not** persisted as transaction truth |
+
+### SSOT red flags — stop immediately
+
+| Thought | Reality |
+|---|---|
+| "I'll hardcode the collection name here" | Import from `config/firebase/collections.ts`. |
+| "I'll compute the budget remaining in the component" | Import from `domain/budget/`. UI may display, not derive. |
+| "I'll copy this validator into the form" | Export from `domain/` and call it. |
+| "These two functions look the same, I'll merge them" | Merge only if they answer the **same question** and must change together. |
+| "I'll add a local fallback default at the call site" | Defaults belong in the domain owner or config registry. |
+| "I'll fetch exchange rates when the user opens this screen" | Rates are global, fetched once daily at 12:00 (Section 7.2). |
+| "I'll use the transaction date to pick the rate" | Display always uses current-day global rates (Section 7.2F). |
+| "I'll store converted/display amounts in Firestore" | Only `originalAmount` + `originalCurrency` are canonical (Section 7.1A). |
+
+### Acceptable local logic (not duplication)
+
+- Input sanitization before calling domain validators
+- Mapping view-model props ↔ domain types at the hook boundary
+- Presentation-only formatting via `lib/format/`
+- Component-local UI state (modal open, tab index, accordion expanded)
+- Test fixtures that intentionally duplicate literals for readability
+
+### When NOT to unify
+
+Do not merge code that shares shape but serves **different contracts** (e.g., `validateTransactionNote` vs `validateCategoryName` — even if both check string length today).
+
+---
+
+## 3. Firebase & Data Access Rules
+
+### Repository pattern (mandatory)
+
+- One repository module per aggregate: `services/transactions/transactionRepository.ts`, etc.
+- Repositories are the **only** modules that import Firestore SDK functions.
+- Repositories return **domain types** or **typed DTOs** — never raw `DocumentData` to hooks/components.
+- All collection/field path strings live in `config/` — never string-interpolate paths in components.
+
+### Data flow (required)
+
+```
+Firestore → service (map/normalize) → domain (validate/compute) → hook (orchestrate) → component (render)
+```
+
+### Forbidden in UI layers
+
+- `getDoc`, `setDoc`, `onSnapshot`, `collection`, `query`, `where` in components/pages
+- Business logic inside Firestore security rule comments as a substitute for domain validation (rules complement, not replace)
+- Silent `try/catch` that returns empty arrays or zero amounts
+
+### Currency-specific persistence rules
+
+- On write, repositories persist `originalAmount` and `originalCurrency` exactly as validated by domain.
+- Repositories must **reject or strip** any payload field that attempts to persist `convertedAmount`, `displayAmount`, `exchangeRate`, or other rate-derived canonical fields.
+- Global exchange rates are stored in a **shared global document/collection** (path in `config/firebase/collections.ts`), not per-user.
+
+### Error handling at the IO boundary
+
+- Services throw or return `Result` types with explicit error codes.
+- Hooks translate errors to user-visible messages.
+- Components display errors; they do not recover by inventing default data.
+
+---
+
+## 4. React & UI Rules
+
+### Components
+
+- **Presentational by default.** Props in, events out.
+- No `useEffect` for data fetching in `components/` — that belongs in `hooks/`.
+- No derived business state in JSX (no inline `.reduce()`, `.filter()` for domain aggregations).
+- Styling: match project convention once established; keep touch targets ≥ 44px; support narrow viewports first.
+
+### Hooks
+
+- One hook per feature concern: `useTransactions`, `useBudgetSummary`, `useGlobalExchangeRates`.
+- Hooks call `services/` + `domain/`; they do not embed policy.
+- Shared hook logic → extract to `features/<feature>/hooks/` or `lib/hooks/` if truly cross-feature.
+- `useGlobalExchangeRates` reads the central rate snapshot; it does **not** trigger fetches (see Section 7.2D).
+
+### Pages
+
+- Compose features; do not implement logic.
+- Max ~50 lines of wiring per page; if longer, extract a feature component.
+
+### State management
+
+- **Server/Firestore state** → hooks + services (source of truth is backend).
+- **UI ephemeral state** → component `useState` or local context.
+- **Display currency preference** → client-only context/hook; never written back as amount truth.
+- **Cross-feature client state** → dedicated store/context in `app/providers/` with a single owner file per concern.
+- Do not duplicate Firestore data into global client state without a named sync strategy.
+
+### Currency-specific UI rules
+
+- Components may hold or receive `displayCurrency` selection state, but must obtain display values via `domain/money/display.getDisplayAmount()` (through a hook) — never call conversion helpers with an already-converted value.
+- Never branch on `displayCurrency === originalCurrency` in components; roundtrip logic belongs in `domain/money/display.ts` (Section 7.1C).
+- Never use `transaction.date` to select an exchange rate in UI or hooks (Section 7.2F).
+
+---
+
+## 5. Root Cause First — Debugging & Fix Discipline
+
+Use this workflow for **any** bug, error, failing test, flake, or regression.
+
+### Red flags — band-aids are forbidden
+
+| Thought | Reality |
+|---|---|
+| "I'll add `?.` so it stops crashing" | Find why the value is null; fix the invariant at its owner. |
+| "try/catch will make the error go away" | Catch-and-continue creates silent data corruption. |
+| "I'll retry the flaky test" | Fix the race or ordering dependency. |
+| "Return a default so the flow continues" | Synthetic success masks failure from downstream consumers. |
+| "It works now, not sure why" | Not fixed. Keep investigating. |
+| "I'll fix the rounding mismatch with toFixed() in the UI" | Trace whether conversion was chained off a display value or roundtrip bypass was skipped (Section 7.1). |
+| "I'll fetch fresh rates to fix the stale conversion" | Rate freshness is a global daily policy issue — fix at `services/rates/`, not per-user (Section 7.2). |
+
+### Required workflow
+
+1. **State the failure** — exact error, log, assertion, or user-visible symptom.
+2. **Reconstruct the contract** — what invariant was violated? Who owns it?
+3. **Trace the real path** — read producer and consumer; reproduce locally.
+4. **Name the root cause** — one primary mechanism; do not patch until identified.
+5. **Reject band-aids explicitly** — no optional chaining, catch-and-continue, timeout inflation, or default-on-error unless that *is* the product contract (rare).
+6. **Fix at the source** — domain owner, service mapper, or hook orchestration — not the symptom site.
+7. **Verify** — add a regression test at the owner layer; run narrow tests first.
+
+### SSOT ↔ Root Cause handoff
+
+- If root cause is **duplicated truth** → consolidate via SSOT registry (Section 2 + Section 6), then verify against original symptom.
+- If consolidation is discovered during greenfield work → create the owner **before** adding the second call site.
+
+### Final answer shape (bugs/fixes)
+
+```
+Root cause: <one mechanism>
+Fix: <what changed and where>
+Verification: <tests/commands run; remaining risk>
+```
+
+### Stop conditions
+
+Stop and report when:
+- The failure cannot be reproduced or located after reading the relevant path.
+- Required credentials, services, logs, or artifacts are unavailable.
+- Fixing the real cause requires a product decision rather than an engineering correction.
+
+---
+
+## 6. SSOT Workflow — Before Every Edit
+
+1. **Scan** for duplicate constants, calculations, validators, routes, collection paths, rate logic.
+2. **Identify owner** — prefer existing `domain/`, `config/`, `services/` modules.
+3. **Decide** — unify if same question; keep separate if different contracts.
+4. **Route through owner** — export named functions/constants; replace local copies.
+5. **Protect** — add/update tests at owner level.
+6. **Drift check** — grep for old literals and remove dead duplicates.
+
+### Final answer shape (SSOT-affecting changes)
+
+```
+SSOT: <what is now the owner>
+Consolidated: <duplicate paths removed>
+Verification: <grep/tests confirming single owner>
+```
+
+---
+
+## 7. Finance Domain Invariants (foundational)
+
+These rules are non-negotiable business laws. Section 7 is the **living invariants section** — additional rules will be appended here as development proceeds.
+
+### 7.1 Currency amount invariants
+
+#### Invariant A — Immutable Source of Truth for Amounts
+
+- Every monetary record stores exactly: `originalAmount` (numeric, domain-validated) + `originalCurrency` (ISO code from `domain/money/constants.ts` / `types/`).
+- When a user enters an amount, the **original amount** and **original currency** are saved to the database. The database **NEVER** overwrites these with converted values.
+- On edit, both fields are replaced together as a new user-entered pair — never partially updated.
+- Firestore documents must never persist `convertedAmount`, `displayAmount`, `exchangeRate`, or other rate-derived values as canonical fields.
+- **SSOT owners:** `domain/money/types.ts` (shape), `domain/transactions/` (validation), `services/*/...Repository.ts` (persistence enforcement).
+
+#### Invariant B — Derived Conversions Only (UI State)
+
+- `displayCurrency` is **ephemeral UI preference** (context/hook/local state) — not a second source of monetary truth.
+- If the user switches currency in the UI, the system calculates the new display value strictly against the **original amount and currency** stored in the DB.
+- Conversion always uses: `convert(originalAmount, originalCurrency → displayCurrency, currentGlobalRates)` via **one** function in `domain/money/convert.ts`.
+- **Forbidden:** `convert(displayValue, ...)`, chaining conversions, or any pipeline where the input amount is not the DB original.
+- **SSOT owners:** `domain/money/convert.ts` (math), `domain/money/display.ts` (orchestration).
+
+#### Invariant C — Perfect Roundtrip
+
+- If the user switches the UI currency back to the original currency they inputted, the system displays the **exact** `originalAmount` from the DB.
+- No conversion formula, no rate lookup, no rounding pass — return the stored value verbatim.
+- This is a domain branch in `domain/money/display.ts`, not a UI `if` scattered in components.
+- **Required domain test:** `getDisplayAmount({ originalAmount, originalCurrency }, originalCurrency) === originalAmount` for representative decimals (including edge cases like `0.1`, `0.2`, `99.99`).
+
+### 7.2 Exchange rate policy invariants
+
+#### Invariant D — Global Daily Fetch
+
+- Exchange rates are fetched **globally for the entire application exactly once a day at 12:00** (timezone defined in `config/rates.ts`) — **not per user**, not per session, not on page load.
+- Fetched rate data is cached/stored centrally (via `services/rates/rateRepository.ts`) and serves **all users**.
+- Individual users must never trigger their own rate fetch. Hooks read the shared global snapshot.
+- **SSOT owners:** `config/rates.ts` (schedule + timezone), `services/rates/rateFetchService.ts` (orchestration), `services/rates/rateRepository.ts` (storage/read).
+
+#### Invariant E — USD Cross-Rate Fallback
+
+- If a direct conversion rate between two currencies (e.g., A → B) is unavailable, the system **must** calculate the rate using USD as the base: **A → USD → B**.
+- USD is the mandatory cross-rate base currency (`CROSS_RATE_BASE_CURRENCY` in `domain/money/constants.ts`).
+- Cross-rate derivation lives exclusively in `domain/money/rates.ts` and `domain/money/convert.ts`.
+- **Forbidden:** silent failure, ad-hoc fallback paths, hardcoded cross-rates at call sites, or skipping the USD bridge.
+
+#### Invariant F — Current Rates Only (No Historical)
+
+- All display conversions must always use the **current day's global exchange rate**, regardless of the transaction's original date.
+- `transaction.date` (or equivalent) must **not** influence which rate is selected for display conversion.
+- **Forbidden:** historical rate lookups, date-indexed rate tables for display, or "rate at time of transaction" logic — unless explicitly added as a future Section 7 amendment via product decision.
+- **SSOT owner:** `domain/money/rates.ts` — expose `getCurrentGlobalRates()` only; no `getRateForDate()`.
+
+### Currency + rate display flow (required mental model)
+
+```
+User enters amount + currency
+  → domain/transactions validates
+  → services repository writes originalAmount + originalCurrency to Firestore
+
+User selects displayCurrency (UI preference)
+  → domain/money/display.getDisplayAmount(original, displayCurrency, currentGlobalRates)
+  → if displayCurrency === originalCurrency → return originalAmount verbatim (Invariant C)
+  → else domain/money/convert.ts converts from original only, using:
+       - direct rate if available (Invariant E)
+       - else A → USD → B (Invariant E)
+       - always current-day global rates (Invariant F)
+  → lib/format/formatCurrency.ts formats for display (no math)
+```
+
+### 7.3 Other foundational invariants
+
+- **Transaction amount sign:** income positive, expense negative (or one consistent convention defined once in `domain/transactions/constants.ts`).
+- **Running balance:** computed from ordered transactions via `domain/accounts/computeBalance()` — never trust a stale cached balance without a named strategy.
+- **Budget period boundaries:** timezone-safe; owner in `domain/budget/periods.ts`.
+- **Category deletion:** policy for reassignment vs block — one function in `domain/categories/`, not per-screen branches.
+- **Transfer transactions:** paired-leg rules owned in `domain/transactions/transfers.ts`.
+
+### Section 7 red-flag tables
+
+**Currency amount red flags:**
+
+| Thought | Reality |
+|---|---|
+| "Store converted amount so queries are easier" | Violates Invariant A. Only originals are canonical. |
+| "Convert the displayed value when user switches currency again" | Violates Invariant B. Always convert from DB original. |
+| "Close enough after roundtrip — use toFixed in the UI" | Violates Invariant C. Roundtrip must return DB original verbatim. |
+| "Persist the user's display currency on each transaction row" | Display currency is UI preference, not transaction truth. |
+
+**Exchange rate red flags:**
+
+| Thought | Reality |
+|---|---|
+| "Fetch rates when the user opens the transactions page" | Violates Invariant D. Global fetch once daily at 12:00. |
+| "Store a different rate snapshot per user" | Violates Invariant D. Rates are centrally cached for all users. |
+| "Use the transaction date to pick the exchange rate" | Violates Invariant F. Always use current-day global rates. |
+| "Hardcode a cross-rate because the API didn't return the pair" | Violates Invariant E. Use USD bridge in domain layer. |
+| "Skip USD fallback and return the unconverted amount" | Violates Invariant E. USD cross-rate is mandatory. |
+
+---
+
+## 8. File & Code Placement Checklist
+
+Before creating a file, answer:
+
+1. Which layer owns this responsibility?
+2. Is there an existing owner to extend?
+3. Will any consumer cross a forbidden boundary?
+
+### Naming conventions
+
+- `*Repository.ts` → `services/`
+- `*Service.ts` → `services/` (orchestration across repos)
+- `use*.ts` → `features/<feature>/hooks/`
+- `*.test.ts` → colocated with owner or in `test/` for integration
+- `*Schema.ts` / `*types.ts` → `types/` or colocated domain types
+- Components: `PascalCase.tsx` in `components/`
+
+### Maximum file complexity (soft limits — split when exceeded)
+
+- Component: ~150 lines
+- Hook: ~120 lines
+- Domain module function: ~40 lines (split helpers)
+- Repository: one aggregate per file
+
+### Currency & exchange rate file placement (mandatory)
+
+| File | Layer | Responsibility |
+|---|---|---|
+| `domain/money/types.ts` | domain | Canonical money shape (`originalAmount`, `originalCurrency`) |
+| `domain/money/constants.ts` | domain | Currency codes, decimal scales, `CROSS_RATE_BASE_CURRENCY` (USD) |
+| `domain/money/convert.ts` | domain | Conversion math only; input must be original amount |
+| `domain/money/display.ts` | domain | Roundtrip + display resolution — **only approved display entry point** |
+| `domain/money/rates.ts` | domain | Current-day rate selection, USD cross-rate derivation |
+| `config/rates.ts` | config | Daily fetch schedule (12:00), timezone, rate provider config |
+| `services/rates/rateFetchService.ts` | services | Global daily fetch orchestration |
+| `services/rates/rateRepository.ts` | services | Read/write global rate cache in Firestore |
+| `lib/format/formatCurrency.ts` | lib | String formatting only — no math, no rate decisions |
+
+---
+
+## 9. AI Agent Constraints
+
+### Always do
+
+- Read surrounding code before editing; match naming, types, and patterns.
+- Search for existing owners before creating new modules.
+- Keep commits scoped; do not commit unless explicitly asked.
+- Prefer typed unions/`as const` over magic strings.
+- Write self-explanatory code; comment only non-obvious business rules.
+- Add regression tests for bug fixes at the **owner** layer.
+
+### Never do
+
+- Import Firestore SDK outside `services/`.
+- Put business logic in JSX, `useEffect` in components, or event handlers inline.
+- Copy-paste constants, validators, calculations, or rate logic to "move faster."
+- Add `any`, `@ts-ignore`, or `eslint-disable` to silence problems — fix the type or contract.
+- Create god files (`utils.ts` dumping ground, `helpers.ts` with mixed concerns).
+- Introduce new state libraries without explicit user approval.
+- Expand scope beyond the request (no drive-by refactors, no bonus features).
+- Claim verification you did not run; state what a human must check for UI/device-only behavior.
+- Fetch exchange rates per user or per page load.
+- Use transaction dates to select exchange rates for display.
+- Persist converted or display amounts to Firestore.
+
+### When blocked
+
+Stop and report when:
+- Failure cannot be reproduced after reading the path.
+- Fix requires a product decision (e.g., future historical-rate feature).
+- Required credentials/services are unavailable.
+- User request forces a layer violation — propose a compliant design first.
+
+---
+
+## 10. Testing Expectations
+
+| Layer | Test type | Location |
+|---|---|---|
+| `domain/` | Unit tests (required for rules/math) | colocated `*.test.ts` |
+| `services/` | Integration tests with Firebase emulator | `services/**/*.test.ts` |
+| `hooks/` | Behavior tests with mocked services | colocated |
+| `components/` | Render + interaction for critical flows only | colocated |
+
+- Domain tests must not mock Firebase.
+- Bug fixes require a test that **fails on old behavior**.
+- Do not add trivial tests that only assert mocks were called.
+
+### Currency & exchange rate required tests
+
+1. Repository persists only `originalAmount` + `originalCurrency`; rejects/strips converted fields.
+2. `getDisplayAmount()` returns `originalAmount` verbatim when display currency equals original (Invariant C).
+3. `convert()` is never invoked when display currency equals original.
+4. Roundtrip property: switch A → B → A shows DB original, not a recomputed float.
+5. USD cross-rate fallback: when direct A→B is missing, conversion uses A→USD→B (Invariant E).
+6. Current-rate-only: conversion for an old-dated transaction uses today's global rates, not date-matched rates (Invariant F).
+7. Rate fetch service: scheduled once daily; not invoked from user-facing hooks/components (Invariant D).
+
+---
+
+## 11. Security & Secrets
+
+- No API keys, service account JSON, or `.env` values in source or commits.
+- `config/env.ts` reads env vars; no direct `import.meta.env` / `process.env` scattered in features.
+- Auth checks: policy in `domain/auth/`; session IO in `services/auth/`.
+- Firestore security rules are a **backstop**; domain + services still validate client-side before write.
+- Global rate documents: write access restricted to backend/scheduled fetch service — not client-writable.
+
+---
+
+## 12. Rewrite Mode — Migration Guardrails
+
+This is a **rewrite**, not a patch on legacy spaghetti.
+
+- Do not port legacy patterns "for speed." Port **behavior** into the new layer map.
+- When migrating a feature, migrate the full vertical slice: `types → domain → services → hooks → components → page`.
+- A feature is not done if business logic still lives in UI or Firebase calls still live outside `services/`.
+- Prefer one complete feature slice over many half-migrated screens.
+
+### Currency migration guardrails
+
+- Legacy single `amount` fields must be split into `originalAmount` + `originalCurrency` — never forward-port a lone amount column.
+- Legacy per-transaction exchange rates or converted amounts must not be carried forward as canonical truth.
+- Legacy per-user or on-demand rate fetching must be replaced by global daily fetch (Section 7.2D).
+
+---
+
+## 13. Pre-Submit Self-Review
+
+Run mentally before every PR-sized change:
+
+- [ ] Every new constant/rule has one owner in the SSOT registry (Section 2).
+- [ ] No Firestore imports outside `services/`.
+- [ ] No business calculations in components or JSX.
+- [ ] No band-aid null checks, catch-and-continue, or silent defaults.
+- [ ] Dependency direction respected (no upward imports).
+- [ ] Mobile-first layout verified at ≤ 390px width.
+- [ ] Tests added at owner layer for non-trivial logic and bug fixes.
+- [ ] Grep confirms no duplicated literals from consolidated policies.
+- [ ] Amount writes persist only `originalAmount` + `originalCurrency` (Invariant A).
+- [ ] All display amounts go through `domain/money/display.ts` (Invariant B/C).
+- [ ] Roundtrip returns DB original without conversion (Invariant C).
+- [ ] Conversions use current-day global rates only — not transaction date (Invariant F).
+- [ ] USD cross-rate fallback used when direct pair unavailable (Invariant E).
+- [ ] No per-user or per-page rate fetching (Invariant D).
+
+---
+
+*Golden Cage version: 1.0 — React/Firebase Finance Tracker rewrite*
+*Discipline source: root-cause-first + ssot-enforcer — https://github.com/cohen-liel/agent-skills*
+*Section 7 is the living invariants section — additional rules will be appended as development proceeds.*
