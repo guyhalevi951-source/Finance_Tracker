@@ -1,4 +1,3 @@
-import { useState, useEffect } from 'react';
 import {
   Wallet,
   TrendingDown,
@@ -10,100 +9,42 @@ import {
   Heart,
   Film,
   Home,
-  HelpCircle
+  HelpCircle,
+  type LucideIcon,
 } from 'lucide-react';
+import { CATEGORY_VALUES, type CategoryValue } from './domain/categories/constants';
+import { useBudgetTracker } from './features/budget/hooks/useBudgetTracker';
 
-interface Expense {
-  id: string;
-  description: string;
-  amount: number;
-  category: string;
-  date: string;
+// Icon and color are presentation-only; they live here, not in domain.
+const CATEGORY_UI: Record<CategoryValue, { icon: LucideIcon; color: string }> = {
+  'אוכל': { icon: Utensils, color: 'bg-amber-500' },
+  'בריאות': { icon: Heart, color: 'bg-rose-500' },
+  'בילויים': { icon: Film, color: 'bg-purple-500' },
+  'שכר דירה': { icon: Home, color: 'bg-cyan-500' },
+  'אחר': { icon: HelpCircle, color: 'bg-gray-500' },
+};
+
+function getCategoryUI(value: string) {
+  return CATEGORY_UI[value as CategoryValue] ?? CATEGORY_UI['אחר'];
 }
 
-const CATEGORIES = [
-  { value: 'אוכל', label: 'אוכל', icon: Utensils, color: 'bg-amber-500' },
-  { value: 'בריאות', label: 'בריאות', icon: Heart, color: 'bg-rose-500' },
-  { value: 'בילויים', label: 'בילויים', icon: Film, color: 'bg-purple-500' },
-  { value: 'שכר דירה', label: 'שכר דירה', icon: Home, color: 'bg-cyan-500' },
-  { value: 'אחר', label: 'אחר', icon: HelpCircle, color: 'bg-gray-500' },
-];
-
 function App() {
-  const [budget, setBudget] = useState<number>(0);
-  const [budgetInput, setBudgetInput] = useState<string>('');
-  const [expenses, setExpenses] = useState<Expense[]>([]);
-  const [newExpense, setNewExpense] = useState({
-    description: '',
-    amount: '',
-    category: 'אוכל',
-  });
-  const [showBudgetSaved, setShowBudgetSaved] = useState(false);
+  const {
+    budget,
+    budgetInput,
+    expenses,
+    newExpense,
+    summary,
+    showBudgetSaved,
+    loadError,
+    setBudgetInput,
+    setNewExpense,
+    handleSetBudget,
+    handleAddExpense,
+    handleDeleteExpense,
+  } = useBudgetTracker();
 
-  // Load data from localStorage on mount
-  useEffect(() => {
-    const savedBudget = localStorage.getItem('monthlyBudget');
-    const savedExpenses = localStorage.getItem('expenses');
-
-    if (savedBudget) {
-      setBudget(parseFloat(savedBudget));
-    }
-    if (savedExpenses) {
-      setExpenses(JSON.parse(savedExpenses));
-    }
-  }, []);
-
-  // Save budget to localStorage
-  const handleSetBudget = () => {
-    const amount = parseFloat(budgetInput);
-    if (!isNaN(amount) && amount >= 0) {
-      setBudget(amount);
-      localStorage.setItem('monthlyBudget', amount.toString());
-      setBudgetInput('');
-      setShowBudgetSaved(true);
-      setTimeout(() => setShowBudgetSaved(false), 2000);
-    }
-  };
-
-  // Save expenses to localStorage
-  useEffect(() => {
-    localStorage.setItem('expenses', JSON.stringify(expenses));
-  }, [expenses]);
-
-  // Add new expense
-  const handleAddExpense = (e: React.FormEvent) => {
-    e.preventDefault();
-    const amount = parseFloat(newExpense.amount);
-
-    if (newExpense.description.trim() && !isNaN(amount) && amount > 0) {
-      const expense: Expense = {
-        id: Date.now().toString(),
-        description: newExpense.description.trim(),
-        amount: amount,
-        category: newExpense.category,
-        date: new Date().toLocaleDateString('he-IL'),
-      };
-
-      setExpenses([expense, ...expenses]);
-      setNewExpense({ description: '', amount: '', category: 'אוכל' });
-    }
-  };
-
-  // Delete expense
-  const handleDeleteExpense = (id: string) => {
-    setExpenses(expenses.filter(expense => expense.id !== id));
-  };
-
-  // Calculate total expenses
-  const totalExpenses = expenses.reduce((sum, expense) => sum + expense.amount, 0);
-  const budgetPercentage = budget > 0 ? (totalExpenses / budget) * 100 : 0;
-  const isOverBudget = totalExpenses > budget && budget > 0;
-  const remaining = budget - totalExpenses;
-
-  // Get category info
-  const getCategoryInfo = (categoryValue: string) => {
-    return CATEGORIES.find(c => c.value === categoryValue) || CATEGORIES[4];
-  };
+  const { totalExpenses, budgetPercentage, isOverBudget, remaining } = summary;
 
   return (
     <div dir="rtl" className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
@@ -128,6 +69,13 @@ function App() {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Load error banner */}
+        {loadError && (
+          <div className="bg-amber-50 border border-amber-200 text-amber-800 rounded-xl px-4 py-3 mb-6 text-sm">
+            נתונים שמורים פגומים — מתחיל מחדש עם נתונים ריקים.
+          </div>
+        )}
+
         {/* Budget Setter */}
         <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 mb-8">
           <h2 className="text-lg font-semibold text-slate-700 mb-4">הגדר תקציב חודשי</h2>
@@ -194,9 +142,7 @@ function App() {
 
           {/* Budget Status Card */}
           <div className={`rounded-2xl shadow-sm border p-6 hover:shadow-md transition-shadow ${
-            isOverBudget
-              ? 'bg-rose-50 border-rose-200'
-              : 'bg-white border-slate-200'
+            isOverBudget ? 'bg-rose-50 border-rose-200' : 'bg-white border-slate-200'
           }`}>
             <div className="flex items-center justify-between mb-4">
               <span className="text-sm font-medium text-slate-500">מצב התקציב</span>
@@ -216,7 +162,9 @@ function App() {
             )}
 
             <p className={`text-2xl font-bold ${isOverBudget ? 'text-rose-600' : 'text-slate-800'}`}>
-              {remaining >= 0 ? `₪${remaining.toLocaleString()}` : `-₪${Math.abs(remaining).toLocaleString()}`}
+              {remaining >= 0
+                ? `₪${remaining.toLocaleString()}`
+                : `-₪${Math.abs(remaining).toLocaleString()}`}
             </p>
             <p className="text-sm text-slate-400 mt-2">
               {remaining >= 0 ? 'נותר בתקציב' : 'חריגה מהתקציב'}
@@ -285,9 +233,9 @@ function App() {
                 onChange={(e) => setNewExpense({ ...newExpense, category: e.target.value })}
                 className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none transition-all bg-white"
               >
-                {CATEGORIES.map((cat) => (
-                  <option key={cat.value} value={cat.value}>
-                    {cat.label}
+                {CATEGORY_VALUES.map((value) => (
+                  <option key={value} value={value}>
+                    {value}
                   </option>
                 ))}
               </select>
@@ -334,9 +282,7 @@ function App() {
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {expenses.map((expense) => {
-                    const categoryInfo = getCategoryInfo(expense.category);
-                    const IconComponent = categoryInfo.icon;
-
+                    const { icon: Icon, color } = getCategoryUI(expense.category);
                     return (
                       <tr key={expense.id} className="hover:bg-slate-50 transition-colors">
                         <td className="px-6 py-4">
@@ -348,8 +294,8 @@ function App() {
                           </span>
                         </td>
                         <td className="px-6 py-4">
-                          <span className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium ${categoryInfo.color} text-white`}>
-                            <IconComponent className="w-4 h-4" />
+                          <span className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium ${color} text-white`}>
+                            <Icon className="w-4 h-4" />
                             {expense.category}
                           </span>
                         </td>
