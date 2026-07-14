@@ -20,6 +20,7 @@ import { useBudgetTracker } from './features/budget/hooks/useBudgetTracker';
 import { useCategories } from './features/categories/hooks/useCategories';
 import { useAuthSession } from './features/auth/hooks/useAuthSession';
 import { LanguageToggle } from './features/i18n/components/LanguageToggle';
+import { ThemeToggle } from './features/theme/components/ThemeToggle';
 import { formatDate, formatNumber } from './lib/format/formatDate';
 import { type AppLocale } from './config/app';
 
@@ -77,9 +78,9 @@ function App() {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-950 transition-colors duration-200">
       {/* Header */}
-      <header className="bg-white shadow-sm border-b border-slate-200">
+      <header className="bg-white dark:bg-slate-800 shadow-sm border-b border-slate-200 dark:border-slate-700 transition-colors duration-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -87,13 +88,14 @@ function App() {
                 <Wallet className="w-8 h-8 text-white" />
               </div>
               <div>
-                <h1 className="text-3xl font-bold text-slate-800">{t('app.name')}</h1>
-                <p className="text-slate-500 text-sm">{t('app.tagline')}</p>
+                <h1 className="text-3xl font-bold text-slate-800 dark:text-slate-100">{t('app.name')}</h1>
+                <p className="text-slate-500 dark:text-slate-400 text-sm">{t('app.tagline')}</p>
               </div>
             </div>
             <div className="flex items-center gap-3">
+              <ThemeToggle />
               <LanguageToggle />
-              <span className="text-sm text-slate-400">
+              <span className="text-sm text-slate-400 dark:text-slate-500">
                 {formatDate(new Date(), locale)}
               </span>
             </div>
@@ -104,18 +106,18 @@ function App() {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Load error banner */}
         {loadError && (
-          <div className="bg-amber-50 border border-amber-200 text-amber-800 rounded-xl px-4 py-3 mb-6 text-sm">
+          <div className="bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-700 text-amber-800 dark:text-amber-300 rounded-xl px-4 py-3 mb-6 text-sm">
             {t('errors.corruptedData')}
           </div>
         )}
 
         {/* Category load error banner */}
         {loadCategoryError && (
-          <div className="bg-amber-50 border border-amber-200 text-amber-800 rounded-xl px-4 py-3 mb-6 text-sm flex justify-between items-center">
+          <div className="bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-700 text-amber-800 dark:text-amber-300 rounded-xl px-4 py-3 mb-6 text-sm flex justify-between items-center">
             <span>{t('category.loadError')}</span>
             <button
               onClick={clearLoadCategoryError}
-              className="ml-4 text-amber-600 hover:text-amber-800 font-semibold text-xs"
+              className="ml-4 text-amber-600 dark:text-amber-400 hover:text-amber-800 dark:hover:text-amber-200 font-semibold text-xs"
             >
               ✕
             </button>
@@ -125,12 +127,12 @@ function App() {
         {/* Translation error banner */}
         {addExpenseError && (
           <div
-            className="bg-rose-50 border border-rose-200 text-rose-800 rounded-xl px-4 py-3 mb-6 text-sm flex justify-between items-center"
+            className="bg-rose-50 dark:bg-rose-900/30 border border-rose-200 dark:border-rose-700 text-rose-800 dark:text-rose-300 rounded-xl px-4 py-3 mb-6 text-sm flex justify-between items-center"
           >
             <span>{t('expense.translationError')}</span>
             <button
               onClick={clearAddExpenseError}
-              className="ml-4 text-rose-600 hover:text-rose-800 font-semibold text-xs"
+              className="ml-4 text-rose-600 dark:text-rose-400 hover:text-rose-800 dark:hover:text-rose-200 font-semibold text-xs"
             >
               ✕
             </button>
@@ -138,11 +140,11 @@ function App() {
         )}
 
         {/* Budget Setter */}
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 mb-8">
-          <h2 className="text-lg font-semibold text-slate-700 mb-4">{t('budget.title')}</h2>
+        <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 p-6 mb-8 transition-colors duration-200">
+          <h2 className="text-lg font-semibold text-slate-700 dark:text-slate-200 mb-4">{t('budget.title')}</h2>
           <div className="flex gap-4 items-end flex-wrap">
             <div className="flex-1 min-w-[180px] max-w-xs">
-              <label className="block text-sm font-medium text-slate-600 mb-2">
+              <label className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-2">
                 {t('budget.amountLabel')}
               </label>
               <input
@@ -154,7 +156,7 @@ function App() {
                     ? t('budget.amountPlaceholderWithCurrent', { amount: formatNumber(budget, locale) })
                     : t('budget.amountPlaceholder')
                 }
-                className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none transition-all text-lg"
+                className="w-full px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 dark:focus:ring-emerald-800 outline-none transition-all text-lg"
                 min="0"
                 step="100"
               />
@@ -178,39 +180,39 @@ function App() {
         {/* Dashboard Summary Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           {/* Total Budget Card */}
-          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 hover:shadow-md transition-shadow">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 p-6 hover:shadow-md transition-all duration-200">
             <div className="flex items-center justify-between mb-4">
-              <span className="text-sm font-medium text-slate-500">{t('budget.card.monthlyBudget')}</span>
+              <span className="text-sm font-medium text-slate-500 dark:text-slate-400">{t('budget.card.monthlyBudget')}</span>
               <div className="bg-emerald-100 p-2 rounded-lg">
                 <Wallet className="w-5 h-5 text-emerald-600" />
               </div>
             </div>
-            <p className="text-3xl font-bold text-slate-800">₪{formatNumber(budget, locale)}</p>
-            <p className="text-sm text-slate-400 mt-2">{t('budget.card.allocated')}</p>
+            <p className="text-3xl font-bold text-slate-800 dark:text-slate-100">₪{formatNumber(budget, locale)}</p>
+            <p className="text-sm text-slate-400 dark:text-slate-500 mt-2">{t('budget.card.allocated')}</p>
           </div>
 
           {/* Total Expenses Card */}
-          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 hover:shadow-md transition-shadow">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 p-6 hover:shadow-md transition-all duration-200">
             <div className="flex items-center justify-between mb-4">
-              <span className="text-sm font-medium text-slate-500">{t('budget.card.totalExpenses')}</span>
+              <span className="text-sm font-medium text-slate-500 dark:text-slate-400">{t('budget.card.totalExpenses')}</span>
               <div className="bg-rose-100 p-2 rounded-lg">
                 <TrendingDown className="w-5 h-5 text-rose-600" />
               </div>
             </div>
-            <p className={`text-3xl font-bold ${isOverBudget ? 'text-rose-600' : 'text-slate-800'}`}>
+            <p className={`text-3xl font-bold ${isOverBudget ? 'text-rose-600' : 'text-slate-800 dark:text-slate-100'}`}>
               ₪{formatNumber(totalExpenses, locale)}
             </p>
-            <p className="text-sm text-slate-400 mt-2">
+            <p className="text-sm text-slate-400 dark:text-slate-500 mt-2">
               {t('budget.card.expensesThisMonth', { count: expenses.length })}
             </p>
           </div>
 
           {/* Budget Status Card */}
-          <div className={`rounded-2xl shadow-sm border p-6 hover:shadow-md transition-shadow ${
-            isOverBudget ? 'bg-rose-50 border-rose-200' : 'bg-white border-slate-200'
+          <div className={`rounded-2xl shadow-sm border p-6 hover:shadow-md transition-all duration-200 ${
+            isOverBudget ? 'bg-rose-50 dark:bg-rose-900/20 border-rose-200 dark:border-rose-800' : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700'
           }`}>
             <div className="flex items-center justify-between mb-4">
-              <span className="text-sm font-medium text-slate-500">{t('budget.card.budgetStatus')}</span>
+              <span className="text-sm font-medium text-slate-500 dark:text-slate-400">{t('budget.card.budgetStatus')}</span>
               <div className={`p-2 rounded-lg ${isOverBudget ? 'bg-rose-200' : 'bg-blue-100'}`}>
                 {isOverBudget ? (
                   <AlertTriangle className="w-5 h-5 text-rose-600" />
@@ -226,22 +228,22 @@ function App() {
               </div>
             )}
 
-            <p className={`text-2xl font-bold ${isOverBudget ? 'text-rose-600' : 'text-slate-800'}`}>
+            <p className={`text-2xl font-bold ${isOverBudget ? 'text-rose-600' : 'text-slate-800 dark:text-slate-100'}`}>
               {remaining >= 0
                 ? `₪${formatNumber(remaining, locale)}`
                 : `-₪${formatNumber(Math.abs(remaining), locale)}`}
             </p>
-            <p className="text-sm text-slate-400 mt-2">
+            <p className="text-sm text-slate-400 dark:text-slate-500 mt-2">
               {remaining >= 0 ? t('budget.card.remaining') : t('budget.card.overBudget')}
             </p>
 
             {/* Progress Bar */}
             <div className="mt-4">
-              <div className="flex justify-between text-xs text-slate-500 mb-1">
+              <div className="flex justify-between text-xs text-slate-500 dark:text-slate-400 mb-1">
                 <span>{t('budget.card.usage')}</span>
                 <span>{Math.min(100, budgetPercentage).toFixed(0)}%</span>
               </div>
-              <div className="h-3 bg-slate-200 rounded-full overflow-hidden">
+              <div className="h-3 bg-slate-200 dark:bg-slate-600 rounded-full overflow-hidden">
                 <div
                   className={`h-full rounded-full transition-all duration-500 ${
                     isOverBudget
@@ -258,15 +260,15 @@ function App() {
         </div>
 
         {/* Add Expense Form */}
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 mb-8">
-          <h2 className="text-lg font-semibold text-slate-700 mb-6 flex items-center gap-2">
+        <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 p-6 mb-8 transition-colors duration-200">
+          <h2 className="text-lg font-semibold text-slate-700 dark:text-slate-200 mb-6 flex items-center gap-2">
             <Plus className="w-5 h-5 text-emerald-500" />
             {t('expense.formTitle')}
           </h2>
 
           <form onSubmit={handleAddExpense} className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div>
-              <label className="block text-sm font-medium text-slate-600 mb-2">
+              <label className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-2">
                 {t('expense.descriptionLabel')}
               </label>
               <input
@@ -274,14 +276,14 @@ function App() {
                 value={newExpense.description}
                 onChange={(e) => setNewExpense({ ...newExpense, description: e.target.value })}
                 placeholder={t('expense.descriptionPlaceholder')}
-                className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none transition-all"
+                className="w-full px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 dark:focus:ring-emerald-800 outline-none transition-all"
                 required
                 disabled={isAddingExpense}
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-600 mb-2">
+              <label className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-2">
                 {t('expense.amountLabel')}
               </label>
               <input
@@ -289,7 +291,7 @@ function App() {
                 value={newExpense.amount}
                 onChange={(e) => setNewExpense({ ...newExpense, amount: e.target.value })}
                 placeholder={t('expense.amountPlaceholder')}
-                className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none transition-all"
+                className="w-full px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 dark:focus:ring-emerald-800 outline-none transition-all"
                 min="0"
                 step="0.01"
                 required
@@ -298,13 +300,13 @@ function App() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-600 mb-2">
+              <label className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-2">
                 {t('expense.categoryLabel')}
               </label>
               <select
                 value={newExpense.category}
                 onChange={(e) => setNewExpense({ ...newExpense, category: e.target.value })}
-                className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none transition-all bg-white"
+                className="w-full px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 dark:focus:ring-emerald-800 outline-none transition-all"
                 disabled={isAddingExpense}
               >
                 {allCategoryOptions.map(({ id, label }) => (
@@ -338,45 +340,45 @@ function App() {
         </div>
 
         {/* Expenses Table */}
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-          <div className="p-6 border-b border-slate-200">
-            <h2 className="text-lg font-semibold text-slate-700">{t('expense.tableTitle')}</h2>
-            <p className="text-sm text-slate-400 mt-1">
+        <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden transition-colors duration-200">
+          <div className="p-6 border-b border-slate-200 dark:border-slate-700">
+            <h2 className="text-lg font-semibold text-slate-700 dark:text-slate-200">{t('expense.tableTitle')}</h2>
+            <p className="text-sm text-slate-400 dark:text-slate-500 mt-1">
               {t('expense.tableCount', { count: expenses.length })}
             </p>
           </div>
 
           {expenses.length === 0 ? (
             <div className="p-12 text-center">
-              <div className="bg-slate-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                <TrendingDown className="w-8 h-8 text-slate-400" />
+              <div className="bg-slate-100 dark:bg-slate-700 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                <TrendingDown className="w-8 h-8 text-slate-400 dark:text-slate-500" />
               </div>
-              <p className="text-slate-500 text-lg">{t('expense.empty.title')}</p>
-              <p className="text-slate-400 text-sm mt-1">{t('expense.empty.subtitle')}</p>
+              <p className="text-slate-500 dark:text-slate-400 text-lg">{t('expense.empty.title')}</p>
+              <p className="text-slate-400 dark:text-slate-500 text-sm mt-1">{t('expense.empty.subtitle')}</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-slate-50">
+                <thead className="bg-slate-50 dark:bg-slate-700/50">
                   <tr>
-                    <th className="text-start px-6 py-4 text-sm font-semibold text-slate-600">
+                    <th className="text-start px-6 py-4 text-sm font-semibold text-slate-600 dark:text-slate-300">
                       {t('expense.tableHeaderDescription')}
                     </th>
-                    <th className="text-start px-6 py-4 text-sm font-semibold text-slate-600">
+                    <th className="text-start px-6 py-4 text-sm font-semibold text-slate-600 dark:text-slate-300">
                       {t('expense.tableHeaderAmount')}
                     </th>
-                    <th className="text-start px-6 py-4 text-sm font-semibold text-slate-600">
+                    <th className="text-start px-6 py-4 text-sm font-semibold text-slate-600 dark:text-slate-300">
                       {t('expense.tableHeaderCategory')}
                     </th>
-                    <th className="text-start px-6 py-4 text-sm font-semibold text-slate-600">
+                    <th className="text-start px-6 py-4 text-sm font-semibold text-slate-600 dark:text-slate-300">
                       {t('expense.tableHeaderDate')}
                     </th>
-                    <th className="px-6 py-4 text-sm font-semibold text-slate-600">
+                    <th className="px-6 py-4 text-sm font-semibold text-slate-600 dark:text-slate-300">
                       {t('expense.tableHeaderActions')}
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100">
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
                   {expenses.map((expense) => {
                     const { icon: Icon, color } = getCategoryUI(expense.category);
                     const categoryLabel = isBuiltinCategoryId(expense.category)
@@ -384,14 +386,14 @@ function App() {
                       : (resolveCustomCategoryLabel(expense.category, customCategories, locale) ?? t('category.other'));
 
                     return (
-                      <tr key={expense.id} className="hover:bg-slate-50 transition-colors">
+                      <tr key={expense.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
                         <td className="px-6 py-4">
-                          <span className="font-medium text-slate-800">
+                          <span className="font-medium text-slate-800 dark:text-slate-100">
                             {resolveBilingualText(expense.description, locale)}
                           </span>
                         </td>
                         <td className="px-6 py-4">
-                          <span className="text-lg font-semibold text-slate-800">
+                          <span className="text-lg font-semibold text-slate-800 dark:text-slate-100">
                             ₪{formatNumber(expense.amount, locale)}
                           </span>
                         </td>
@@ -401,13 +403,13 @@ function App() {
                             {categoryLabel}
                           </span>
                         </td>
-                        <td className="px-6 py-4 text-slate-500">
+                        <td className="px-6 py-4 text-slate-500 dark:text-slate-400">
                           {expense.date}
                         </td>
                         <td className="px-6 py-4">
                           <button
                             onClick={() => handleDeleteExpense(expense.id)}
-                            className="text-slate-400 hover:text-rose-500 hover:bg-rose-50 p-2 rounded-lg transition-all min-h-[44px] min-w-[44px] flex items-center justify-center"
+                            className="text-slate-400 dark:text-slate-500 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/30 p-2 rounded-lg transition-all min-h-[44px] min-w-[44px] flex items-center justify-center"
                             title={t('expense.deleteTitle')}
                           >
                             <Trash2 className="w-5 h-5" />
@@ -423,10 +425,10 @@ function App() {
 
           {/* Summary Footer */}
           {expenses.length > 0 && (
-            <div className="bg-slate-50 px-6 py-4 border-t border-slate-200">
+            <div className="bg-slate-50 dark:bg-slate-700/50 px-6 py-4 border-t border-slate-200 dark:border-slate-700">
               <div className="flex justify-between items-center">
-                <span className="text-slate-600 font-medium">{t('expense.totalExpenses')}</span>
-                <span className={`text-2xl font-bold ${isOverBudget ? 'text-rose-600' : 'text-slate-800'}`}>
+                <span className="text-slate-600 dark:text-slate-300 font-medium">{t('expense.totalExpenses')}</span>
+                <span className={`text-2xl font-bold ${isOverBudget ? 'text-rose-600' : 'text-slate-800 dark:text-slate-100'}`}>
                   ₪{formatNumber(totalExpenses, locale)}
                 </span>
               </div>
@@ -436,9 +438,9 @@ function App() {
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-slate-200 bg-white mt-12">
+      <footer className="border-t border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 mt-12 transition-colors duration-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <p className="text-center text-sm text-slate-400">
+          <p className="text-center text-sm text-slate-400 dark:text-slate-500">
             {t('footer.text')}
           </p>
         </div>

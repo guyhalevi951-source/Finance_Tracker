@@ -8,4 +8,9 @@ export const DEFAULT_LOCALE = 'he' as const;
 export const SUPPORTED_LOCALES = ['en', 'he'] as const;
 export const LOCALE_STORAGE_KEY = 'locale';
 
+export const THEME_STORAGE_KEY = 'theme';
+export const THEMES = ['light', 'dark'] as const;
+export type AppTheme = (typeof THEMES)[number];
+export const DEFAULT_THEME: AppTheme = 'light';
+
 export type AppLocale = (typeof SUPPORTED_LOCALES)[number];

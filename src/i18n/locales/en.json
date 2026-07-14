@@ -8,6 +8,9 @@
     "en": "English",
     "he": "Hebrew"
   },
+  "theme": {
+    "toggle": "Toggle dark mode"
+  },
   "header": {
     "date": "{{date}}"
   },

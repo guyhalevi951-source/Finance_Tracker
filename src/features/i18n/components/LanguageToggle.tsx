@@ -16,7 +16,7 @@ export function LanguageToggle() {
     <button
       onClick={() => changeLanguage(nextLocale)}
       aria-label={t('language.toggle')}
-      className="flex items-center justify-center min-h-[44px] min-w-[44px] p-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 hover:border-emerald-300 transition-all text-slate-600 hover:text-emerald-700 shadow-sm"
+      className="flex items-center justify-center min-h-[44px] min-w-[44px] p-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 hover:border-emerald-300 transition-all text-slate-600 hover:text-emerald-700 shadow-sm dark:bg-slate-800 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:border-emerald-500"
     >
       <Globe className="w-5 h-5" />
     </button>
