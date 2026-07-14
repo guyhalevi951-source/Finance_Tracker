@@ -16,9 +16,9 @@ Object.defineProperty(globalThis, 'localStorage', { value: localStorageMock });
 
 const sampleExpense: Expense = {
   id: '1',
-  description: 'Test',
+  description: { en: 'Test', he: 'Test' },
   amount: 10.5,
-  category: 'אוכל',
+  category: 'food',
   date: '14/7/2026',
 };
 
@@ -58,6 +58,19 @@ describe('loadExpenses', () => {
     const result = loadExpenses();
     expect(result.ok).toBe(true);
     if (result.ok) expect(result.value).toEqual([sampleExpense]);
+  });
+
+  it('migrates legacy plain-string descriptions to BilingualText', () => {
+    localStorage.setItem(
+      'expenses',
+      JSON.stringify([{ id: '2', description: 'סופר', amount: 50, category: 'אוכל', date: '14/7/2026' }]),
+    );
+    const result = loadExpenses();
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.value[0].description).toEqual({ en: 'סופר', he: 'סופר' });
+      expect(result.value[0].category).toBe('food');
+    }
   });
 
   it('returns CORRUPTED_EXPENSES for invalid JSON', () => {

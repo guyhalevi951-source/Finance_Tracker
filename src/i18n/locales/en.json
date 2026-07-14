@@ -1,0 +1,76 @@
+{
+  "app": {
+    "name": "Finance Tracer",
+    "tagline": "Track your expenses smartly"
+  },
+  "language": {
+    "toggle": "Switch language",
+    "en": "English",
+    "he": "Hebrew"
+  },
+  "header": {
+    "date": "{{date}}"
+  },
+  "budget": {
+    "title": "Set Monthly Budget",
+    "amountLabel": "Budget amount (₪)",
+    "amountPlaceholder": "Enter amount",
+    "amountPlaceholderWithCurrent": "Current: ₪{{amount}}",
+    "updateButton": "Update Budget",
+    "savedButton": "Saved!",
+    "card": {
+      "monthlyBudget": "Monthly Budget",
+      "allocated": "Allocated for expenses",
+      "totalExpenses": "Total Expenses",
+      "expensesThisMonth": "{{count}} expenses this month",
+      "budgetStatus": "Budget Status",
+      "remaining": "Remaining",
+      "overBudget": "Over Budget!",
+      "overBudgetBadge": "Over budget!",
+      "usage": "Usage"
+    }
+  },
+  "expense": {
+    "formTitle": "Add New Expense",
+    "descriptionLabel": "Description",
+    "descriptionPlaceholder": "e.g. Supermarket, Gas",
+    "amountLabel": "Amount (₪)",
+    "amountPlaceholder": "0.00",
+    "categoryLabel": "Category",
+    "addButton": "Add Expense",
+    "addingButton": "Translating...",
+    "tableTitle": "Expense List",
+    "tableCount": "{{count}} recorded expenses",
+    "tableHeaderDescription": "Description",
+    "tableHeaderAmount": "Amount",
+    "tableHeaderCategory": "Category",
+    "tableHeaderDate": "Date",
+    "tableHeaderActions": "Actions",
+    "deleteTitle": "Delete",
+    "totalExpenses": "Total expenses:",
+    "empty": {
+      "title": "No expenses recorded",
+      "subtitle": "Add your first expense"
+    },
+    "translationError": "Could not translate description. Please try again."
+  },
+  "category": {
+    "food": "Food",
+    "health": "Health",
+    "entertainment": "Entertainment",
+    "rent": "Rent",
+    "other": "Other",
+    "addCustomLabel": "Add custom category",
+    "addCustomPlaceholder": "Category name",
+    "addCustomButton": "Add",
+    "addingCustomButton": "Translating...",
+    "customTranslationError": "Could not translate category. Please try again.",
+    "loadError": "Could not load custom categories. Please refresh the page."
+  },
+  "errors": {
+    "corruptedData": "Saved data was corrupted — starting fresh with empty data."
+  },
+  "footer": {
+    "text": "Finance Tracer — Track your money smartly"
+  }
+}

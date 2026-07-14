@@ -519,6 +519,95 @@ Run mentally before every PR-sized change:
 
 ---
 
-*Golden Cage version: 1.0 — React/Firebase Finance Tracker rewrite*
+---
+
+## 14. i18n, Branding & User Content
+
+### 14.1 App Name & Branding
+
+- **App Name:** The app is strictly named **"Finance Tracer"** in English and **"מעקב פיננסי"** in Hebrew. Apply this format everywhere — page titles, headers, footers, metadata, and documentation. The old name "מנהל התקציב שלי" is retired.
+- **SSOT owner for app name:** `src/config/app.ts` (`APP_NAME`). All code that needs the app name must import from there.
+- Built-in UI strings for the app name are mirrored in `src/i18n/locales/en.json` and `src/i18n/locales/he.json` under the key `app.name`.
+
+### 14.2 Translation Workflow (Built-in UI Strings)
+
+- Any new built-in UI component added to the app **MUST** have its strings translated into both English and Hebrew and added to the core i18n dictionary files (`src/i18n/locales/en.json` and `src/i18n/locales/he.json`) for all users.
+- No hardcoded display strings are permitted in components, hooks, or domain code. All UI copy must use `t('key')` from `react-i18next`.
+- **SSOT owners:** `src/i18n/locales/en.json` (English UI strings), `src/i18n/locales/he.json` (Hebrew UI strings), `src/i18n/index.ts` (init + `changeLanguage`).
+
+### 14.3 Dynamic User Content Translation
+
+- When a user creates a custom item (e.g., a custom category or expense description), the app **MUST** automatically call the Translation API to translate the item into the opposite language. Both the original and translated versions must be saved together as a `BilingualText` object (`src/types/bilingual.ts`).
+- The **only** approved entry point for creating `BilingualText` from user input via the API is `src/services/translation/createBilingualText.ts`.
+- Translation errors must surface as visible UI errors — never silently swallowed. Do not save partial data (only original, no translation) without explicit user acknowledgement.
+- **SSOT owner for Translation API IO:** `src/services/translation/translationService.ts` (MyMemory API).
+
+### 14.4 Storage of User Content
+
+- User-generated items and their dynamic translations must be saved in **Firebase Firestore** for authenticated users (path: `users/{uid}/categories`), or in **`localStorage`** for guest users (key: `customCategories`).
+- The branching between guest and authenticated storage is owned exclusively by each repository module (e.g., `src/services/categories/categoryRepository.ts`). No hook or component may branch on auth state for storage purposes.
+- Auth state is obtained via `src/services/auth/authSessionService.ts` and exposed reactively via `src/features/auth/hooks/useAuthSession.ts`.
+
+### 14.5 Bilingual Data Model
+
+- Every piece of user-entered text that will be displayed in the UI **must** be stored as `BilingualText { en: string; he: string }`, never as a plain string.
+- Display of `BilingualText` always goes through `src/domain/i18n/resolveBilingualText.ts` — no inline bracket access (`text[locale]`) in components.
+- Legacy plain-string data (expense descriptions, category names) is migrated to `BilingualText` at load time via `wrapLegacyText` in `src/domain/i18n/buildBilingualText.ts`.
+
+### 14.6 Category IDs (SSOT)
+
+- Built-in category persistence keys are stable English IDs (`food`, `health`, `entertainment`, `rent`, `other`) — never localized display strings.
+- Display labels for built-in categories come from i18n: `t('category.food')` etc.
+- Legacy Hebrew category strings stored in old localStorage data are migrated to IDs at load time via `migrateCategoryId` in `src/domain/categories/constants.ts`.
+
+### 14.7 SSOT Registry for i18n & User Content
+
+| Responsibility | Owner |
+|---|---|
+| App name (en/he) | `src/config/app.ts` + `src/i18n/locales/*.json` key `app.name` |
+| Built-in English UI strings | `src/i18n/locales/en.json` |
+| Built-in Hebrew UI strings | `src/i18n/locales/he.json` |
+| i18n init + language change | `src/i18n/index.ts` |
+| Locale preference persistence | `src/i18n/index.ts` (`localStorage` key `locale`) |
+| Document lang/dir sync | `src/app/providers/I18nProvider.tsx` |
+| Language toggle component | `src/features/i18n/components/LanguageToggle.tsx` |
+| Translation API IO (MyMemory) | `src/services/translation/translationService.ts` |
+| BilingualText creation from user input | `src/services/translation/createBilingualText.ts` |
+| Bilingual text shape | `src/types/bilingual.ts` |
+| Display resolution (BilingualText → string) | `src/domain/i18n/resolveBilingualText.ts` |
+| Build BilingualText from parts | `src/domain/i18n/buildBilingualText.ts` |
+| Legacy text migration | `src/domain/i18n/buildBilingualText.ts` (`wrapLegacyText`) |
+| Built-in category IDs + legacy migration | `src/domain/categories/constants.ts` |
+| Category label resolution | `src/domain/categories/resolveCategoryLabel.ts` |
+| Custom category type | `src/types/category.ts` |
+| Custom category persistence (guest + auth) | `src/services/categories/categoryRepository.ts` |
+| Custom category feature hook | `src/features/categories/hooks/useCategories.ts` |
+| Auth session IO | `src/services/auth/authSessionService.ts` |
+| Auth session React hook | `src/features/auth/hooks/useAuthSession.ts` |
+| Date/number locale formatting | `src/lib/format/formatDate.ts` |
+
+### 14.8 i18n Red Flags — Stop Immediately
+
+| Thought | Reality |
+|---|---|
+| "I'll hardcode a display string in Hebrew or English in JSX" | Add the key to both locale JSON files and use `t('key')`. |
+| "The category name is always Hebrew so I'll compare it to a string" | Use stable ID comparisons. Hebrew category strings are display-only. |
+| "I'll save the translation later and just store the original now" | Both languages must be persisted atomically — see 14.3. |
+| "I'll call `translateText` directly in the component" | Route through `createBilingualText.ts` → `useCategories` or `useBudgetTracker`. |
+| "The user is authenticated so I'll write to Firestore from the hook" | Firestore writes belong in the repository. Hooks call repositories. |
+| "I'll add the app name as a string constant here" | Import from `src/config/app.ts`. |
+
+### 14.9 Pre-Submit Additions for i18n Changes
+
+- [ ] Every new UI string has a key in **both** `en.json` and `he.json`.
+- [ ] No `t()` calls reference keys that don't exist in both locale files.
+- [ ] User-created content creates `BilingualText` via `createBilingualText.ts`.
+- [ ] Translation failures surface as visible errors; no silent fallbacks.
+- [ ] App name displayed as "Finance Tracer" (en) / "מעקב פיננסי" (he) everywhere.
+- [ ] Category persistence uses stable IDs, not display strings.
+
+---
+
+*Golden Cage version: 1.1 — i18n, branding, and dynamic translation added*
 *Discipline source: root-cause-first + ssot-enforcer — https://github.com/cohen-liel/agent-skills*
 *Section 7 is the living invariants section — additional rules will be appended as development proceeds.*

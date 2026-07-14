@@ -1,0 +1,76 @@
+{
+  "app": {
+    "name": "מעקב פיננסי",
+    "tagline": "עקוב אחר ההוצאות שלך בצורה חכמה"
+  },
+  "language": {
+    "toggle": "החלף שפה",
+    "en": "אנגלית",
+    "he": "עברית"
+  },
+  "header": {
+    "date": "{{date}}"
+  },
+  "budget": {
+    "title": "הגדר תקציב חודשי",
+    "amountLabel": "סכום התקציב (₪)",
+    "amountPlaceholder": "הזן סכום",
+    "amountPlaceholderWithCurrent": "נוכחי: ₪{{amount}}",
+    "updateButton": "עדכן תקציב",
+    "savedButton": "נשמר!",
+    "card": {
+      "monthlyBudget": "תקציב חודשי",
+      "allocated": "הסכום שהוקצב להוצאות",
+      "totalExpenses": "סה\"כ הוצאות",
+      "expensesThisMonth": "{{count}} הוצאות החודש",
+      "budgetStatus": "מצב התקציב",
+      "remaining": "נותר בתקציב",
+      "overBudget": "חריגה מהתקציב",
+      "overBudgetBadge": "חרגת מהתקציב!",
+      "usage": "ניצולת"
+    }
+  },
+  "expense": {
+    "formTitle": "הוסף הוצאה חדשה",
+    "descriptionLabel": "תיאור",
+    "descriptionPlaceholder": "לדוגמה: סופר, דלק",
+    "amountLabel": "סכום (₪)",
+    "amountPlaceholder": "0.00",
+    "categoryLabel": "קטגוריה",
+    "addButton": "הוסף הוצאה",
+    "addingButton": "מתרגם...",
+    "tableTitle": "רשימת ההוצאות",
+    "tableCount": "{{count}} הוצאות רשומות",
+    "tableHeaderDescription": "תיאור",
+    "tableHeaderAmount": "סכום",
+    "tableHeaderCategory": "קטגוריה",
+    "tableHeaderDate": "תאריך",
+    "tableHeaderActions": "פעולות",
+    "deleteTitle": "מחק",
+    "totalExpenses": "סה\"כ הוצאות:",
+    "empty": {
+      "title": "אין הוצאות רשומות",
+      "subtitle": "הוסף את ההוצאה הראשונה שלך"
+    },
+    "translationError": "לא ניתן לתרגם את התיאור. נסה שוב."
+  },
+  "category": {
+    "food": "אוכל",
+    "health": "בריאות",
+    "entertainment": "בילויים",
+    "rent": "שכר דירה",
+    "other": "אחר",
+    "addCustomLabel": "הוסף קטגוריה מותאמת",
+    "addCustomPlaceholder": "שם קטגוריה",
+    "addCustomButton": "הוסף",
+    "addingCustomButton": "מתרגם...",
+    "customTranslationError": "לא ניתן לתרגם את הקטגוריה. נסה שוב.",
+    "loadError": "לא ניתן לטעון קטגוריות מותאמות. נסה לרענן את הדף."
+  },
+  "errors": {
+    "corruptedData": "נתונים שמורים פגומים — מתחיל מחדש עם נתונים ריקים."
+  },
+  "footer": {
+    "text": "מעקב פיננסי — נהל את הכסף שלך בצורה חכמה"
+  }
+}
