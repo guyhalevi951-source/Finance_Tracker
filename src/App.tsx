@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Wallet,
@@ -63,15 +62,9 @@ function App() {
 
   const {
     customCategories,
-    isAddingCategory,
-    addCategoryError,
     loadCategoryError,
-    addCustomCategory,
-    clearAddCategoryError,
     clearLoadCategoryError,
   } = useCategories(userId);
-
-  const [customCategoryInput, setCustomCategoryInput] = useState('');
 
   const { totalExpenses, budgetPercentage, isOverBudget, remaining } = summary;
 
@@ -82,12 +75,6 @@ function App() {
       label: resolveBilingualText(c.labels, locale),
     })),
   ];
-
-  const handleAddCustomCategory = async () => {
-    if (!customCategoryInput.trim()) return;
-    await addCustomCategory(customCategoryInput.trim(), locale);
-    if (!addCategoryError) setCustomCategoryInput('');
-  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
@@ -326,32 +313,6 @@ function App() {
                   </option>
                 ))}
               </select>
-
-              {/* Add custom category inline */}
-              <div className="mt-2 flex gap-2">
-                <input
-                  type="text"
-                  value={customCategoryInput}
-                  onChange={(e) => {
-                    setCustomCategoryInput(e.target.value);
-                    if (addCategoryError) clearAddCategoryError();
-                  }}
-                  placeholder={t('category.addCustomPlaceholder')}
-                  className="flex-1 px-3 py-2 text-sm rounded-lg border border-slate-300 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-200 outline-none transition-all"
-                  disabled={isAddingCategory}
-                />
-                <button
-                  type="button"
-                  onClick={handleAddCustomCategory}
-                  disabled={isAddingCategory || !customCategoryInput.trim()}
-                  className="px-3 py-2 text-sm bg-emerald-100 hover:bg-emerald-200 text-emerald-700 rounded-lg font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed min-h-[36px]"
-                >
-                  {isAddingCategory ? t('category.addingCustomButton') : t('category.addCustomButton')}
-                </button>
-              </div>
-              {addCategoryError && (
-                <p className="text-xs text-rose-600 mt-1">{t('category.customTranslationError')}</p>
-              )}
             </div>
 
             <div className="flex items-end">
