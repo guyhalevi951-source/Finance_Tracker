@@ -1,17 +1,22 @@
 import { useTranslation } from 'react-i18next';
 import { Calendar, Check, Delete } from 'lucide-react';
+import { type PaymentMethodId } from '../../../types/paymentMethod';
 import {
   appendNumpadDigit,
   formatNumpadDisplay,
   numpadAmountToNumber,
   numpadBackspace,
 } from '../../../domain/expenses/numpadAmount';
+import { PaymentMethodIcon } from './PaymentMethodIcon';
 
 interface ExpenseNumpadProps {
   amountDigits: string;
   onAmountChange: (value: string) => void;
   dateLabel: string;
   onDateClick: () => void;
+  paymentMethodId: PaymentMethodId;
+  paymentMethodLabel: string;
+  onPaymentMethodClick: () => void;
   onSubmit: () => void;
   isSaving: boolean;
 }
@@ -21,6 +26,9 @@ export function ExpenseNumpad({
   onAmountChange,
   dateLabel,
   onDateClick,
+  paymentMethodId,
+  paymentMethodLabel,
+  onPaymentMethodClick,
   onSubmit,
   isSaving,
 }: ExpenseNumpadProps) {
@@ -38,6 +46,9 @@ export function ExpenseNumpad({
   const digitBtn =
     'min-h-[56px] rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-100 text-xl font-medium hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors active:scale-95';
 
+  const sideActionBtn =
+    'rounded-xl bg-slate-100 dark:bg-slate-800 text-amber-500 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors flex flex-col items-center justify-center gap-0.5 px-1 active:scale-95';
+
   return (
     <div className="grid grid-cols-4 gap-2">
       {['7', '8', '9'].map((d) => (
@@ -48,7 +59,7 @@ export function ExpenseNumpad({
       <button
         type="button"
         onClick={onDateClick}
-        className="min-h-[56px] rounded-xl bg-slate-100 dark:bg-slate-800 text-amber-500 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors flex flex-col items-center justify-center gap-0.5 px-1"
+        className={`min-h-[56px] ${sideActionBtn}`}
       >
         <Calendar className="w-5 h-5" />
         <span className="text-[10px] font-medium leading-tight text-center">{dateLabel}</span>
@@ -59,14 +70,23 @@ export function ExpenseNumpad({
           {d}
         </button>
       ))}
-      <div aria-hidden className="min-h-[56px]" />
+      <button
+        type="button"
+        onClick={onPaymentMethodClick}
+        aria-label={t('addExpense.selectPaymentMethod')}
+        className={`row-span-2 min-h-0 ${sideActionBtn}`}
+      >
+        <PaymentMethodIcon methodId={paymentMethodId} className="w-5 h-5" />
+        <span className="text-[10px] font-medium leading-tight text-center line-clamp-2">
+          {paymentMethodLabel}
+        </span>
+      </button>
 
       {['1', '2', '3'].map((d) => (
         <button key={d} type="button" className={digitBtn} onClick={() => handleKey(d)}>
           {d}
         </button>
       ))}
-      <div aria-hidden className="min-h-[56px]" />
 
       <button type="button" className={digitBtn} onClick={() => handleKey('.')}>
         .

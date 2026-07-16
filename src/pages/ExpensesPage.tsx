@@ -129,6 +129,8 @@ export function ExpensesPage() {
         onNoteChange={addFlow.setNote}
         date={addFlow.date}
         onDateChange={addFlow.setDate}
+        paymentMethod={addFlow.paymentMethod}
+        onPaymentMethodChange={addFlow.setPaymentMethod}
         attachmentFile={addFlow.attachmentFile}
         onAttachmentChange={addFlow.setAttachmentFile}
         isSaving={addFlow.isSaving}

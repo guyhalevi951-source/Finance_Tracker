@@ -3,7 +3,10 @@ import { useTranslation } from 'react-i18next';
 import { type Expense } from '../../../types/expense';
 import { validateExpenseInput } from '../../../domain/expenses/validateExpense';
 import { generateExpenseId } from '../../../domain/expenses/generateId';
-import { DEFAULT_PAYMENT_METHOD } from '../../../domain/expenses/paymentMethods';
+import {
+  DEFAULT_PAYMENT_METHOD,
+  type PaymentMethodId,
+} from '../../../domain/expenses/paymentMethods';
 import { toIsoDate } from '../../../domain/expenses/parseExpenseDate';
 import { createBilingualText } from '../../../services/translation/createBilingualText';
 import { uploadExpenseAttachment } from '../../../services/attachments/expenseAttachmentService';
@@ -24,6 +27,7 @@ export function useAddExpenseFlow({ userId, createExpense }: UseAddExpenseFlowOp
   const [amountDigits, setAmountDigits] = useState('');
   const [note, setNote] = useState('');
   const [date, setDate] = useState(() => toIsoDate(new Date()));
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethodId>(DEFAULT_PAYMENT_METHOD);
   const [attachmentFile, setAttachmentFile] = useState<File | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [errorKey, setErrorKey] = useState<string | null>(null);
@@ -34,6 +38,7 @@ export function useAddExpenseFlow({ userId, createExpense }: UseAddExpenseFlowOp
     setAmountDigits('');
     setNote('');
     setDate(toIsoDate(new Date()));
+    setPaymentMethod(DEFAULT_PAYMENT_METHOD);
     setAttachmentFile(null);
     setIsSaving(false);
     setErrorKey(null);
@@ -70,7 +75,7 @@ export function useAddExpenseFlow({ userId, createExpense }: UseAddExpenseFlowOp
       description,
       amount: amountDigits === '' ? '0' : amountDigits,
       category: selectedSubCategoryId,
-      paymentMethod: DEFAULT_PAYMENT_METHOD,
+      paymentMethod,
       date,
     });
 
@@ -123,6 +128,7 @@ export function useAddExpenseFlow({ userId, createExpense }: UseAddExpenseFlowOp
     note,
     amountDigits,
     date,
+    paymentMethod,
     attachmentFile,
     i18n.language,
     userId,
@@ -140,6 +146,8 @@ export function useAddExpenseFlow({ userId, createExpense }: UseAddExpenseFlowOp
     setNote,
     date,
     setDate,
+    paymentMethod,
+    setPaymentMethod,
     attachmentFile,
     setAttachmentFile,
     isSaving,

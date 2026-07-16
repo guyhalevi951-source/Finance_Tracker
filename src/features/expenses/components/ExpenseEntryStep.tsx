@@ -5,8 +5,10 @@ import { getSubCategoryI18nKey } from '../../../domain/categories/hierarchy';
 import { toIsoDate } from '../../../domain/expenses/parseExpenseDate';
 import { formatExpenseDateNumeric } from '../../../lib/format/formatDate';
 import { type AppLocale } from '../../../config/app';
+import { type PaymentMethodId } from '../../../types/paymentMethod';
 import { ExpenseNumpad, formatNumpadDisplay } from './ExpenseNumpad';
 import { ExpenseDatePickerModal } from './ExpenseDatePickerModal';
+import { ExpensePaymentMethodPickerModal } from './ExpensePaymentMethodPickerModal';
 
 interface ExpenseEntryStepProps {
   locale: AppLocale;
@@ -17,6 +19,8 @@ interface ExpenseEntryStepProps {
   onNoteChange: (value: string) => void;
   date: string;
   onDateChange: (value: string) => void;
+  paymentMethod: PaymentMethodId;
+  onPaymentMethodChange: (value: PaymentMethodId) => void;
   attachmentFile: File | null;
   onAttachmentChange: (file: File | null) => void;
   isSaving: boolean;
@@ -34,6 +38,8 @@ export function ExpenseEntryStep({
   onNoteChange,
   date,
   onDateChange,
+  paymentMethod,
+  onPaymentMethodChange,
   attachmentFile,
   onAttachmentChange,
   isSaving,
@@ -44,9 +50,11 @@ export function ExpenseEntryStep({
   const { t } = useTranslation();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [dateModalOpen, setDateModalOpen] = useState(false);
+  const [paymentMethodModalOpen, setPaymentMethodModalOpen] = useState(false);
 
   const todayIso = toIsoDate(new Date());
   const dateLabel = date === todayIso ? t('addExpense.today') : formatExpenseDateNumeric(date, locale);
+  const paymentMethodLabel = t(`expense.paymentMethod.${paymentMethod}`);
 
   return (
     <div className="flex flex-col h-full">
@@ -113,6 +121,9 @@ export function ExpenseEntryStep({
             onAmountChange={onAmountChange}
             dateLabel={dateLabel}
             onDateClick={() => setDateModalOpen(true)}
+            paymentMethodId={paymentMethod}
+            paymentMethodLabel={paymentMethodLabel}
+            onPaymentMethodClick={() => setPaymentMethodModalOpen(true)}
             onSubmit={onSubmit}
             isSaving={isSaving}
           />
@@ -127,6 +138,13 @@ export function ExpenseEntryStep({
           setDateModalOpen(false);
         }}
         onCancel={() => setDateModalOpen(false)}
+      />
+
+      <ExpensePaymentMethodPickerModal
+        open={paymentMethodModalOpen}
+        value={paymentMethod}
+        onSelect={onPaymentMethodChange}
+        onClose={() => setPaymentMethodModalOpen(false)}
       />
     </div>
   );

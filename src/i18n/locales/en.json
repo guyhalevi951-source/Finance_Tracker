@@ -130,7 +130,9 @@
     "attachmentTooLarge": "Image is too large. Maximum size is 500 KB.",
     "datePickerTitle": "Select date",
     "dateConfirm": "Confirm",
-    "dateCancel": "Cancel"
+    "dateCancel": "Cancel",
+    "paymentMethodPickerTitle": "Select payment method",
+    "selectPaymentMethod": "Select payment method"
   },
   "category": {
     "food": "Food",

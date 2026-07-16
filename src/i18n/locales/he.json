@@ -130,7 +130,9 @@
     "attachmentTooLarge": "התמונה גדולה מדי. גודל מקסימלי 500 KB.",
     "datePickerTitle": "בחר תאריך",
     "dateConfirm": "אישור",
-    "dateCancel": "ביטול"
+    "dateCancel": "ביטול",
+    "paymentMethodPickerTitle": "בחר אמצעי תשלום",
+    "selectPaymentMethod": "בחר אמצעי תשלום"
   },
   "category": {
     "food": "אוכל",

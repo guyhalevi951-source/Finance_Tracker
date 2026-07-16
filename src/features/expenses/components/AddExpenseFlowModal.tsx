@@ -1,4 +1,5 @@
 import { type AppLocale } from '../../../config/app';
+import { type PaymentMethodId } from '../../../types/paymentMethod';
 import { type AddExpenseStep } from '../hooks/useAddExpenseFlow';
 import { CategorySelectionStep } from './CategorySelectionStep';
 import { ExpenseEntryStep } from './ExpenseEntryStep';
@@ -14,6 +15,8 @@ interface AddExpenseFlowModalProps {
   onNoteChange: (value: string) => void;
   date: string;
   onDateChange: (value: string) => void;
+  paymentMethod: PaymentMethodId;
+  onPaymentMethodChange: (value: PaymentMethodId) => void;
   attachmentFile: File | null;
   onAttachmentChange: (file: File | null) => void;
   isSaving: boolean;
@@ -35,6 +38,8 @@ export function AddExpenseFlowModal({
   onNoteChange,
   date,
   onDateChange,
+  paymentMethod,
+  onPaymentMethodChange,
   attachmentFile,
   onAttachmentChange,
   isSaving,
@@ -61,6 +66,8 @@ export function AddExpenseFlowModal({
           onNoteChange={onNoteChange}
           date={date}
           onDateChange={onDateChange}
+          paymentMethod={paymentMethod}
+          onPaymentMethodChange={onPaymentMethodChange}
           attachmentFile={attachmentFile}
           onAttachmentChange={onAttachmentChange}
           isSaving={isSaving}
