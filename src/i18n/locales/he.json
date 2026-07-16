@@ -11,6 +11,10 @@
   "theme": {
     "toggle": "החלף מצב כהה"
   },
+  "nav": {
+    "dashboard": "לוח בקרה",
+    "expenses": "הוצאות"
+  },
   "header": {
     "date": "{{date}}"
   },
@@ -34,6 +38,49 @@
     }
   },
   "expense": {
+    "pageTitle": "הוצאות",
+    "viewByDate": "לפי תאריך",
+    "viewByCategory": "לפי קטגוריות",
+    "detailsTitle": "פרטי הוצאה",
+    "notFound": "ההוצאה לא נמצאה",
+    "paymentMethodLabel": "אמצעי תשלום",
+    "dateLabel": "תאריך",
+    "paymentMethod": {
+      "cash": "מזומן",
+      "creditCard": "כרטיס אשראי",
+      "bankTransfer": "העברה בנקאית"
+    },
+    "batch": {
+      "deleteMode": "מצב מחיקה",
+      "editMode": "מצב עריכה",
+      "confirm": "שמור שינויים",
+      "cancel": "ביטול",
+      "discardTitle": "לבטל שינויים?",
+      "discardMessage": "בטוח שאתה רוצה לצאת בלי לשמור את השינויים?",
+      "discardYes": "כן, בטל",
+      "discardNo": "לא, המשך לערוך"
+    },
+    "editModal": {
+      "title": "עריכת הוצאה",
+      "save": "שמור",
+      "saving": "שומר...",
+      "cancel": "ביטול"
+    },
+    "details": {
+      "back": "חזרה להוצאות",
+      "category": "קטגוריה",
+      "description": "תיאור",
+      "paymentMethod": "אמצעי תשלום",
+      "date": "תאריך"
+    },
+    "validation": {
+      "DESCRIPTION_EMPTY": "יש להזין תיאור",
+      "AMOUNT_INVALID": "הסכום חייב להיות מספר תקין",
+      "AMOUNT_NOT_POSITIVE": "הסכום חייב להיות גדול מאפס",
+      "PAYMENT_METHOD_INVALID": "אמצעי תשלום לא תקין",
+      "DATE_INVALID": "תאריך לא תקין",
+      "translationError": "לא ניתן לתרגם את התיאור. נסה שוב."
+    },
     "formTitle": "הוסף הוצאה חדשה",
     "descriptionLabel": "תיאור",
     "descriptionPlaceholder": "לדוגמה: סופר, דלק",

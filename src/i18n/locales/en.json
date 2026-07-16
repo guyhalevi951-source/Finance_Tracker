@@ -11,6 +11,10 @@
   "theme": {
     "toggle": "Toggle dark mode"
   },
+  "nav": {
+    "dashboard": "Dashboard",
+    "expenses": "Expenses"
+  },
   "header": {
     "date": "{{date}}"
   },
@@ -34,6 +38,49 @@
     }
   },
   "expense": {
+    "pageTitle": "Expenses",
+    "viewByDate": "By Date",
+    "viewByCategory": "By Category",
+    "detailsTitle": "Expense details",
+    "notFound": "Expense not found",
+    "paymentMethodLabel": "Payment method",
+    "dateLabel": "Date",
+    "paymentMethod": {
+      "cash": "Cash",
+      "creditCard": "Credit Card",
+      "bankTransfer": "Bank Transfer"
+    },
+    "batch": {
+      "deleteMode": "Delete mode",
+      "editMode": "Edit mode",
+      "confirm": "Save changes",
+      "cancel": "Cancel",
+      "discardTitle": "Discard changes?",
+      "discardMessage": "Are you sure you want to exit without saving changes?",
+      "discardYes": "Yes, discard",
+      "discardNo": "No, keep editing"
+    },
+    "editModal": {
+      "title": "Edit expense",
+      "save": "Save",
+      "saving": "Saving...",
+      "cancel": "Cancel"
+    },
+    "details": {
+      "back": "Back to expenses",
+      "category": "Category",
+      "description": "Description",
+      "paymentMethod": "Payment method",
+      "date": "Date"
+    },
+    "validation": {
+      "DESCRIPTION_EMPTY": "Description is required",
+      "AMOUNT_INVALID": "Amount must be a valid number",
+      "AMOUNT_NOT_POSITIVE": "Amount must be greater than zero",
+      "PAYMENT_METHOD_INVALID": "Invalid payment method",
+      "DATE_INVALID": "Invalid date",
+      "translationError": "Could not translate description. Please try again."
+    },
     "formTitle": "Add New Expense",
     "descriptionLabel": "Description",
     "descriptionPlaceholder": "e.g. Supermarket, Gas",

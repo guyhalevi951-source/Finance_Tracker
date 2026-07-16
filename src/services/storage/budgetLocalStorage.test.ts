@@ -1,6 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { loadBudget, loadExpenses, saveBudget, saveExpenses } from './budgetLocalStorage';
-import type { Expense } from '../../types/expense';
+import { loadBudget, saveBudget } from './budgetLocalStorage';
 
 const localStorageMock = (() => {
   let store: Record<string, string> = {};
@@ -13,14 +12,6 @@ const localStorageMock = (() => {
 })();
 
 Object.defineProperty(globalThis, 'localStorage', { value: localStorageMock });
-
-const sampleExpense: Expense = {
-  id: '1',
-  description: { en: 'Test', he: 'Test' },
-  amount: 10.5,
-  category: 'food',
-  date: '14/7/2026',
-};
 
 beforeEach(() => localStorageMock.clear());
 
@@ -43,54 +34,5 @@ describe('loadBudget', () => {
     const result = loadBudget();
     expect(result.ok).toBe(false);
     if (!result.ok) expect(result.error).toBe('CORRUPTED_BUDGET');
-  });
-});
-
-describe('loadExpenses', () => {
-  it('returns NOT_FOUND when nothing stored', () => {
-    const result = loadExpenses();
-    expect(result.ok).toBe(false);
-    if (!result.ok) expect(result.error).toBe('NOT_FOUND');
-  });
-
-  it('returns saved expenses', () => {
-    saveExpenses([sampleExpense]);
-    const result = loadExpenses();
-    expect(result.ok).toBe(true);
-    if (result.ok) expect(result.value).toEqual([sampleExpense]);
-  });
-
-  it('migrates legacy plain-string descriptions to BilingualText', () => {
-    localStorage.setItem(
-      'expenses',
-      JSON.stringify([{ id: '2', description: 'סופר', amount: 50, category: 'אוכל', date: '14/7/2026' }]),
-    );
-    const result = loadExpenses();
-    expect(result.ok).toBe(true);
-    if (result.ok) {
-      expect(result.value[0].description).toEqual({ en: 'סופר', he: 'סופר' });
-      expect(result.value[0].category).toBe('food');
-    }
-  });
-
-  it('returns CORRUPTED_EXPENSES for invalid JSON', () => {
-    localStorage.setItem('expenses', '{bad json');
-    const result = loadExpenses();
-    expect(result.ok).toBe(false);
-    if (!result.ok) expect(result.error).toBe('CORRUPTED_EXPENSES');
-  });
-
-  it('returns INVALID_EXPENSES when array items fail shape check', () => {
-    localStorage.setItem('expenses', JSON.stringify([{ id: 1, description: 'X' }]));
-    const result = loadExpenses();
-    expect(result.ok).toBe(false);
-    if (!result.ok) expect(result.error).toBe('INVALID_EXPENSES');
-  });
-
-  it('returns INVALID_EXPENSES when root is not an array', () => {
-    localStorage.setItem('expenses', JSON.stringify({ data: [] }));
-    const result = loadExpenses();
-    expect(result.ok).toBe(false);
-    if (!result.ok) expect(result.error).toBe('INVALID_EXPENSES');
   });
 });
