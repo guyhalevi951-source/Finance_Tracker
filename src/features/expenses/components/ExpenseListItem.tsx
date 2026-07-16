@@ -1,7 +1,9 @@
 import { useTranslation } from 'react-i18next';
+import { Camera } from 'lucide-react';
 import { type Expense } from '../../../types/expense';
 import { type ExpenseBatchMode } from '../hooks/useExpenseBatchMode';
 import { resolveBilingualText } from '../../../domain/i18n/resolveBilingualText';
+import { hasBilingualTextContent } from '../../../domain/i18n/buildBilingualText';
 import { isBuiltinSubCategoryId } from '../../../domain/categories/hierarchy';
 import { getBuiltinCategoryI18nKey, resolveCustomCategoryLabel } from '../../../domain/categories/resolveCategoryLabel';
 import { type CustomCategory } from '../../../types/category';
@@ -35,6 +37,8 @@ export function ExpenseListItem({
   const categoryLabel = isBuiltinSubCategoryId(expense.category)
     ? t(getBuiltinCategoryI18nKey(expense.category))
     : (resolveCustomCategoryLabel(expense.category, customCategories, locale) ?? t('category.sub.other.miscellaneous'));
+  const descriptionText = resolveBilingualText(expense.description, locale);
+  const hasDescription = hasBilingualTextContent(expense.description);
 
   return (
     <button
@@ -62,14 +66,16 @@ export function ExpenseListItem({
       <div className="flex-1 min-w-0">
         {hideCategoryLabel ? (
           <p className="font-medium text-slate-800 dark:text-slate-100 truncate">
-            {resolveBilingualText(expense.description, locale)}
+            {hasDescription ? descriptionText : categoryLabel}
           </p>
         ) : (
           <>
             <p className="font-medium text-slate-800 dark:text-slate-100 truncate">{categoryLabel}</p>
-            <p className="text-sm text-slate-500 dark:text-slate-400 truncate">
-              {resolveBilingualText(expense.description, locale)}
-            </p>
+            {hasDescription && (
+              <p className="text-sm text-slate-500 dark:text-slate-400 truncate">
+                {descriptionText}
+              </p>
+            )}
           </>
         )}
         {showNestedDate && (
@@ -80,12 +86,22 @@ export function ExpenseListItem({
       </div>
 
       <div className="flex items-center gap-2 flex-shrink-0">
-        <span className={`hidden sm:inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs text-white ${color}`}>
-          <Icon className="w-3 h-3" />
-        </span>
         <span className="font-semibold text-rose-600 dark:text-rose-400">
           {formatCurrencyAmount(expense.amount, locale)}
         </span>
+        <div className="relative flex-shrink-0">
+          <span className={`inline-flex items-center justify-center w-9 h-9 rounded-full text-white ${color}`}>
+            <Icon className="w-4 h-4" />
+          </span>
+          {expense.attachmentUrl && (
+            <span
+              className="absolute -bottom-0.5 -start-0.5 flex items-center justify-center w-4 h-4 rounded-full bg-amber-400 ring-2 ring-white dark:ring-slate-800"
+              aria-hidden
+            >
+              <Camera className="w-2.5 h-2.5 text-slate-800" />
+            </span>
+          )}
+        </div>
       </div>
     </button>
   );

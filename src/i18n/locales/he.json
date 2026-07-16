@@ -72,10 +72,9 @@
       "description": "תיאור",
       "paymentMethod": "אמצעי תשלום",
       "date": "תאריך",
-      "attachment": "קבלה"
+      "attachment": "תמונות"
     },
     "validation": {
-      "DESCRIPTION_EMPTY": "יש להזין תיאור",
       "AMOUNT_INVALID": "הסכום חייב להיות מספר תקין",
       "AMOUNT_NOT_POSITIVE": "הסכום חייב להיות גדול מאפס",
       "PAYMENT_METHOD_INVALID": "אמצעי תשלום לא תקין",

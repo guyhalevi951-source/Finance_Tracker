@@ -5,7 +5,6 @@ import { validateExpenseInput } from '../../../domain/expenses/validateExpense';
 import { generateExpenseId } from '../../../domain/expenses/generateId';
 import { DEFAULT_PAYMENT_METHOD } from '../../../domain/expenses/paymentMethods';
 import { toIsoDate } from '../../../domain/expenses/parseExpenseDate';
-import { getSubCategoryI18nKey } from '../../../domain/categories/hierarchy';
 import { createBilingualText } from '../../../services/translation/createBilingualText';
 import { uploadExpenseAttachment } from '../../../services/attachments/expenseAttachmentService';
 import { type AppLocale } from '../../../config/app';
@@ -18,7 +17,7 @@ export interface UseAddExpenseFlowOptions {
 }
 
 export function useAddExpenseFlow({ userId, createExpense }: UseAddExpenseFlowOptions) {
-  const { t, i18n } = useTranslation();
+  const { i18n } = useTranslation();
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState<AddExpenseStep>('category');
   const [selectedSubCategoryId, setSelectedSubCategoryId] = useState<string | null>(null);
@@ -65,10 +64,7 @@ export function useAddExpenseFlow({ userId, createExpense }: UseAddExpenseFlowOp
     if (!selectedSubCategoryId) return;
 
     const locale = i18n.language as AppLocale;
-    const description =
-      note.trim() !== ''
-        ? note.trim()
-        : t(getSubCategoryI18nKey(selectedSubCategoryId));
+    const description = note.trim();
 
     const result = validateExpenseInput({
       description,
@@ -129,7 +125,6 @@ export function useAddExpenseFlow({ userId, createExpense }: UseAddExpenseFlowOp
     date,
     attachmentFile,
     i18n.language,
-    t,
     userId,
     createExpense,
     closeFlow,

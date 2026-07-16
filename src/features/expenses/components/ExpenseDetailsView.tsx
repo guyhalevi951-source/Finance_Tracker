@@ -11,6 +11,7 @@ import {
 import { type Expense } from '../../../types/expense';
 import { type CustomCategory } from '../../../types/category';
 import { resolveBilingualText } from '../../../domain/i18n/resolveBilingualText';
+import { hasBilingualTextContent } from '../../../domain/i18n/buildBilingualText';
 import { isBuiltinSubCategoryId } from '../../../domain/categories/hierarchy';
 import { getBuiltinCategoryI18nKey, resolveCustomCategoryLabel } from '../../../domain/categories/resolveCategoryLabel';
 import { ROUTES } from '../../../config/routes';
@@ -33,11 +34,13 @@ export function ExpenseDetailsView({ expense, locale, customCategories }: Expens
 
   const rows = [
     { icon: Folder, label: t('expense.details.category'), value: categoryLabel },
-    {
-      icon: FileText,
-      label: t('expense.details.description'),
-      value: resolveBilingualText(expense.description, locale),
-    },
+    ...(hasBilingualTextContent(expense.description)
+      ? [{
+          icon: FileText,
+          label: t('expense.details.description'),
+          value: resolveBilingualText(expense.description, locale),
+        }]
+      : []),
     {
       icon: CreditCard,
       label: t('expense.details.paymentMethod'),

@@ -3,7 +3,6 @@ import { isPaymentMethodId } from './paymentMethods';
 import { isIsoDateString } from './parseExpenseDate';
 
 export type ExpenseValidationError =
-  | 'DESCRIPTION_EMPTY'
   | 'AMOUNT_INVALID'
   | 'AMOUNT_NOT_POSITIVE'
   | 'PAYMENT_METHOD_INVALID'
@@ -40,8 +39,6 @@ export interface EditExpenseInput {
 export function validateExpenseInput(
   input: NewExpenseInput | EditExpenseInput,
 ): Result<ValidatedExpenseInput, ExpenseValidationError> {
-  if (input.description.trim() === '') return err('DESCRIPTION_EMPTY');
-
   const amount = parseFloat(input.amount);
   if (isNaN(amount)) return err('AMOUNT_INVALID');
   if (amount <= 0) return err('AMOUNT_NOT_POSITIVE');

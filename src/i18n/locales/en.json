@@ -72,10 +72,9 @@
       "description": "Description",
       "paymentMethod": "Payment method",
       "date": "Date",
-      "attachment": "Receipt"
+      "attachment": "Images"
     },
     "validation": {
-      "DESCRIPTION_EMPTY": "Description is required",
       "AMOUNT_INVALID": "Amount must be a valid number",
       "AMOUNT_NOT_POSITIVE": "Amount must be greater than zero",
       "PAYMENT_METHOD_INVALID": "Invalid payment method",

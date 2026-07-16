@@ -19,6 +19,12 @@ describe('validateExpenseInput', () => {
     }
   });
 
+  it('accepts empty description', () => {
+    const result = validateExpenseInput({ ...valid, description: '' });
+    expect(result.ok).toBe(true);
+    if (result.ok) expect(result.value.description).toBe('');
+  });
+
   it('rejects invalid payment method', () => {
     const result = validateExpenseInput({ ...valid, paymentMethod: 'bitcoin' });
     expect(result.ok).toBe(false);

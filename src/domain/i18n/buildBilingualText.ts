@@ -1,6 +1,12 @@
 import { type BilingualText } from '../../types/bilingual';
 import { type AppLocale } from '../../config/app';
 
+export const EMPTY_BILINGUAL_TEXT: BilingualText = { en: '', he: '' };
+
+export function hasBilingualTextContent(text: BilingualText): boolean {
+  return text.en.trim() !== '' || text.he.trim() !== '';
+}
+
 /**
  * Pure helper: pairs an original string with its translation to form a BilingualText.
  * Does not make any API calls — translation must be provided by the caller.
