@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { expenseDetailPath } from '../config/routes';
@@ -10,8 +10,11 @@ import { useAddExpenseFlow } from '../features/expenses/hooks/useAddExpenseFlow'
 import { useExpenseBatchMode } from '../features/expenses/hooks/useExpenseBatchMode';
 import { ExpensesPageHeader } from '../features/expenses/components/ExpensesPageHeader';
 import { ExpensesViewTabs, type ExpensesViewMode } from '../features/expenses/components/ExpensesViewTabs';
+import { ExpenseTimeFilterBar } from '../features/expenses/components/ExpenseTimeFilterBar';
 import { ExpensesByDateView } from '../features/expenses/components/ExpensesByDateView';
 import { ExpensesByCategoryView } from '../features/expenses/components/ExpensesByCategoryView';
+import { useExpenseTimeFilter } from '../features/expenses/hooks/useExpenseTimeFilter';
+import { filterExpensesByPeriod } from '../domain/expenses/periods';
 import { ExpenseEditModal } from '../features/expenses/components/ExpenseEditModal';
 import { DiscardChangesModal } from '../features/expenses/components/DiscardChangesModal';
 import { AddExpenseFab } from '../features/expenses/components/AddExpenseFab';
@@ -32,6 +35,12 @@ export function ExpensesPage() {
   const addFlow = useAddExpenseFlow({ userId, createExpense });
 
   const batch = useExpenseBatchMode(expenses, userId, reload);
+  const timeFilter = useExpenseTimeFilter(locale);
+
+  const filteredExpenses = useMemo(
+    () => filterExpensesByPeriod(batch.displayExpenses, timeFilter.range),
+    [batch.displayExpenses, timeFilter.range],
+  );
 
   const categoryOptions = [
     ...getAllBuiltinSubCategoryIds().map((id) => ({ id, label: t(getSubCategoryI18nKey(id)) })),
@@ -54,7 +63,7 @@ export function ExpensesPage() {
   };
 
   const listProps = {
-    expenses: batch.displayExpenses,
+    expenses: filteredExpenses,
     locale,
     customCategories,
     mode: batch.mode,
@@ -80,6 +89,8 @@ export function ExpensesPage() {
       />
 
       <ExpensesViewTabs active={viewMode} onChange={setViewMode} />
+
+      <ExpenseTimeFilterBar locale={locale} {...timeFilter} />
 
       {viewMode === 'date' ? (
         <ExpensesByDateView {...listProps} />

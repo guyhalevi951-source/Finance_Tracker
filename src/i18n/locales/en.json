@@ -41,6 +41,17 @@
     "pageTitle": "Expenses",
     "viewByDate": "By Date",
     "viewByCategory": "By Category",
+    "time": {
+      "granularity": {
+        "monthly": "Monthly",
+        "weekly": "Weekly",
+        "daily": "Daily"
+      },
+      "prevMonth": "Previous month",
+      "nextMonth": "Next month",
+      "weekRange": "{{start}} – {{end}}",
+      "selectDay": "Day {{day}}"
+    },
     "detailsTitle": "Expense details",
     "notFound": "Expense not found",
     "paymentMethodLabel": "Payment method",

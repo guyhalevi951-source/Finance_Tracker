@@ -28,6 +28,21 @@ export function formatExpenseDateNumeric(iso: string, locale: AppLocale): string
   return date.toLocaleDateString(DATE_LOCALES[locale]);
 }
 
+/** Compact day + month label for week range chips (e.g. "1 Jul – 7 Jul"). */
+export function formatWeekRangeLabel(startIso: string, endIso: string, locale: AppLocale): string {
+  const start = new Date(`${startIso}T00:00:00`);
+  const end = new Date(`${endIso}T00:00:00`);
+  const opts: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'short' };
+  const startLabel = start.toLocaleDateString(DATE_LOCALES[locale], opts);
+  if (startIso === endIso) return startLabel;
+  const endLabel = end.toLocaleDateString(DATE_LOCALES[locale], opts);
+  return `${startLabel} – ${endLabel}`;
+}
+
+export function formatDayOfMonth(iso: string): number {
+  return new Date(`${iso}T00:00:00`).getDate();
+}
+
 export function formatCurrencyAmount(amount: number, locale: AppLocale): string {
   return `₪${formatNumber(amount, locale)}`;
 }

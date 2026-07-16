@@ -4,12 +4,9 @@ import { LayoutDashboard, Receipt, Wallet } from 'lucide-react';
 import { ROUTES } from '../config/routes';
 import { LanguageToggle } from '../features/i18n/components/LanguageToggle';
 import { ThemeToggle } from '../features/theme/components/ThemeToggle';
-import { formatDate } from '../lib/format/formatDate';
-import { type AppLocale } from '../config/app';
 
 export function AppShell() {
-  const { t, i18n } = useTranslation();
-  const locale = i18n.language as AppLocale;
+  const { t } = useTranslation();
 
   const navLinkClass = ({ isActive }: { isActive: boolean }) =>
     `flex flex-col md:flex-row items-center justify-center gap-1 md:gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-colors min-h-[44px] min-w-[44px] ${
@@ -65,9 +62,6 @@ export function AppShell() {
         </header>
 
         <main className="flex-1 max-w-5xl w-full mx-auto px-4 sm:px-6 py-6 md:py-8 pb-24 md:pb-8">
-          <p className="hidden md:block text-sm text-slate-400 dark:text-slate-500 mb-6">
-            {formatDate(new Date(), locale)}
-          </p>
           <Outlet />
         </main>
 

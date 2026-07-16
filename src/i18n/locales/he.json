@@ -41,6 +41,17 @@
     "pageTitle": "הוצאות",
     "viewByDate": "לפי תאריך",
     "viewByCategory": "לפי קטגוריות",
+    "time": {
+      "granularity": {
+        "monthly": "חודשי",
+        "weekly": "שבועי",
+        "daily": "יומי"
+      },
+      "prevMonth": "חודש קודם",
+      "nextMonth": "חודש הבא",
+      "weekRange": "{{start}} – {{end}}",
+      "selectDay": "יום {{day}}"
+    },
     "detailsTitle": "פרטי הוצאה",
     "notFound": "ההוצאה לא נמצאה",
     "paymentMethodLabel": "אמצעי תשלום",
