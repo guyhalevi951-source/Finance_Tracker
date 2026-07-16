@@ -15,6 +15,7 @@ interface ExpenseListItemProps {
   mode: ExpenseBatchMode;
   selected: boolean;
   showNestedDate?: boolean;
+  hideCategoryLabel?: boolean;
   onItemClick: () => void;
 }
 
@@ -25,6 +26,7 @@ export function ExpenseListItem({
   mode,
   selected,
   showNestedDate = false,
+  hideCategoryLabel = false,
   onItemClick,
 }: ExpenseListItemProps) {
   const { t } = useTranslation();
@@ -57,10 +59,18 @@ export function ExpenseListItem({
       )}
 
       <div className="flex-1 min-w-0">
-        <p className="font-medium text-slate-800 dark:text-slate-100 truncate">{categoryLabel}</p>
-        <p className="text-sm text-slate-500 dark:text-slate-400 truncate">
-          {resolveBilingualText(expense.description, locale)}
-        </p>
+        {hideCategoryLabel ? (
+          <p className="font-medium text-slate-800 dark:text-slate-100 truncate">
+            {resolveBilingualText(expense.description, locale)}
+          </p>
+        ) : (
+          <>
+            <p className="font-medium text-slate-800 dark:text-slate-100 truncate">{categoryLabel}</p>
+            <p className="text-sm text-slate-500 dark:text-slate-400 truncate">
+              {resolveBilingualText(expense.description, locale)}
+            </p>
+          </>
+        )}
         {showNestedDate && (
           <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
             {formatExpenseDateNumeric(expense.date, locale)}

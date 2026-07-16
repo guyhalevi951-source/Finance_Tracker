@@ -608,6 +608,25 @@ Run mentally before every PR-sized change:
 
 ---
 
-*Golden Cage version: 1.1 — i18n, branding, and dynamic translation added*
+## 15. Numeric Input Scroll Wheel
+
+Whenever creating or editing numeric input fields (e.g., `<input type="number">` or custom number input components), the AI must ALWAYS write code that disables the mouse scroll wheel from changing the input's value (e.g., by blurring the input on scroll or using an appropriate event preventer in React).
+
+### 15.1 SSOT owner
+
+| Responsibility | Owner |
+|---|---|
+| Scroll-wheel prevention handler for number inputs | `src/lib/input/preventNumberInputScroll.ts` |
+
+All `type="number"` inputs must use `onWheel={preventNumberInputScroll}` from this module — no inline duplicates, no global document listeners.
+
+### 15.2 Pre-Submit Additions for Numeric Inputs
+
+- [ ] Every `type="number"` input uses `preventNumberInputScroll` from `src/lib/input/preventNumberInputScroll.ts`.
+- [ ] No ad-hoc `onWheel` handlers for number inputs at call sites.
+
+---
+
+*Golden Cage version: 1.2 — numeric input scroll-wheel rule*
 *Discipline source: root-cause-first + ssot-enforcer — https://github.com/cohen-liel/agent-skills*
 *Section 7 is the living invariants section — additional rules will be appended as development proceeds.*

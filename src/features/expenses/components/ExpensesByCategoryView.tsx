@@ -94,6 +94,7 @@ export function ExpensesByCategoryView({
                     mode={mode}
                     selected={selectedIds.has(expense.id)}
                     showNestedDate
+                    hideCategoryLabel
                     onItemClick={() => onItemClick(expense)}
                   />
                 ))}

@@ -13,6 +13,7 @@ import { useExpenses } from '../features/expenses/hooks/useExpenses';
 import { useCategories } from '../features/categories/hooks/useCategories';
 import { useAuthSession } from '../features/auth/hooks/useAuthSession';
 import { formatNumber } from '../lib/format/formatDate';
+import { preventNumberInputScroll } from '../lib/input/preventNumberInputScroll';
 import { type AppLocale } from '../config/app';
 import { PAYMENT_METHOD_IDS } from '../domain/expenses/paymentMethods';
 
@@ -79,6 +80,7 @@ export function DashboardPage() {
               type="number"
               value={budgetInput}
               onChange={(e) => setBudgetInput(e.target.value)}
+              onWheel={preventNumberInputScroll}
               placeholder={
                 budget > 0
                   ? t('budget.amountPlaceholderWithCurrent', { amount: formatNumber(budget, locale) })
@@ -208,6 +210,7 @@ export function DashboardPage() {
               type="number"
               value={newExpense.amount}
               onChange={(e) => setNewExpense({ ...newExpense, amount: e.target.value })}
+              onWheel={preventNumberInputScroll}
               placeholder={t('expense.amountPlaceholder')}
               className="w-full px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 dark:focus:ring-emerald-800 outline-none transition-all"
               min="0"

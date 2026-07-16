@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { X } from 'lucide-react';
 import { type EditExpenseInput } from '../../../domain/expenses/validateExpense';
 import { PAYMENT_METHOD_IDS } from '../../../domain/expenses/paymentMethods';
+import { preventNumberInputScroll } from '../../../lib/input/preventNumberInputScroll';
 
 interface ExpenseEditModalProps {
   open: boolean;
@@ -72,6 +73,7 @@ export function ExpenseEditModal({
               type="number"
               value={input.amount}
               onChange={(e) => onChange({ ...input, amount: e.target.value })}
+              onWheel={preventNumberInputScroll}
               min="0"
               step="0.01"
               className="w-full px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100"
