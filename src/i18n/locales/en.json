@@ -132,7 +132,40 @@
     "dateConfirm": "Confirm",
     "dateCancel": "Cancel",
     "paymentMethodPickerTitle": "Select payment method",
-    "selectPaymentMethod": "Select payment method"
+    "selectPaymentMethod": "Select payment method",
+    "recurrence": {
+      "pickerTitle": "Recurring expense",
+      "selectRecurrence": "Select recurrence",
+      "never": "Never",
+      "daily": "Every day",
+      "weekly": "Every week",
+      "weekday": "Every weekday",
+      "weekend": "Every weekend day",
+      "monthly": "Every month",
+      "yearly": "Every year",
+      "custom": "Custom",
+      "everyDays": "Every {{count}} days",
+      "customWeekdays": "Custom days",
+      "customModeInterval": "Every N days",
+      "customModeWeekdays": "Specific days",
+      "intervalLabel": "Every",
+      "intervalSuffix": "days",
+      "weekdaySun": "Sun",
+      "weekdayMon": "Mon",
+      "weekdayTue": "Tue",
+      "weekdayWed": "Wed",
+      "weekdayThu": "Thu",
+      "weekdayFri": "Fri",
+      "weekdaySat": "Sat",
+      "confirm": "Confirm",
+      "cancel": "Cancel",
+      "back": "Back"
+    },
+    "validation": {
+      "RECURRENCE_INTERVAL_INVALID": "Recurrence interval must be at least 1",
+      "RECURRENCE_WEEKDAYS_EMPTY": "Select at least one day of the week",
+      "RECURRENCE_TYPE_INVALID": "Invalid recurrence type"
+    }
   },
   "category": {
     "food": "Food",

@@ -76,4 +76,32 @@ describe('migrateExpense', () => {
     });
     expect(migrated.paymentMethod).toBe('cash');
   });
+
+  it('preserves valid recurrenceRule and recurrenceSeriesId', () => {
+    const migrated = migrateExpense({
+      id: 'x',
+      description: { en: 'A', he: 'A' },
+      amount: 5,
+      category: 'food.groceries',
+      date: '2026-01-01',
+      paymentMethod: 'cash',
+      recurrenceRule: { type: 'weekly', interval: 1, customDays: [] },
+      recurrenceSeriesId: 'template-1',
+    });
+    expect(migrated.recurrenceRule).toEqual({ type: 'weekly', interval: 1, customDays: [] });
+    expect(migrated.recurrenceSeriesId).toBe('template-1');
+  });
+
+  it('strips invalid recurrenceRule', () => {
+    const migrated = migrateExpense({
+      id: 'x',
+      description: { en: 'A', he: 'A' },
+      amount: 5,
+      category: 'food.groceries',
+      date: '2026-01-01',
+      paymentMethod: 'cash',
+      recurrenceRule: { type: 'weekly', interval: 0 },
+    });
+    expect(migrated.recurrenceRule).toBeUndefined();
+  });
 });

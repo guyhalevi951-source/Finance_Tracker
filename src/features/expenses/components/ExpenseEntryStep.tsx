@@ -6,9 +6,17 @@ import { toIsoDate } from '../../../domain/expenses/parseExpenseDate';
 import { formatExpenseDateNumeric } from '../../../lib/format/formatDate';
 import { type AppLocale } from '../../../config/app';
 import { type PaymentMethodId } from '../../../types/paymentMethod';
+import {
+  type RecurrenceSelection,
+} from '../../../types/recurrenceRule';
+import {
+  isRecurrenceActive,
+  resolveRecurrenceLabelDescriptor,
+} from '../../../domain/recurrence/resolveRecurrenceLabelKey';
 import { ExpenseNumpad, formatNumpadDisplay } from './ExpenseNumpad';
 import { ExpenseDatePickerModal } from './ExpenseDatePickerModal';
 import { ExpensePaymentMethodPickerModal } from './ExpensePaymentMethodPickerModal';
+import { ExpenseRecurrencePickerModal } from './ExpenseRecurrencePickerModal';
 
 interface ExpenseEntryStepProps {
   locale: AppLocale;
@@ -21,6 +29,8 @@ interface ExpenseEntryStepProps {
   onDateChange: (value: string) => void;
   paymentMethod: PaymentMethodId;
   onPaymentMethodChange: (value: PaymentMethodId) => void;
+  recurrenceSelection: RecurrenceSelection;
+  onRecurrenceSelectionChange: (value: RecurrenceSelection) => void;
   attachmentFile: File | null;
   onAttachmentChange: (file: File | null) => void;
   isSaving: boolean;
@@ -40,6 +50,8 @@ export function ExpenseEntryStep({
   onDateChange,
   paymentMethod,
   onPaymentMethodChange,
+  recurrenceSelection,
+  onRecurrenceSelectionChange,
   attachmentFile,
   onAttachmentChange,
   isSaving,
@@ -51,10 +63,14 @@ export function ExpenseEntryStep({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [dateModalOpen, setDateModalOpen] = useState(false);
   const [paymentMethodModalOpen, setPaymentMethodModalOpen] = useState(false);
+  const [recurrenceModalOpen, setRecurrenceModalOpen] = useState(false);
 
   const todayIso = toIsoDate(new Date());
   const dateLabel = date === todayIso ? t('addExpense.today') : formatExpenseDateNumeric(date, locale);
   const paymentMethodLabel = t(`expense.paymentMethod.${paymentMethod}`);
+  const recurrenceDescriptor = resolveRecurrenceLabelDescriptor(recurrenceSelection);
+  const recurrenceLabel = t(recurrenceDescriptor.key, recurrenceDescriptor.params);
+  const recurrenceActive = isRecurrenceActive(recurrenceSelection);
 
   return (
     <div className="flex flex-col h-full">
@@ -124,6 +140,9 @@ export function ExpenseEntryStep({
             paymentMethodId={paymentMethod}
             paymentMethodLabel={paymentMethodLabel}
             onPaymentMethodClick={() => setPaymentMethodModalOpen(true)}
+            recurrenceLabel={recurrenceLabel}
+            recurrenceActive={recurrenceActive}
+            onRecurrenceClick={() => setRecurrenceModalOpen(true)}
             onSubmit={onSubmit}
             isSaving={isSaving}
           />
@@ -145,6 +164,13 @@ export function ExpenseEntryStep({
         value={paymentMethod}
         onSelect={onPaymentMethodChange}
         onClose={() => setPaymentMethodModalOpen(false)}
+      />
+
+      <ExpenseRecurrencePickerModal
+        open={recurrenceModalOpen}
+        value={recurrenceSelection}
+        onSelect={onRecurrenceSelectionChange}
+        onClose={() => setRecurrenceModalOpen(false)}
       />
     </div>
   );

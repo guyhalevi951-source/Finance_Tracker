@@ -16,6 +16,8 @@ import {
   isPaymentMethodId,
 } from '../../domain/expenses/paymentMethods';
 import { parseExpenseDateToIso } from '../../domain/expenses/parseExpenseDate';
+import { validateRecurrenceRule } from '../../domain/recurrence/validateRecurrenceRule';
+import { RECURRENCE_TYPES, type RecurrenceRule } from '../../types/recurrenceRule';
 import { db } from '../firebase';
 
 const GUEST_EXPENSES_KEY = 'expenses';
@@ -41,6 +43,29 @@ function isValidRawExpense(value: unknown): value is Record<string, unknown> {
   );
 }
 
+function parseRecurrenceRule(raw: unknown): RecurrenceRule | undefined {
+  if (typeof raw !== 'object' || raw === null) return undefined;
+  const obj = raw as Record<string, unknown>;
+  const type = obj.type;
+  const interval = obj.interval;
+
+  if (typeof type !== 'string' || !RECURRENCE_TYPES.includes(type as RecurrenceRule['type'])) {
+    return undefined;
+  }
+  if (typeof interval !== 'number' || !Number.isInteger(interval)) {
+    return undefined;
+  }
+
+  const rule: RecurrenceRule = { type: type as RecurrenceRule['type'], interval };
+
+  if (Array.isArray(obj.customDays)) {
+    rule.customDays = obj.customDays.filter((d): d is number => typeof d === 'number');
+  }
+
+  if (validateRecurrenceRule(rule) !== null) return undefined;
+  return rule;
+}
+
 export function migrateExpense(raw: Record<string, unknown>): Expense {
   const description =
     typeof raw.description === 'string'
@@ -48,6 +73,9 @@ export function migrateExpense(raw: Record<string, unknown>): Expense {
       : (raw.description as Expense['description']);
 
   const rawPaymentMethod = typeof raw.paymentMethod === 'string' ? raw.paymentMethod : DEFAULT_PAYMENT_METHOD;
+  const recurrenceRule = parseRecurrenceRule(raw.recurrenceRule);
+  const recurrenceSeriesId =
+    typeof raw.recurrenceSeriesId === 'string' ? raw.recurrenceSeriesId : undefined;
 
   return {
     id: raw.id as string,
@@ -57,6 +85,8 @@ export function migrateExpense(raw: Record<string, unknown>): Expense {
     date: parseExpenseDateToIso(raw.date as string),
     paymentMethod: isPaymentMethodId(rawPaymentMethod) ? rawPaymentMethod : DEFAULT_PAYMENT_METHOD,
     ...(typeof raw.attachmentUrl === 'string' ? { attachmentUrl: raw.attachmentUrl } : {}),
+    ...(recurrenceRule ? { recurrenceRule } : {}),
+    ...(recurrenceSeriesId ? { recurrenceSeriesId } : {}),
   };
 }
 

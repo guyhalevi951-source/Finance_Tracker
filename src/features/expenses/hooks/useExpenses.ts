@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { type Expense } from '../../../types/expense';
 import { loadExpenses, saveExpense } from '../../../services/expenses/expenseRepository';
+import { syncRecurringExpenses } from '../../../services/recurrence/recurringExpenseSyncService';
+import { useTodayIso } from '../../../lib/hooks/useTodayIso';
 
 export interface UseExpensesReturn {
   expenses: Expense[];
@@ -12,17 +14,19 @@ export interface UseExpensesReturn {
 export function useExpenses(userId: string | null): UseExpensesReturn {
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [loadError, setLoadError] = useState(false);
+  const todayIso = useTodayIso();
 
   const reload = useCallback(async () => {
     try {
       const loaded = await loadExpenses(userId);
-      setExpenses(loaded);
+      const { expenses: synced } = await syncRecurringExpenses(userId, loaded, todayIso);
+      setExpenses(synced);
       setLoadError(false);
     } catch {
       setLoadError(true);
       setExpenses([]);
     }
-  }, [userId]);
+  }, [userId, todayIso]);
 
   useEffect(() => {
     void reload();

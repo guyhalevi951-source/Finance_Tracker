@@ -131,6 +131,8 @@ export function ExpensesPage() {
         onDateChange={addFlow.setDate}
         paymentMethod={addFlow.paymentMethod}
         onPaymentMethodChange={addFlow.setPaymentMethod}
+        recurrenceSelection={addFlow.recurrenceSelection}
+        onRecurrenceSelectionChange={addFlow.setRecurrenceSelection}
         attachmentFile={addFlow.attachmentFile}
         onAttachmentChange={addFlow.setAttachmentFile}
         isSaving={addFlow.isSaving}

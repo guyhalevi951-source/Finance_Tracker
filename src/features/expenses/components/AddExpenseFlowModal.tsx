@@ -1,5 +1,6 @@
 import { type AppLocale } from '../../../config/app';
 import { type PaymentMethodId } from '../../../types/paymentMethod';
+import { type RecurrenceSelection } from '../../../types/recurrenceRule';
 import { type AddExpenseStep } from '../hooks/useAddExpenseFlow';
 import { CategorySelectionStep } from './CategorySelectionStep';
 import { ExpenseEntryStep } from './ExpenseEntryStep';
@@ -17,6 +18,8 @@ interface AddExpenseFlowModalProps {
   onDateChange: (value: string) => void;
   paymentMethod: PaymentMethodId;
   onPaymentMethodChange: (value: PaymentMethodId) => void;
+  recurrenceSelection: RecurrenceSelection;
+  onRecurrenceSelectionChange: (value: RecurrenceSelection) => void;
   attachmentFile: File | null;
   onAttachmentChange: (file: File | null) => void;
   isSaving: boolean;
@@ -40,6 +43,8 @@ export function AddExpenseFlowModal({
   onDateChange,
   paymentMethod,
   onPaymentMethodChange,
+  recurrenceSelection,
+  onRecurrenceSelectionChange,
   attachmentFile,
   onAttachmentChange,
   isSaving,
@@ -68,6 +73,8 @@ export function AddExpenseFlowModal({
           onDateChange={onDateChange}
           paymentMethod={paymentMethod}
           onPaymentMethodChange={onPaymentMethodChange}
+          recurrenceSelection={recurrenceSelection}
+          onRecurrenceSelectionChange={onRecurrenceSelectionChange}
           attachmentFile={attachmentFile}
           onAttachmentChange={onAttachmentChange}
           isSaving={isSaving}

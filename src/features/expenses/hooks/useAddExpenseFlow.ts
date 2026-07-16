@@ -7,6 +7,12 @@ import {
   DEFAULT_PAYMENT_METHOD,
   type PaymentMethodId,
 } from '../../../domain/expenses/paymentMethods';
+import {
+  DEFAULT_RECURRENCE_SELECTION,
+  type RecurrenceSelection,
+} from '../../../types/recurrenceRule';
+import { selectionToRule } from '../../../domain/recurrence/presets';
+import { validateRecurrenceSelection } from '../../../domain/recurrence/validateRecurrenceRule';
 import { toIsoDate } from '../../../domain/expenses/parseExpenseDate';
 import { createBilingualText } from '../../../services/translation/createBilingualText';
 import { uploadExpenseAttachment } from '../../../services/attachments/expenseAttachmentService';
@@ -28,6 +34,9 @@ export function useAddExpenseFlow({ userId, createExpense }: UseAddExpenseFlowOp
   const [note, setNote] = useState('');
   const [date, setDate] = useState(() => toIsoDate(new Date()));
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethodId>(DEFAULT_PAYMENT_METHOD);
+  const [recurrenceSelection, setRecurrenceSelection] = useState<RecurrenceSelection>(
+    DEFAULT_RECURRENCE_SELECTION,
+  );
   const [attachmentFile, setAttachmentFile] = useState<File | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [errorKey, setErrorKey] = useState<string | null>(null);
@@ -39,6 +48,7 @@ export function useAddExpenseFlow({ userId, createExpense }: UseAddExpenseFlowOp
     setNote('');
     setDate(toIsoDate(new Date()));
     setPaymentMethod(DEFAULT_PAYMENT_METHOD);
+    setRecurrenceSelection(DEFAULT_RECURRENCE_SELECTION);
     setAttachmentFile(null);
     setIsSaving(false);
     setErrorKey(null);
@@ -84,6 +94,14 @@ export function useAddExpenseFlow({ userId, createExpense }: UseAddExpenseFlowOp
       return;
     }
 
+    const recurrenceError = validateRecurrenceSelection(recurrenceSelection);
+    if (recurrenceError) {
+      setErrorKey(`addExpense.validation.${recurrenceError}`);
+      return;
+    }
+
+    const recurrenceRule = selectionToRule(recurrenceSelection);
+
     setIsSaving(true);
     setErrorKey(null);
 
@@ -114,6 +132,7 @@ export function useAddExpenseFlow({ userId, createExpense }: UseAddExpenseFlowOp
         date: result.value.date,
         paymentMethod: result.value.paymentMethod as Expense['paymentMethod'],
         ...(attachmentUrl ? { attachmentUrl } : {}),
+        ...(recurrenceRule ? { recurrenceRule } : {}),
       };
 
       await createExpense(expense);
@@ -129,6 +148,7 @@ export function useAddExpenseFlow({ userId, createExpense }: UseAddExpenseFlowOp
     amountDigits,
     date,
     paymentMethod,
+    recurrenceSelection,
     attachmentFile,
     i18n.language,
     userId,
@@ -148,6 +168,8 @@ export function useAddExpenseFlow({ userId, createExpense }: UseAddExpenseFlowOp
     setDate,
     paymentMethod,
     setPaymentMethod,
+    recurrenceSelection,
+    setRecurrenceSelection,
     attachmentFile,
     setAttachmentFile,
     isSaving,

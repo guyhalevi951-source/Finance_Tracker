@@ -132,7 +132,40 @@
     "dateConfirm": "אישור",
     "dateCancel": "ביטול",
     "paymentMethodPickerTitle": "בחר אמצעי תשלום",
-    "selectPaymentMethod": "בחר אמצעי תשלום"
+    "selectPaymentMethod": "בחר אמצעי תשלום",
+    "recurrence": {
+      "pickerTitle": "הוצאה חוזרת",
+      "selectRecurrence": "בחר תדירות",
+      "never": "אף פעם",
+      "daily": "כל יום",
+      "weekly": "כל שבוע",
+      "weekday": "כל יום חול",
+      "weekend": "כל יום סופ״ש",
+      "monthly": "כל חודש",
+      "yearly": "כל שנה",
+      "custom": "התאמה אישית",
+      "everyDays": "כל {{count}} ימים",
+      "customWeekdays": "ימים מותאמים",
+      "customModeInterval": "כל N ימים",
+      "customModeWeekdays": "ימים ספציפיים",
+      "intervalLabel": "כל",
+      "intervalSuffix": "ימים",
+      "weekdaySun": "א׳",
+      "weekdayMon": "ב׳",
+      "weekdayTue": "ג׳",
+      "weekdayWed": "ד׳",
+      "weekdayThu": "ה׳",
+      "weekdayFri": "ו׳",
+      "weekdaySat": "ש׳",
+      "confirm": "אישור",
+      "cancel": "ביטול",
+      "back": "חזרה"
+    },
+    "validation": {
+      "RECURRENCE_INTERVAL_INVALID": "מרווח החזרה חייב להיות לפחות 1",
+      "RECURRENCE_WEEKDAYS_EMPTY": "יש לבחור לפחות יום אחד בשבוע",
+      "RECURRENCE_TYPE_INVALID": "סוג חזרה לא תקין"
+    }
   },
   "category": {
     "food": "אוכל",

@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { Calendar, Check, Delete } from 'lucide-react';
+import { Calendar, Check, Clock, Delete } from 'lucide-react';
 import { type PaymentMethodId } from '../../../types/paymentMethod';
 import {
   appendNumpadDigit,
@@ -17,6 +17,9 @@ interface ExpenseNumpadProps {
   paymentMethodId: PaymentMethodId;
   paymentMethodLabel: string;
   onPaymentMethodClick: () => void;
+  recurrenceLabel: string;
+  recurrenceActive: boolean;
+  onRecurrenceClick: () => void;
   onSubmit: () => void;
   isSaving: boolean;
 }
@@ -29,6 +32,9 @@ export function ExpenseNumpad({
   paymentMethodId,
   paymentMethodLabel,
   onPaymentMethodClick,
+  recurrenceLabel,
+  recurrenceActive,
+  onRecurrenceClick,
   onSubmit,
   isSaving,
 }: ExpenseNumpadProps) {
@@ -47,7 +53,9 @@ export function ExpenseNumpad({
     'min-h-[56px] rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-100 text-xl font-medium hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors active:scale-95';
 
   const sideActionBtn =
-    'rounded-xl bg-slate-100 dark:bg-slate-800 text-amber-500 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors flex flex-col items-center justify-center gap-0.5 px-1 active:scale-95';
+    'min-h-[56px] rounded-xl bg-slate-100 dark:bg-slate-800 text-amber-500 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors flex flex-col items-center justify-center gap-0.5 px-1 active:scale-95';
+
+  const recurrenceColor = recurrenceActive ? 'text-emerald-500' : 'text-rose-500';
 
   return (
     <div className="grid grid-cols-4 gap-2">
@@ -59,7 +67,7 @@ export function ExpenseNumpad({
       <button
         type="button"
         onClick={onDateClick}
-        className={`min-h-[56px] ${sideActionBtn}`}
+        className={sideActionBtn}
       >
         <Calendar className="w-5 h-5" />
         <span className="text-[10px] font-medium leading-tight text-center">{dateLabel}</span>
@@ -74,7 +82,7 @@ export function ExpenseNumpad({
         type="button"
         onClick={onPaymentMethodClick}
         aria-label={t('addExpense.selectPaymentMethod')}
-        className={`row-span-2 min-h-0 ${sideActionBtn}`}
+        className={sideActionBtn}
       >
         <PaymentMethodIcon methodId={paymentMethodId} className="w-5 h-5" />
         <span className="text-[10px] font-medium leading-tight text-center line-clamp-2">
@@ -87,6 +95,17 @@ export function ExpenseNumpad({
           {d}
         </button>
       ))}
+      <button
+        type="button"
+        onClick={onRecurrenceClick}
+        aria-label={t('addExpense.recurrence.selectRecurrence')}
+        className={`${sideActionBtn} ${recurrenceColor}`}
+      >
+        <Clock className="w-5 h-5" />
+        <span className="text-[10px] font-medium leading-tight text-center line-clamp-2">
+          {recurrenceLabel}
+        </span>
+      </button>
 
       <button type="button" className={digitBtn} onClick={() => handleKey('.')}>
         .
