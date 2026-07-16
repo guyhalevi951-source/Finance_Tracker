@@ -1,4 +1,5 @@
 import { type Expense } from '../../types/expense';
+import { getParentCategoryId } from '../categories/hierarchy';
 import { sumAmounts } from '../money/arithmetic';
 import { isoDateToDate } from './parseExpenseDate';
 
@@ -12,11 +13,12 @@ export function groupExpensesByCategory(expenses: Expense[]): ExpenseCategoryGro
   const map = new Map<string, Expense[]>();
 
   for (const expense of expenses) {
-    const existing = map.get(expense.category);
+    const parentId = getParentCategoryId(expense.category);
+    const existing = map.get(parentId);
     if (existing) {
       existing.push(expense);
     } else {
-      map.set(expense.category, [expense]);
+      map.set(parentId, [expense]);
     }
   }
 

@@ -3,11 +3,8 @@ import {
   Wallet,
   TrendingDown,
   AlertTriangle,
-  Plus,
   Check,
 } from 'lucide-react';
-import { BUILTIN_CATEGORY_IDS } from '../domain/categories/constants';
-import { resolveBilingualText } from '../domain/i18n/resolveBilingualText';
 import { useBudgetTracker } from '../features/budget/hooks/useBudgetTracker';
 import { useExpenses } from '../features/expenses/hooks/useExpenses';
 import { useCategories } from '../features/categories/hooks/useCategories';
@@ -15,27 +12,18 @@ import { useAuthSession } from '../features/auth/hooks/useAuthSession';
 import { formatNumber } from '../lib/format/formatDate';
 import { preventNumberInputScroll } from '../lib/input/preventNumberInputScroll';
 import { type AppLocale } from '../config/app';
-import { PAYMENT_METHOD_IDS } from '../domain/expenses/paymentMethods';
 
 export function DashboardPage() {
   const { t, i18n } = useTranslation();
   const locale = i18n.language as AppLocale;
 
   const { userId } = useAuthSession();
-  const { expenses, newExpense, setNewExpense, isAddingExpense, addExpenseError, addExpense, clearAddExpenseError, loadError: expensesLoadError } = useExpenses(userId);
+  const { expenses, loadError: expensesLoadError } = useExpenses(userId);
   const { budget, budgetInput, summary, showBudgetSaved, loadError: budgetLoadError, setBudgetInput, handleSetBudget } = useBudgetTracker(expenses);
-  const { customCategories, loadCategoryError, clearLoadCategoryError } = useCategories(userId);
+  const { loadCategoryError, clearLoadCategoryError } = useCategories(userId);
 
   const { totalExpenses, budgetPercentage, isOverBudget, remaining } = summary;
   const loadError = budgetLoadError || expensesLoadError;
-
-  const allCategoryOptions = [
-    ...BUILTIN_CATEGORY_IDS.map((id) => ({ id, label: t(`category.${id}`) })),
-    ...customCategories.map((c) => ({
-      id: c.id,
-      label: resolveBilingualText(c.labels, locale),
-    })),
-  ];
 
   return (
     <div>
@@ -51,18 +39,6 @@ export function DashboardPage() {
           <button
             onClick={clearLoadCategoryError}
             className="ms-4 text-amber-600 dark:text-amber-400 hover:text-amber-800 dark:hover:text-amber-200 font-semibold text-xs min-h-[44px] min-w-[44px]"
-          >
-            ✕
-          </button>
-        </div>
-      )}
-
-      {addExpenseError && (
-        <div className="bg-rose-50 dark:bg-rose-900/30 border border-rose-200 dark:border-rose-700 text-rose-800 dark:text-rose-300 rounded-xl px-4 py-3 mb-6 text-sm flex justify-between items-center">
-          <span>{t('expense.translationError')}</span>
-          <button
-            onClick={clearAddExpenseError}
-            className="ms-4 text-rose-600 dark:text-rose-400 hover:text-rose-800 dark:hover:text-rose-200 font-semibold text-xs min-h-[44px] min-w-[44px]"
           >
             ✕
           </button>
@@ -179,109 +155,6 @@ export function DashboardPage() {
             </div>
           </div>
         </div>
-      </div>
-
-      <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 p-6 transition-colors duration-200">
-        <h2 className="text-lg font-semibold text-slate-700 dark:text-slate-200 mb-6 flex items-center gap-2">
-          <Plus className="w-5 h-5 text-emerald-500" />
-          {t('expense.formTitle')}
-        </h2>
-
-        <form onSubmit={(e) => void addExpense(e)} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-2">
-              {t('expense.descriptionLabel')}
-            </label>
-            <input
-              type="text"
-              value={newExpense.description}
-              onChange={(e) => setNewExpense({ ...newExpense, description: e.target.value })}
-              placeholder={t('expense.descriptionPlaceholder')}
-              className="w-full px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 dark:focus:ring-emerald-800 outline-none transition-all"
-              required
-              disabled={isAddingExpense}
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-2">
-              {t('expense.amountLabel')}
-            </label>
-            <input
-              type="number"
-              value={newExpense.amount}
-              onChange={(e) => setNewExpense({ ...newExpense, amount: e.target.value })}
-              onWheel={preventNumberInputScroll}
-              placeholder={t('expense.amountPlaceholder')}
-              className="w-full px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 dark:focus:ring-emerald-800 outline-none transition-all"
-              min="0"
-              step="0.01"
-              required
-              disabled={isAddingExpense}
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-2">
-              {t('expense.categoryLabel')}
-            </label>
-            <select
-              value={newExpense.category}
-              onChange={(e) => setNewExpense({ ...newExpense, category: e.target.value })}
-              className="w-full px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 dark:focus:ring-emerald-800 outline-none transition-all"
-              disabled={isAddingExpense}
-            >
-              {allCategoryOptions.map(({ id, label }) => (
-                <option key={id} value={id}>{label}</option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-2">
-              {t('expense.paymentMethodLabel')}
-            </label>
-            <select
-              value={newExpense.paymentMethod}
-              onChange={(e) => setNewExpense({ ...newExpense, paymentMethod: e.target.value })}
-              className="w-full px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 dark:focus:ring-emerald-800 outline-none transition-all"
-              disabled={isAddingExpense}
-            >
-              {PAYMENT_METHOD_IDS.map((id) => (
-                <option key={id} value={id}>{t(`expense.paymentMethod.${id}`)}</option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-2">
-              {t('expense.dateLabel')}
-            </label>
-            <input
-              type="date"
-              value={newExpense.date}
-              onChange={(e) => setNewExpense({ ...newExpense, date: e.target.value })}
-              className="w-full px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 dark:focus:ring-emerald-800 outline-none transition-all"
-              required
-              disabled={isAddingExpense}
-            />
-          </div>
-          <div className="flex items-end">
-            <button
-              type="submit"
-              disabled={isAddingExpense}
-              className="w-full bg-gradient-to-r from-emerald-500 to-teal-600 text-white px-6 py-3 rounded-xl font-medium hover:from-emerald-600 hover:to-teal-700 transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed min-h-[48px]"
-            >
-              {isAddingExpense ? (
-                <>
-                  <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  {t('expense.addingButton')}
-                </>
-              ) : (
-                <>
-                  <Plus className="w-5 h-5" />
-                  {t('expense.addButton')}
-                </>
-              )}
-            </button>
-          </div>
-        </form>
       </div>
     </div>
   );

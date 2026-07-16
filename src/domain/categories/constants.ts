@@ -1,3 +1,5 @@
+import { migrateToSubCategoryId } from './hierarchy';
+
 /**
  * SSOT for category IDs used in domain logic and persistence.
  * Display labels for built-in categories live in i18n locale files under `category.*`.
@@ -13,7 +15,7 @@ export const BUILTIN_CATEGORY_IDS = [
 
 export type BuiltinCategoryId = (typeof BUILTIN_CATEGORY_IDS)[number];
 
-export const DEFAULT_CATEGORY_ID: BuiltinCategoryId = 'food';
+export { DEFAULT_SUB_CATEGORY_ID as DEFAULT_CATEGORY_ID } from './hierarchy';
 
 /**
  * Maps legacy Hebrew category strings (stored in old localStorage data) to stable IDs.
@@ -27,7 +29,7 @@ export const LEGACY_CATEGORY_MIGRATION: Record<string, BuiltinCategoryId> = {
   'אחר': 'other',
 };
 
-/** Returns the stable ID for a raw category value, migrating legacy Hebrew strings if needed. */
+/** Returns the stable sub-category ID for a raw category value, migrating legacy data if needed. */
 export function migrateCategoryId(raw: string): string {
-  return LEGACY_CATEGORY_MIGRATION[raw] ?? raw;
+  return migrateToSubCategoryId(raw, LEGACY_CATEGORY_MIGRATION);
 }

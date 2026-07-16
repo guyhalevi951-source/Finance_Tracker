@@ -2,7 +2,8 @@ import { useTranslation } from 'react-i18next';
 import { type Expense } from '../../../types/expense';
 import { type ExpenseBatchMode } from '../hooks/useExpenseBatchMode';
 import { resolveBilingualText } from '../../../domain/i18n/resolveBilingualText';
-import { isBuiltinCategoryId, resolveCustomCategoryLabel } from '../../../domain/categories/resolveCategoryLabel';
+import { isBuiltinSubCategoryId } from '../../../domain/categories/hierarchy';
+import { getBuiltinCategoryI18nKey, resolveCustomCategoryLabel } from '../../../domain/categories/resolveCategoryLabel';
 import { type CustomCategory } from '../../../types/category';
 import { type AppLocale } from '../../../config/app';
 import { formatCurrencyAmount, formatExpenseDateNumeric } from '../../../lib/format/formatDate';
@@ -31,9 +32,9 @@ export function ExpenseListItem({
 }: ExpenseListItemProps) {
   const { t } = useTranslation();
   const { icon: Icon, color } = getCategoryUI(expense.category);
-  const categoryLabel = isBuiltinCategoryId(expense.category)
-    ? t(`category.${expense.category}`)
-    : (resolveCustomCategoryLabel(expense.category, customCategories, locale) ?? t('category.other'));
+  const categoryLabel = isBuiltinSubCategoryId(expense.category)
+    ? t(getBuiltinCategoryI18nKey(expense.category))
+    : (resolveCustomCategoryLabel(expense.category, customCategories, locale) ?? t('category.sub.other.miscellaneous'));
 
   return (
     <button

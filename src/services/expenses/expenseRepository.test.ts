@@ -18,7 +18,7 @@ const sampleExpense: Expense = {
   id: '1',
   description: { en: 'Test', he: 'Test' },
   amount: 10.5,
-  category: 'food',
+  category: 'food.groceries',
   date: '2026-07-14',
   paymentMethod: 'cash',
 };
@@ -38,7 +38,7 @@ describe('loadExpenses guest', () => {
     );
     const result = await loadExpenses(null);
     expect(result[0].description).toEqual({ en: 'סופר', he: 'סופר' });
-    expect(result[0].category).toBe('food');
+    expect(result[0].category).toBe('food.groceries');
     expect(result[0].paymentMethod).toBe('cash');
     expect(result[0].date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
   });

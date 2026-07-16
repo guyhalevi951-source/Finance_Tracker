@@ -6,11 +6,13 @@ import {
   CreditCard,
   FileText,
   Folder,
+  ImageIcon,
 } from 'lucide-react';
 import { type Expense } from '../../../types/expense';
 import { type CustomCategory } from '../../../types/category';
 import { resolveBilingualText } from '../../../domain/i18n/resolveBilingualText';
-import { isBuiltinCategoryId, resolveCustomCategoryLabel } from '../../../domain/categories/resolveCategoryLabel';
+import { isBuiltinSubCategoryId } from '../../../domain/categories/hierarchy';
+import { getBuiltinCategoryI18nKey, resolveCustomCategoryLabel } from '../../../domain/categories/resolveCategoryLabel';
 import { ROUTES } from '../../../config/routes';
 import { type AppLocale } from '../../../config/app';
 import { formatCurrencyAmount, formatExpenseDateLong } from '../../../lib/format/formatDate';
@@ -25,9 +27,9 @@ export function ExpenseDetailsView({ expense, locale, customCategories }: Expens
   const { t } = useTranslation();
   const navigate = useNavigate();
 
-  const categoryLabel = isBuiltinCategoryId(expense.category)
-    ? t(`category.${expense.category}`)
-    : (resolveCustomCategoryLabel(expense.category, customCategories, locale) ?? t('category.other'));
+  const categoryLabel = isBuiltinSubCategoryId(expense.category)
+    ? t(getBuiltinCategoryI18nKey(expense.category))
+    : (resolveCustomCategoryLabel(expense.category, customCategories, locale) ?? t('category.sub.other.miscellaneous'));
 
   const rows = [
     { icon: Folder, label: t('expense.details.category'), value: categoryLabel },
@@ -47,6 +49,14 @@ export function ExpenseDetailsView({ expense, locale, customCategories }: Expens
       value: formatExpenseDateLong(expense.date, locale),
     },
   ];
+
+  if (expense.attachmentUrl) {
+    rows.push({
+      icon: ImageIcon,
+      label: t('expense.details.attachment'),
+      value: '',
+    });
+  }
 
   return (
     <div>
@@ -73,11 +83,19 @@ export function ExpenseDetailsView({ expense, locale, customCategories }: Expens
             <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-700 flex items-center justify-center flex-shrink-0">
               <Icon className="w-5 h-5 text-slate-600 dark:text-slate-300" />
             </div>
-            <div className="min-w-0">
+            <div className="min-w-0 flex-1">
               <p className="text-sm text-slate-500 dark:text-slate-400">{label}</p>
-              <p className="text-base font-medium text-slate-800 dark:text-slate-100 mt-1 break-words">
-                {value}
-              </p>
+              {expense.attachmentUrl && label === t('expense.details.attachment') ? (
+                <img
+                  src={expense.attachmentUrl}
+                  alt={t('expense.details.attachment')}
+                  className="mt-2 max-h-48 rounded-xl border border-slate-200 dark:border-slate-600 object-contain"
+                />
+              ) : (
+                <p className="text-base font-medium text-slate-800 dark:text-slate-100 mt-1 break-words">
+                  {value}
+                </p>
+              )}
             </div>
           </div>
         ))}

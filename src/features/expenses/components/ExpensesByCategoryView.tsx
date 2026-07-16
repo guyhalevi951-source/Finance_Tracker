@@ -6,7 +6,8 @@ import { type ExpenseBatchMode } from '../hooks/useExpenseBatchMode';
 import { type CustomCategory } from '../../../types/category';
 import { type AppLocale } from '../../../config/app';
 import { groupExpensesByCategory } from '../../../domain/expenses/groupByCategory';
-import { isBuiltinCategoryId, resolveCustomCategoryLabel } from '../../../domain/categories/resolveCategoryLabel';
+import { isBuiltinParentCategoryId } from '../../../domain/categories/hierarchy';
+import { getBuiltinParentI18nKey } from '../../../domain/categories/resolveCategoryLabel';
 import { formatCurrencyAmount } from '../../../lib/format/formatDate';
 import { getCategoryUI } from '../categoryUi';
 import { ExpenseListItem } from './ExpenseListItem';
@@ -54,9 +55,9 @@ export function ExpensesByCategoryView({
     <div className="space-y-3">
       {groups.map((group) => {
         const { icon: Icon, color } = getCategoryUI(group.categoryId);
-        const categoryLabel = isBuiltinCategoryId(group.categoryId)
-          ? t(`category.${group.categoryId}`)
-          : (resolveCustomCategoryLabel(group.categoryId, customCategories, locale) ?? t('category.other'));
+        const categoryLabel = isBuiltinParentCategoryId(group.categoryId)
+          ? t(getBuiltinParentI18nKey(group.categoryId))
+          : t('category.parent.other');
         const isOpen = expanded.has(group.categoryId);
 
         return (

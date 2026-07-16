@@ -71,7 +71,8 @@
       "category": "קטגוריה",
       "description": "תיאור",
       "paymentMethod": "אמצעי תשלום",
-      "date": "תאריך"
+      "date": "תאריך",
+      "attachment": "קבלה"
     },
     "validation": {
       "DESCRIPTION_EMPTY": "יש להזין תיאור",
@@ -104,12 +105,92 @@
     },
     "translationError": "לא ניתן לתרגם את התיאור. נסה שוב."
   },
+  "addExpense": {
+    "title": "הוסף",
+    "fab": "הוסף הוצאה",
+    "cancel": "ביטול",
+    "back": "חזרה",
+    "noteLabel": "הערה",
+    "notePlaceholder": "על מה ההוצאה?",
+    "today": "היום",
+    "submit": "שמור הוצאה",
+    "backspace": "מחק ספרה",
+    "attachImage": "צרף תמונת קבלה",
+    "attachmentError": "לא ניתן לצרף תמונה. נסה שוב.",
+    "attachmentTooLarge": "התמונה גדולה מדי. גודל מקסימלי 500 KB.",
+    "datePickerTitle": "בחר תאריך",
+    "dateConfirm": "אישור",
+    "dateCancel": "ביטול"
+  },
   "category": {
     "food": "אוכל",
     "health": "בריאות",
     "entertainment": "בילויים",
     "rent": "שכר דירה",
     "other": "אחר",
+    "parent": {
+      "food": "אוכל ומסעדות",
+      "transport": "תחבורה",
+      "housing": "דיור ובית",
+      "health": "בריאות ויופי",
+      "shopping": "קניות",
+      "entertainment": "בילויים",
+      "lifestyle": "אורח חיים וחברה",
+      "other": "אחר"
+    },
+    "sub": {
+      "food": {
+        "groceries": "מכולת",
+        "restaurants": "מסעדות",
+        "delivery": "משלוחים",
+        "snacks": "חטיפים",
+        "alcohol": "אלכוהול"
+      },
+      "transport": {
+        "publicTransit": "תחבורה ציבורית",
+        "car": "רכב",
+        "fuel": "דלק",
+        "taxi": "מונית"
+      },
+      "housing": {
+        "rent": "שכר דירה",
+        "utilities": "חשבונות",
+        "maintenance": "תחזוקה",
+        "homeGoods": "ציוד לבית"
+      },
+      "health": {
+        "medical": "רפואה",
+        "pharmacy": "בית מרקחת",
+        "fitness": "כושר",
+        "beauty": "יופי"
+      },
+      "shopping": {
+        "clothing": "ביגוד",
+        "electronics": "אלקטרוניקה",
+        "gifts": "מתנות",
+        "general": "קניות כלליות"
+      },
+      "entertainment": {
+        "movies": "סרטים",
+        "events": "אירועים",
+        "hobbies": "תחביבים",
+        "subscriptions": "מנויים",
+        "travel": "נסיעות"
+      },
+      "lifestyle": {
+        "education": "חינוך",
+        "pets": "חיות מחמד",
+        "donations": "תרומות",
+        "social": "חברה",
+        "kids": "ילדים"
+      },
+      "other": {
+        "miscellaneous": "שונות",
+        "cigarettes": "סיגריות",
+        "lottery": "הגרלות",
+        "phone": "טלפון"
+      }
+    },
     "addCustomLabel": "הוסף קטגוריה מותאמת",
     "addCustomPlaceholder": "שם קטגוריה",
     "addCustomButton": "הוסף",

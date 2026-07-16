@@ -71,7 +71,8 @@
       "category": "Category",
       "description": "Description",
       "paymentMethod": "Payment method",
-      "date": "Date"
+      "date": "Date",
+      "attachment": "Receipt"
     },
     "validation": {
       "DESCRIPTION_EMPTY": "Description is required",
@@ -104,12 +105,92 @@
     },
     "translationError": "Could not translate description. Please try again."
   },
+  "addExpense": {
+    "title": "Add",
+    "fab": "Add expense",
+    "cancel": "Cancel",
+    "back": "Back",
+    "noteLabel": "Note",
+    "notePlaceholder": "What is it for?",
+    "today": "Today",
+    "submit": "Save expense",
+    "backspace": "Delete digit",
+    "attachImage": "Attach receipt image",
+    "attachmentError": "Could not attach image. Please try again.",
+    "attachmentTooLarge": "Image is too large. Maximum size is 500 KB.",
+    "datePickerTitle": "Select date",
+    "dateConfirm": "Confirm",
+    "dateCancel": "Cancel"
+  },
   "category": {
     "food": "Food",
     "health": "Health",
     "entertainment": "Entertainment",
     "rent": "Rent",
     "other": "Other",
+    "parent": {
+      "food": "Food & Dining",
+      "transport": "Transportation",
+      "housing": "Housing & Home",
+      "health": "Health & Beauty",
+      "shopping": "Shopping",
+      "entertainment": "Entertainment",
+      "lifestyle": "Lifestyle & Social",
+      "other": "Other"
+    },
+    "sub": {
+      "food": {
+        "groceries": "Groceries",
+        "restaurants": "Restaurants",
+        "delivery": "Delivery",
+        "snacks": "Snacks",
+        "alcohol": "Alcohol"
+      },
+      "transport": {
+        "publicTransit": "Public Transit",
+        "car": "Car",
+        "fuel": "Fuel",
+        "taxi": "Taxi"
+      },
+      "housing": {
+        "rent": "Rent",
+        "utilities": "Utilities",
+        "maintenance": "Maintenance",
+        "homeGoods": "Home Goods"
+      },
+      "health": {
+        "medical": "Medical",
+        "pharmacy": "Pharmacy",
+        "fitness": "Fitness",
+        "beauty": "Beauty"
+      },
+      "shopping": {
+        "clothing": "Clothing",
+        "electronics": "Electronics",
+        "gifts": "Gifts",
+        "general": "General Shopping"
+      },
+      "entertainment": {
+        "movies": "Movies",
+        "events": "Events",
+        "hobbies": "Hobbies",
+        "subscriptions": "Subscriptions",
+        "travel": "Travel"
+      },
+      "lifestyle": {
+        "education": "Education",
+        "pets": "Pets",
+        "donations": "Donations",
+        "social": "Social",
+        "kids": "Kids"
+      },
+      "other": {
+        "miscellaneous": "Miscellaneous",
+        "cigarettes": "Cigarettes",
+        "lottery": "Lottery",
+        "phone": "Phone"
+      }
+    },
     "addCustomLabel": "Add custom category",
     "addCustomPlaceholder": "Category name",
     "addCustomButton": "Add",

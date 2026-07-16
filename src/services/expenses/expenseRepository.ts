@@ -56,6 +56,7 @@ export function migrateExpense(raw: Record<string, unknown>): Expense {
     category: migrateCategoryId(raw.category as string),
     date: parseExpenseDateToIso(raw.date as string),
     paymentMethod: isPaymentMethodId(rawPaymentMethod) ? rawPaymentMethod : DEFAULT_PAYMENT_METHOD,
+    ...(typeof raw.attachmentUrl === 'string' ? { attachmentUrl: raw.attachmentUrl } : {}),
   };
 }
 

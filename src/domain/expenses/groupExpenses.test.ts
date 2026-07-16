@@ -28,14 +28,14 @@ describe('groupExpensesByDate', () => {
 });
 
 describe('groupExpensesByCategory', () => {
-  it('groups by category and sums totals', () => {
+  it('groups by parent category and sums totals', () => {
     const groups = groupExpensesByCategory([
-      makeExpense({ id: 'a', category: 'food', amount: 10 }),
-      makeExpense({ id: 'b', category: 'food', amount: 15 }),
-      makeExpense({ id: 'c', category: 'rent', amount: 100 }),
+      makeExpense({ id: 'a', category: 'food.groceries', amount: 10 }),
+      makeExpense({ id: 'b', category: 'food.restaurants', amount: 15 }),
+      makeExpense({ id: 'c', category: 'housing.rent', amount: 100 }),
     ]);
     expect(groups).toHaveLength(2);
-    expect(groups[0].categoryId).toBe('rent');
+    expect(groups[0].categoryId).toBe('housing');
     expect(groups[0].total).toBe(100);
     expect(groups[1].categoryId).toBe('food');
     expect(groups[1].total).toBe(25);
