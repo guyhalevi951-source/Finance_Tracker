@@ -19,4 +19,6 @@ export interface Expense {
   recurrenceSeriesId?: string;
   /** Last ISO date this template may generate occurrences through (inclusive) */
   recurrenceEndDate?: string;
+  /** ISO dates the template must never auto-generate (manual instance deletions) */
+  recurrenceExcludedDates?: string[];
 }

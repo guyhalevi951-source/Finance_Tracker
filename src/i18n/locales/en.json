@@ -1,7 +1,12 @@
 {
   "app": {
     "name": "Finance Tracer",
-    "tagline": "Track your expenses smartly"
+    "tagline": "Track your expenses smartly",
+    "errorBoundary": {
+      "title": "Something went wrong",
+      "message": "The app ran into an unexpected error.",
+      "reload": "Reload page"
+    }
   },
   "language": {
     "toggle": "Switch language",
@@ -24,7 +29,27 @@
     "defaultUserName": "User",
     "goToProfile": "Go to profile",
     "pageTitle": "Profile",
-    "placeholder": "Profile settings coming soon."
+    "settings": {
+      "title": "Settings",
+      "categories": {
+        "expenses": "Expenses"
+      },
+      "subcategories": {
+        "recurringExpenses": "Recurring Expenses"
+      },
+      "recurring": {
+        "empty": "No active recurring expenses.",
+        "editTitle": "Edit recurring expense",
+        "editAction": "Edit recurring expense",
+        "deleteAction": "Delete recurring expense",
+        "terminateTitle": "Stop recurring expense?",
+        "terminateMessage": "This will stop future occurrences. Past expenses will not be deleted.",
+        "terminateConfirm": "Stop recurrence",
+        "terminateCancel": "Cancel",
+        "unnamed": "Recurring expense",
+        "saveError": "Could not save changes. Please try again."
+      }
+    }
   },
   "budget": {
     "title": "Set Monthly Budget",
@@ -77,7 +102,13 @@
       "discardTitle": "Discard changes?",
       "discardMessage": "Are you sure you want to exit without saving changes?",
       "discardYes": "Yes, discard",
-      "discardNo": "No, keep editing"
+      "discardNo": "No, keep editing",
+      "saveError": "Could not save changes. Please try again.",
+      "recurringDeleteTitle": "Delete recurring expense?",
+      "recurringDeleteMessage": "This expense is part of a recurring series. What would you like to delete?",
+      "recurringDeleteInstanceOnly": "Delete this instance only",
+      "recurringDeleteThisAndFuture": "Delete this and future instances",
+      "recurringDeleteProgress": "{{current}} of {{total}}"
     },
     "editModal": {
       "title": "Edit expense",
@@ -170,12 +201,19 @@
       "weekdaySat": "Sat",
       "confirm": "Confirm",
       "cancel": "Cancel",
-      "back": "Back"
+      "back": "Back",
+      "occurrencesTitle": "How many times?",
+      "occurrencesRemainingTitle": "How many more times?",
+      "occurrencesRemainingCustomLabel": "Remaining times",
+      "occurrencesUnlimited": "Unlimited",
+      "occurrencesCustom": "Custom",
+      "occurrencesCustomLabel": "Number of times"
     },
     "validation": {
       "RECURRENCE_INTERVAL_INVALID": "Recurrence interval must be at least 1",
       "RECURRENCE_WEEKDAYS_EMPTY": "Select at least one day of the week",
-      "RECURRENCE_TYPE_INVALID": "Invalid recurrence type"
+      "RECURRENCE_TYPE_INVALID": "Invalid recurrence type",
+      "RECURRENCE_OCCURRENCES_INVALID": "Occurrences must be at least 2"
     }
   },
   "category": {

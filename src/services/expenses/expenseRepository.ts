@@ -56,10 +56,16 @@ function parseRecurrenceRule(raw: unknown): RecurrenceRule | undefined {
     return undefined;
   }
 
-  const rule: RecurrenceRule = { type: type as RecurrenceRule['type'], interval };
+  const rule: RecurrenceRule = { type: type as RecurrenceRule['type'], interval, occurrences: null };
 
   if (Array.isArray(obj.customDays)) {
     rule.customDays = obj.customDays.filter((d): d is number => typeof d === 'number');
+  }
+
+  if (obj.occurrences === null) {
+    rule.occurrences = null;
+  } else if (typeof obj.occurrences === 'number' && Number.isInteger(obj.occurrences)) {
+    rule.occurrences = obj.occurrences;
   }
 
   if (validateRecurrenceRule(rule) !== null) return undefined;
@@ -80,6 +86,11 @@ export function migrateExpense(raw: Record<string, unknown>): Expense {
     typeof raw.recurrenceEndDate === 'string' && isIsoDateString(raw.recurrenceEndDate)
       ? raw.recurrenceEndDate
       : undefined;
+  const recurrenceExcludedDates = Array.isArray(raw.recurrenceExcludedDates)
+    ? raw.recurrenceExcludedDates.filter(
+        (date): date is string => typeof date === 'string' && isIsoDateString(date),
+      )
+    : undefined;
 
   return {
     id: raw.id as string,
@@ -92,6 +103,9 @@ export function migrateExpense(raw: Record<string, unknown>): Expense {
     ...(recurrenceRule ? { recurrenceRule } : {}),
     ...(recurrenceSeriesId ? { recurrenceSeriesId } : {}),
     ...(recurrenceEndDate ? { recurrenceEndDate } : {}),
+    ...(recurrenceExcludedDates && recurrenceExcludedDates.length > 0
+      ? { recurrenceExcludedDates }
+      : {}),
   };
 }
 

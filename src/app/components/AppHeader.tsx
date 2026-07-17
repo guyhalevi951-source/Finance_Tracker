@@ -16,7 +16,7 @@ export function AppHeader() {
         </div>
 
         {title && (
-          <h1 className="absolute inset-x-0 text-center text-base sm:text-lg font-bold text-slate-800 dark:text-slate-100 truncate px-20 pointer-events-none">
+          <h1 className="absolute inset-x-0 z-20 text-center text-base sm:text-lg font-bold text-slate-800 dark:text-slate-100 truncate px-20 pointer-events-none">
             {title}
           </h1>
         )}

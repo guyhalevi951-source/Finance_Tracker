@@ -1,4 +1,7 @@
 import { type Expense } from '../../types/expense';
+import { canGenerateOccurrence } from '../../domain/recurrence/canGenerateOccurrence';
+import { countSeriesOccurrences } from '../../domain/recurrence/countSeriesOccurrences';
+import { isRecurrenceDateExcluded } from '../../domain/recurrence/isRecurrenceDateExcluded';
 import { computeDueDates } from '../../domain/recurrence/computeDueDates';
 import {
   buildExistingOccurrenceKey,
@@ -30,10 +33,23 @@ export async function syncRecurringExpenses(
     if (!rule) continue;
 
     const dueDates = computeDueDates(template.date, rule, todayIso);
+    const currentCount = countSeriesOccurrences(expenses, template.id);
 
     for (const dueDate of dueDates) {
       if (template.recurrenceEndDate && dueDate > template.recurrenceEndDate) {
         continue;
+      }
+
+      if (isRecurrenceDateExcluded(template, dueDate)) {
+        continue;
+      }
+
+      const pendingForSeries = toCreate.filter(
+        (expense) => expense.recurrenceSeriesId === template.id,
+      ).length;
+
+      if (!canGenerateOccurrence(rule.occurrences, currentCount, pendingForSeries)) {
+        break;
       }
 
       const key = buildExistingOccurrenceKey(template.id, dueDate);

@@ -2,8 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { type Expense } from '../../types/expense';
 import { applyRecurrenceChangeOnEdit } from './applyRecurrenceChangeOnEdit';
 
-const dailyRule = { type: 'daily' as const, interval: 1 };
-const weeklyRule = { type: 'weekly' as const, interval: 1, customDays: [] as number[] };
+const dailyRule = { type: 'daily' as const, interval: 1, occurrences: null };
+const weeklyRule = { type: 'weekly' as const, interval: 1, customDays: [] as number[], occurrences: null };
 
 function makeExpense(overrides: Partial<Expense> & Pick<Expense, 'id' | 'date'>): Expense {
   return {

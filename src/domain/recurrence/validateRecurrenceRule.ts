@@ -4,10 +4,15 @@ import { selectionToRule } from './presets';
 export type RecurrenceValidationError =
   | 'RECURRENCE_INTERVAL_INVALID'
   | 'RECURRENCE_WEEKDAYS_EMPTY'
-  | 'RECURRENCE_TYPE_INVALID';
+  | 'RECURRENCE_TYPE_INVALID'
+  | 'RECURRENCE_OCCURRENCES_INVALID';
 
 function isValidWeekday(day: number): boolean {
   return Number.isInteger(day) && day >= 0 && day <= 6;
+}
+
+function isValidOccurrences(value: number | null): boolean {
+  return value === null || (Number.isInteger(value) && value >= 2);
 }
 
 export function validateRecurrenceRule(
@@ -19,6 +24,10 @@ export function validateRecurrenceRule(
 
   if (!Number.isInteger(rule.interval) || rule.interval < 1) {
     return 'RECURRENCE_INTERVAL_INVALID';
+  }
+
+  if (!isValidOccurrences(rule.occurrences)) {
+    return 'RECURRENCE_OCCURRENCES_INVALID';
   }
 
   if (rule.type === 'weekly' && rule.customDays !== undefined) {
@@ -37,6 +46,14 @@ export function validateRecurrenceSelection(
   selection: RecurrenceSelection,
 ): RecurrenceValidationError | null {
   if (selection.preset === 'never') return null;
+
+  const limit = selection.occurrencesLimit ?? 'unlimited';
+  if (limit === 'custom') {
+    const occurrences = selection.customOccurrences ?? 0;
+    if (!Number.isInteger(occurrences) || occurrences < 2) {
+      return 'RECURRENCE_OCCURRENCES_INVALID';
+    }
+  }
 
   if (selection.preset === 'custom') {
     if (selection.customMode === 'intervalDays') {

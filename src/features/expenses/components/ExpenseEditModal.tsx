@@ -28,6 +28,11 @@ interface ExpenseEditModalProps {
   onRemoveAttachment: () => void;
   onSave: () => void;
   onClose: () => void;
+  hideDateField?: boolean;
+  modalTitleKey?: string;
+  occurrencesTitleKey?: string;
+  occurrencesCustomLabelKey?: string;
+  minCustomOccurrences?: number;
 }
 
 export function ExpenseEditModal({
@@ -46,6 +51,11 @@ export function ExpenseEditModal({
   onRemoveAttachment,
   onSave,
   onClose,
+  hideDateField = false,
+  modalTitleKey = 'expense.editModal.title',
+  occurrencesTitleKey,
+  occurrencesCustomLabelKey,
+  minCustomOccurrences,
 }: ExpenseEditModalProps) {
   const { t } = useTranslation();
   const [recurrenceModalOpen, setRecurrenceModalOpen] = useState(false);
@@ -71,7 +81,7 @@ export function ExpenseEditModal({
         <div className="w-full max-w-lg bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-6 shadow-xl max-h-[90vh] overflow-y-auto">
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
-              {t('expense.editModal.title')}
+              {t(modalTitleKey)}
             </h3>
             <button
               onClick={onClose}
@@ -142,6 +152,7 @@ export function ExpenseEditModal({
                 ))}
               </select>
             </div>
+            {!hideDateField && (
             <div>
               <label className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-2">
                 {t('expense.dateLabel')}
@@ -153,6 +164,7 @@ export function ExpenseEditModal({
                 className="w-full px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100"
               />
             </div>
+            )}
             <div>
               <label className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-2">
                 {t('addExpense.recurrence.selectRecurrence')}
@@ -204,6 +216,9 @@ export function ExpenseEditModal({
         value={recurrenceSelection}
         onSelect={onRecurrenceSelectionChange}
         onClose={() => setRecurrenceModalOpen(false)}
+        occurrencesTitleKey={occurrencesTitleKey}
+        occurrencesCustomLabelKey={occurrencesCustomLabelKey}
+        minCustomOccurrences={minCustomOccurrences}
       />
     </>
   );

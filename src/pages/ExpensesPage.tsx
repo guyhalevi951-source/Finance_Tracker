@@ -18,6 +18,7 @@ import { useExpenseTimeFilter } from '../features/expenses/hooks/useExpenseTimeF
 import { filterExpensesByPeriod } from '../domain/expenses/periods';
 import { ExpenseEditModal } from '../features/expenses/components/ExpenseEditModal';
 import { DiscardChangesModal } from '../features/expenses/components/DiscardChangesModal';
+import { RecurringDeleteConfirmModal } from '../features/expenses/components/RecurringDeleteConfirmModal';
 import { AddExpenseFab } from '../features/expenses/components/AddExpenseFab';
 import { AddExpenseFlowModal } from '../features/expenses/components/AddExpenseFlowModal';
 import { getAllBuiltinSubCategoryIds, getSubCategoryI18nKey } from '../domain/categories/hierarchy';
@@ -151,6 +152,17 @@ export function ExpensesPage() {
         open={batch.showDiscardModal}
         onConfirm={batch.confirmDiscard}
         onDismiss={batch.dismissDiscard}
+      />
+
+      <RecurringDeleteConfirmModal
+        open={batch.showRecurringDeleteModal}
+        target={batch.recurringDeleteTarget}
+        locale={locale}
+        queueIndex={batch.recurringDeleteQueueIndex}
+        queueTotal={batch.recurringDeleteQueueTotal}
+        isSaving={batch.isSaving}
+        onConfirm={(scope) => void batch.confirmRecurringDelete(scope)}
+        onDismiss={batch.dismissRecurringDelete}
       />
 
       <AddExpenseFab onClick={addFlow.openFlow} hidden={addFlow.open} />

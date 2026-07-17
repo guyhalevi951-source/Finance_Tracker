@@ -1,7 +1,12 @@
 {
   "app": {
     "name": "מעקב פיננסי",
-    "tagline": "עקוב אחר ההוצאות שלך בצורה חכמה"
+    "tagline": "עקוב אחר ההוצאות שלך בצורה חכמה",
+    "errorBoundary": {
+      "title": "משהו השתבש",
+      "message": "האפליקציה נתקלה בשגיאה בלתי צפויה.",
+      "reload": "רענן דף"
+    }
   },
   "language": {
     "toggle": "החלף שפה",
@@ -24,7 +29,27 @@
     "defaultUserName": "משתמש",
     "goToProfile": "עבור לפרופיל",
     "pageTitle": "פרופיל",
-    "placeholder": "הגדרות פרופיל יגיעו בקרוב."
+    "settings": {
+      "title": "הגדרות",
+      "categories": {
+        "expenses": "הוצאות"
+      },
+      "subcategories": {
+        "recurringExpenses": "הוצאות חוזרות"
+      },
+      "recurring": {
+        "empty": "אין הוצאות חוזרות פעילות.",
+        "editTitle": "עריכת הוצאה חוזרת",
+        "editAction": "ערוך הוצאה חוזרת",
+        "deleteAction": "מחק הוצאה חוזרת",
+        "terminateTitle": "להפסיק הוצאה חוזרת?",
+        "terminateMessage": "פעולה זו תעצור הופעות עתידיות. הוצאות שכבר נרשמו לא יימחקו.",
+        "terminateConfirm": "הפסק חזרה",
+        "terminateCancel": "ביטול",
+        "unnamed": "הוצאה חוזרת",
+        "saveError": "לא ניתן לשמור את השינויים. נסה שוב."
+      }
+    }
   },
   "budget": {
     "title": "הגדר תקציב חודשי",
@@ -77,7 +102,13 @@
       "discardTitle": "לבטל שינויים?",
       "discardMessage": "בטוח שאתה רוצה לצאת בלי לשמור את השינויים?",
       "discardYes": "כן, בטל",
-      "discardNo": "לא, המשך לערוך"
+      "discardNo": "לא, המשך לערוך",
+      "saveError": "לא ניתן לשמור את השינויים. נסה שוב.",
+      "recurringDeleteTitle": "למחוק הוצאה חוזרת?",
+      "recurringDeleteMessage": "ההוצאה הזו היא חלק מסדרה חוזרת. מה תרצה למחוק?",
+      "recurringDeleteInstanceOnly": "מחק אירוע זה בלבד",
+      "recurringDeleteThisAndFuture": "מחק אירוע זה ואת כל הבאים אחריו",
+      "recurringDeleteProgress": "{{current}} מתוך {{total}}"
     },
     "editModal": {
       "title": "עריכת הוצאה",
@@ -170,12 +201,19 @@
       "weekdaySat": "ש׳",
       "confirm": "אישור",
       "cancel": "ביטול",
-      "back": "חזרה"
+      "back": "חזרה",
+      "occurrencesTitle": "כמה פעמים?",
+      "occurrencesRemainingTitle": "כמה פעמים נוספות?",
+      "occurrencesRemainingCustomLabel": "מספר פעמים שנותר",
+      "occurrencesUnlimited": "בלי הגבלה",
+      "occurrencesCustom": "בחירה אישית",
+      "occurrencesCustomLabel": "מספר פעמים"
     },
     "validation": {
       "RECURRENCE_INTERVAL_INVALID": "מרווח החזרה חייב להיות לפחות 1",
       "RECURRENCE_WEEKDAYS_EMPTY": "יש לבחור לפחות יום אחד בשבוע",
-      "RECURRENCE_TYPE_INVALID": "סוג חזרה לא תקין"
+      "RECURRENCE_TYPE_INVALID": "סוג חזרה לא תקין",
+      "RECURRENCE_OCCURRENCES_INVALID": "מספר החזרות חייב להיות לפחות 2"
     }
   },
   "category": {

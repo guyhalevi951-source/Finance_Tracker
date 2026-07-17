@@ -2,10 +2,14 @@ export const RECURRENCE_TYPES = ['daily', 'weekly', 'monthly', 'yearly'] as cons
 
 export type RecurrenceType = (typeof RECURRENCE_TYPES)[number];
 
+export type OccurrencesLimitPreset = 'unlimited' | '2' | '3' | '4' | '5' | 'custom';
+
 export interface RecurrenceRule {
   type: RecurrenceType;
   interval: number;
   customDays?: number[];
+  /** Max total instances in series (template + generated). null = unlimited */
+  occurrences: number | null;
 }
 
 export const RECURRENCE_PRESET_IDS = [
@@ -28,6 +32,8 @@ export interface RecurrenceSelection {
   customMode?: RecurrenceCustomMode;
   customIntervalDays?: number;
   customWeekdays?: number[];
+  occurrencesLimit?: OccurrencesLimitPreset;
+  customOccurrences?: number;
 }
 
 export const DEFAULT_RECURRENCE_SELECTION: RecurrenceSelection = { preset: 'never' };

@@ -85,10 +85,15 @@ describe('migrateExpense', () => {
       category: 'food.groceries',
       date: '2026-01-01',
       paymentMethod: 'cash',
-      recurrenceRule: { type: 'weekly', interval: 1, customDays: [] },
+      recurrenceRule: { type: 'weekly', interval: 1, customDays: [], occurrences: null },
       recurrenceSeriesId: 'template-1',
     });
-    expect(migrated.recurrenceRule).toEqual({ type: 'weekly', interval: 1, customDays: [] });
+    expect(migrated.recurrenceRule).toEqual({
+      type: 'weekly',
+      interval: 1,
+      customDays: [],
+      occurrences: null,
+    });
     expect(migrated.recurrenceSeriesId).toBe('template-1');
   });
 
@@ -103,5 +108,19 @@ describe('migrateExpense', () => {
       recurrenceRule: { type: 'weekly', interval: 0 },
     });
     expect(migrated.recurrenceRule).toBeUndefined();
+  });
+
+  it('preserves valid recurrenceExcludedDates and filters invalid entries', () => {
+    const migrated = migrateExpense({
+      id: 'x',
+      description: { en: 'A', he: 'A' },
+      amount: 5,
+      category: 'food.groceries',
+      date: '2026-01-01',
+      paymentMethod: 'cash',
+      recurrenceRule: { type: 'daily', interval: 1, occurrences: null },
+      recurrenceExcludedDates: ['2026-03-02', 'invalid', 42],
+    });
+    expect(migrated.recurrenceExcludedDates).toEqual(['2026-03-02']);
   });
 });

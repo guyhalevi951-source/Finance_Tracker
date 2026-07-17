@@ -7,6 +7,11 @@ import {
 } from '../../../types/recurrenceRule';
 import { validateExpenseInput, type EditExpenseInput } from '../../../domain/expenses/validateExpense';
 import { applyRecurrenceChangeOnEdit } from '../../../domain/recurrence/applyRecurrenceChangeOnEdit';
+import {
+  applyRecurrenceDelete,
+  type RecurrenceDeleteScope,
+} from '../../../domain/recurrence/applyRecurrenceDelete';
+import { isRecurringExpense } from '../../../domain/recurrence/isRecurringExpense';
 import { ruleToSelection, selectionToRule } from '../../../domain/recurrence/presets';
 import { validateRecurrenceSelection } from '../../../domain/recurrence/validateRecurrenceRule';
 import { applyExpenseBatch } from '../../../services/expenses/expenseRepository';
@@ -39,6 +44,10 @@ export interface UseExpenseBatchModeReturn {
   isSaving: boolean;
   editError: string | null;
   batchError: string | null;
+  showRecurringDeleteModal: boolean;
+  recurringDeleteTarget: Expense | null;
+  recurringDeleteQueueIndex: number;
+  recurringDeleteQueueTotal: number;
   enterDeleteMode: () => void;
   enterEditMode: () => void;
   toggleSelected: (id: string) => void;
@@ -50,6 +59,8 @@ export interface UseExpenseBatchModeReturn {
   setRemoveAttachment: (remove: boolean) => void;
   saveLocalEdit: () => Promise<void>;
   confirmMode: () => Promise<void>;
+  confirmRecurringDelete: (scope: RecurrenceDeleteScope) => Promise<void>;
+  dismissRecurringDelete: () => void;
   requestCancel: () => void;
   confirmDiscard: () => void;
   dismissDiscard: () => void;
@@ -102,8 +113,23 @@ export function useExpenseBatchMode(
   const [isSaving, setIsSaving] = useState(false);
   const [editError, setEditError] = useState<string | null>(null);
   const [batchError, setBatchError] = useState<string | null>(null);
+  const [showRecurringDeleteModal, setShowRecurringDeleteModal] = useState(false);
+  const [recurringDeleteTarget, setRecurringDeleteTarget] = useState<Expense | null>(null);
+  const [recurringDeleteQueue, setRecurringDeleteQueue] = useState<Expense[]>([]);
+  const [recurringDeleteQueueTotal, setRecurringDeleteQueueTotal] = useState(0);
+  const [pendingDeleteDraft, setPendingDeleteDraft] = useState<Expense[]>([]);
+  const [deleteBaselineExpenses, setDeleteBaselineExpenses] = useState<Expense[]>([]);
 
   const displayExpenses = mode === 'view' ? committedExpenses : draftExpenses;
+
+  const resetRecurringDeleteSession = useCallback(() => {
+    setShowRecurringDeleteModal(false);
+    setRecurringDeleteTarget(null);
+    setRecurringDeleteQueue([]);
+    setRecurringDeleteQueueTotal(0);
+    setPendingDeleteDraft([]);
+    setDeleteBaselineExpenses([]);
+  }, []);
 
   const resetEditSession = useCallback(() => {
     setEditingExpense(null);
@@ -245,66 +271,6 @@ export function useExpenseBatchMode(
     resetEditSession,
   ]);
 
-  const confirmMode = useCallback(async () => {
-    setIsSaving(true);
-    setBatchError(null);
-
-    try {
-      let nextExpenses = draftExpenses;
-      if (mode === 'deleting') {
-        nextExpenses = draftExpenses.filter((expense) => !selectedIds.has(expense.id));
-      }
-
-      for (const [expenseId, change] of pendingAttachmentChanges.entries()) {
-        const index = nextExpenses.findIndex((expense) => expense.id === expenseId);
-        if (index === -1) continue;
-
-        const expense = nextExpenses[index];
-
-        if (change.remove) {
-          await deleteExpenseAttachment(userId, expenseId);
-          const { attachmentUrl, ...withoutAttachment } = expense;
-          nextExpenses = nextExpenses.map((item, itemIndex) =>
-            itemIndex === index ? withoutAttachment : item,
-          );
-          continue;
-        }
-
-        if (change.file) {
-          const attachmentUrl = await uploadExpenseAttachment(userId, expenseId, change.file);
-          nextExpenses = nextExpenses.map((item, itemIndex) =>
-            itemIndex === index ? { ...item, attachmentUrl } : item,
-          );
-        }
-      }
-
-      await applyExpenseBatch(userId, nextExpenses);
-      await onCommittedChange();
-      setMode('view');
-      setDraftExpenses([]);
-      setSelectedIds(new Set());
-      setShowDiscardModal(false);
-      setPendingAttachmentChanges(new Map());
-      resetEditSession();
-    } catch (error) {
-      if (error instanceof Error && error.message === 'FILE_TOO_LARGE') {
-        setBatchError('addExpense.attachmentTooLarge');
-      } else {
-        setBatchError('addExpense.attachmentError');
-      }
-    } finally {
-      setIsSaving(false);
-    }
-  }, [
-    draftExpenses,
-    mode,
-    onCommittedChange,
-    pendingAttachmentChanges,
-    resetEditSession,
-    selectedIds,
-    userId,
-  ]);
-
   const resetToView = useCallback(() => {
     setMode('view');
     setDraftExpenses([]);
@@ -312,8 +278,148 @@ export function useExpenseBatchMode(
     setShowDiscardModal(false);
     setPendingAttachmentChanges(new Map());
     setBatchError(null);
+    resetRecurringDeleteSession();
     resetEditSession();
-  }, [resetEditSession]);
+  }, [resetEditSession, resetRecurringDeleteSession]);
+
+  const persistBatch = useCallback(
+    async (nextExpensesInput: Expense[], baselineExpenses: Expense[]) => {
+      setIsSaving(true);
+      setBatchError(null);
+
+      let nextExpenses = nextExpensesInput;
+
+      const removedIds = new Set(
+        baselineExpenses
+          .filter((expense) => !nextExpenses.some((item) => item.id === expense.id))
+          .map((expense) => expense.id),
+      );
+
+      try {
+        for (const expenseId of removedIds) {
+          await deleteExpenseAttachment(userId, expenseId);
+        }
+
+        for (const [expenseId, change] of pendingAttachmentChanges.entries()) {
+          const index = nextExpenses.findIndex((expense) => expense.id === expenseId);
+          if (index === -1) continue;
+
+          const expense = nextExpenses[index];
+
+          if (change.remove) {
+            await deleteExpenseAttachment(userId, expenseId);
+            const { attachmentUrl, ...withoutAttachment } = expense;
+            nextExpenses = nextExpenses.map((item, itemIndex) =>
+              itemIndex === index ? withoutAttachment : item,
+            );
+            continue;
+          }
+
+          if (change.file) {
+            const attachmentUrl = await uploadExpenseAttachment(userId, expenseId, change.file);
+            nextExpenses = nextExpenses.map((item, itemIndex) =>
+              itemIndex === index ? { ...item, attachmentUrl } : item,
+            );
+          }
+        }
+      } catch (error) {
+        if (error instanceof Error && error.message === 'FILE_TOO_LARGE') {
+          setBatchError('addExpense.attachmentTooLarge');
+        } else {
+          setBatchError('addExpense.attachmentError');
+        }
+        setIsSaving(false);
+        return false;
+      }
+
+      try {
+        await applyExpenseBatch(userId, nextExpenses);
+        await onCommittedChange();
+        resetToView();
+        return true;
+      } catch {
+        setBatchError('expense.batch.saveError');
+        return false;
+      } finally {
+        setIsSaving(false);
+      }
+    },
+    [onCommittedChange, pendingAttachmentChanges, resetToView, userId],
+  );
+
+  const confirmMode = useCallback(async () => {
+    if (mode === 'deleting') {
+      const selectedExpenses = draftExpenses.filter((expense) => selectedIds.has(expense.id));
+      const recurring = selectedExpenses.filter(isRecurringExpense);
+      const oneOffIds = new Set(
+        selectedExpenses.filter((expense) => !isRecurringExpense(expense)).map((expense) => expense.id),
+      );
+
+      const afterOneOffDelete = draftExpenses.filter((expense) => !oneOffIds.has(expense.id));
+
+      if (recurring.length > 0) {
+        setDeleteBaselineExpenses(draftExpenses);
+        setPendingDeleteDraft(afterOneOffDelete);
+        setDraftExpenses(afterOneOffDelete);
+        setSelectedIds(new Set(recurring.map((expense) => expense.id)));
+        setRecurringDeleteQueue(recurring);
+        setRecurringDeleteQueueTotal(recurring.length);
+        setRecurringDeleteTarget(recurring[0]);
+        setShowRecurringDeleteModal(true);
+        return;
+      }
+
+      const ok = await persistBatch(afterOneOffDelete, draftExpenses);
+      if (ok) {
+        setDraftExpenses([]);
+        setSelectedIds(new Set());
+      }
+      return;
+    }
+
+    await persistBatch(draftExpenses, draftExpenses);
+  }, [draftExpenses, mode, persistBatch, selectedIds]);
+
+  const confirmRecurringDelete = useCallback(
+    async (scope: RecurrenceDeleteScope) => {
+      if (!recurringDeleteTarget) return;
+
+      const targetInDraft =
+        pendingDeleteDraft.find((expense) => expense.id === recurringDeleteTarget.id) ??
+        recurringDeleteTarget;
+
+      let nextDraft = applyRecurrenceDelete(pendingDeleteDraft, targetInDraft, scope);
+      const remainingQueue = recurringDeleteQueue.slice(1);
+
+      if (remainingQueue.length > 0) {
+        setPendingDeleteDraft(nextDraft);
+        setRecurringDeleteQueue(remainingQueue);
+        setRecurringDeleteTarget(remainingQueue[0]);
+        return;
+      }
+
+      setShowRecurringDeleteModal(false);
+      setRecurringDeleteTarget(null);
+      setRecurringDeleteQueue([]);
+
+      const ok = await persistBatch(nextDraft, deleteBaselineExpenses);
+      if (ok) {
+        resetRecurringDeleteSession();
+      }
+    },
+    [
+      deleteBaselineExpenses,
+      pendingDeleteDraft,
+      persistBatch,
+      recurringDeleteQueue,
+      recurringDeleteTarget,
+      resetRecurringDeleteSession,
+    ],
+  );
+
+  const dismissRecurringDelete = useCallback(() => {
+    resetRecurringDeleteSession();
+  }, [resetRecurringDeleteSession]);
 
   const requestCancel = useCallback(() => {
     setShowDiscardModal(true);
@@ -341,6 +447,13 @@ export function useExpenseBatchMode(
     isSaving,
     editError,
     batchError,
+    showRecurringDeleteModal,
+    recurringDeleteTarget,
+    recurringDeleteQueueIndex:
+      recurringDeleteQueueTotal > 0
+        ? recurringDeleteQueueTotal - recurringDeleteQueue.length + 1
+        : 0,
+    recurringDeleteQueueTotal,
     enterDeleteMode,
     enterEditMode,
     toggleSelected,
@@ -352,6 +465,8 @@ export function useExpenseBatchMode(
     setRemoveAttachment,
     saveLocalEdit,
     confirmMode,
+    confirmRecurringDelete,
+    dismissRecurringDelete,
     requestCancel,
     confirmDiscard,
     dismissDiscard,
