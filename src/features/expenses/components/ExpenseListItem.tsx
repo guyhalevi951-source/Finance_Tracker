@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
-import { Camera } from 'lucide-react';
 import { type Expense } from '../../../types/expense';
+import { isRecurringExpense } from '../../../domain/recurrence/isRecurringExpense';
 import { type ExpenseBatchMode } from '../hooks/useExpenseBatchMode';
 import { resolveBilingualText } from '../../../domain/i18n/resolveBilingualText';
 import { hasBilingualTextContent } from '../../../domain/i18n/buildBilingualText';
@@ -10,6 +10,7 @@ import { type CustomCategory } from '../../../types/category';
 import { type AppLocale } from '../../../config/app';
 import { formatCurrencyAmount, formatExpenseDateNumeric } from '../../../lib/format/formatDate';
 import { getCategoryUI } from '../categoryUi';
+import { ExpenseIconBadges } from './ExpenseIconBadges';
 
 interface ExpenseListItemProps {
   expense: Expense;
@@ -93,14 +94,10 @@ export function ExpenseListItem({
           <span className={`inline-flex items-center justify-center w-9 h-9 rounded-full text-white ${color}`}>
             <Icon className="w-4 h-4" />
           </span>
-          {expense.attachmentUrl && (
-            <span
-              className="absolute -bottom-0.5 -start-0.5 flex items-center justify-center w-4 h-4 rounded-full bg-amber-400 ring-2 ring-white dark:ring-slate-800"
-              aria-hidden
-            >
-              <Camera className="w-2.5 h-2.5 text-slate-800" />
-            </span>
-          )}
+          <ExpenseIconBadges
+            hasAttachment={!!expense.attachmentUrl}
+            isRecurring={isRecurringExpense(expense)}
+          />
         </div>
       </div>
     </button>

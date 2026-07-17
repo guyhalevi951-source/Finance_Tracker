@@ -1,9 +1,10 @@
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import { expenseAttachmentStoragePath } from '../../config/firebase/storage';
 import { storage } from '../firebase/firebaseApp';
 
 const GUEST_ATTACHMENTS_KEY = 'expenseAttachments';
-const MAX_GUEST_ATTACHMENT_BYTES = 500 * 1024;
+
+export const MAX_GUEST_ATTACHMENT_BYTES = 500 * 1024;
 
 export type AttachmentError = 'FILE_TOO_LARGE' | 'UPLOAD_FAILED';
 
@@ -57,6 +58,31 @@ export async function uploadExpenseAttachment(
   map[expenseId] = dataUrl;
   writeGuestAttachments(map);
   return dataUrl;
+}
+
+/**
+ * Removes a stored expense attachment for the given expense id.
+ */
+export async function deleteExpenseAttachment(
+  userId: string | null,
+  expenseId: string,
+): Promise<void> {
+  if (userId) {
+    const path = expenseAttachmentStoragePath(userId, expenseId);
+    const storageRef = ref(storage, path);
+    try {
+      await deleteObject(storageRef);
+    } catch {
+      // Ignore missing object — attachment may already be absent.
+    }
+    return;
+  }
+
+  const map = readGuestAttachments();
+  if (expenseId in map) {
+    delete map[expenseId];
+    writeGuestAttachments(map);
+  }
 }
 
 /** Resolves guest attachment from localStorage when expense stores a guest reference key. */

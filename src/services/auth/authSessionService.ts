@@ -1,7 +1,32 @@
 import { onAuthStateChanged, type User } from 'firebase/auth';
 import { auth } from '../firebase';
+import { type AuthSession } from '../../types/auth';
 
-type AuthCallback = (userId: string | null) => void;
+type AuthCallback = (session: AuthSession) => void;
+
+function resolveDisplayName(user: User): string | null {
+  if (user.displayName?.trim()) {
+    return user.displayName.trim();
+  }
+
+  const email = user.email?.trim();
+  if (email) {
+    return email.split('@')[0];
+  }
+
+  return null;
+}
+
+function toAuthSession(user: User | null): AuthSession {
+  if (!user) {
+    return { userId: null, displayName: null };
+  }
+
+  return {
+    userId: user.uid,
+    displayName: resolveDisplayName(user),
+  };
+}
 
 /**
  * Subscribes to Firebase Auth state changes.
@@ -9,7 +34,7 @@ type AuthCallback = (userId: string | null) => void;
  */
 export function subscribeAuthSession(callback: AuthCallback): () => void {
   return onAuthStateChanged(auth, (user: User | null) => {
-    callback(user?.uid ?? null);
+    callback(toAuthSession(user));
   });
 }
 
@@ -19,4 +44,12 @@ export function subscribeAuthSession(callback: AuthCallback): () => void {
  */
 export function getCurrentUserId(): string | null {
   return auth.currentUser?.uid ?? null;
+}
+
+/**
+ * Returns the current auth session synchronously.
+ * Prefer subscribeAuthSession for reactive updates.
+ */
+export function getCurrentAuthSession(): AuthSession {
+  return toAuthSession(auth.currentUser);
 }

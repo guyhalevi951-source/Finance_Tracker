@@ -5,6 +5,7 @@ import {
   AlertTriangle,
   Check,
 } from 'lucide-react';
+import { useAppHeader } from '../app/hooks/useAppHeader';
 import { useBudgetTracker } from '../features/budget/hooks/useBudgetTracker';
 import { useExpenses } from '../features/expenses/hooks/useExpenses';
 import { useCategories } from '../features/categories/hooks/useCategories';
@@ -24,6 +25,8 @@ export function DashboardPage() {
 
   const { totalExpenses, budgetPercentage, isOverBudget, remaining } = summary;
   const loadError = budgetLoadError || expensesLoadError;
+
+  useAppHeader({ title: t('nav.dashboard') });
 
   return (
     <div>

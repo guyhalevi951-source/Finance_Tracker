@@ -17,4 +17,6 @@ export interface Expense {
   recurrenceRule?: RecurrenceRule;
   /** Links generated instances back to the template expense id */
   recurrenceSeriesId?: string;
+  /** Last ISO date this template may generate occurrences through (inclusive) */
+  recurrenceEndDate?: string;
 }

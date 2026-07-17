@@ -18,6 +18,14 @@
   "header": {
     "date": "{{date}}"
   },
+  "profile": {
+    "greetingGuest": "שלום אורח",
+    "greetingUser": "שלום {{name}}",
+    "defaultUserName": "משתמש",
+    "goToProfile": "עבור לפרופיל",
+    "pageTitle": "פרופיל",
+    "placeholder": "הגדרות פרופיל יגיעו בקרוב."
+  },
   "budget": {
     "title": "הגדר תקציב חודשי",
     "amountLabel": "סכום התקציב (₪)",
@@ -75,7 +83,10 @@
       "title": "עריכת הוצאה",
       "save": "שמור",
       "saving": "שומר...",
-      "cancel": "ביטול"
+      "cancel": "ביטול",
+      "attachImage": "צרף תמונת קבלה",
+      "removeAttachment": "הסר תמונה",
+      "replaceAttachment": "החלף תמונה"
     },
     "details": {
       "back": "חזרה להוצאות",

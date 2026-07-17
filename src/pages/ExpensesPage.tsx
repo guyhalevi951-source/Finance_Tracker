@@ -3,12 +3,13 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { expenseDetailPath } from '../config/routes';
 import { type AppLocale } from '../config/app';
+import { useAppHeader } from '../app/hooks/useAppHeader';
 import { useAuthSession } from '../features/auth/hooks/useAuthSession';
 import { useCategories } from '../features/categories/hooks/useCategories';
 import { useExpenses } from '../features/expenses/hooks/useExpenses';
 import { useAddExpenseFlow } from '../features/expenses/hooks/useAddExpenseFlow';
 import { useExpenseBatchMode } from '../features/expenses/hooks/useExpenseBatchMode';
-import { ExpensesPageHeader } from '../features/expenses/components/ExpensesPageHeader';
+import { ExpensesHeaderActions } from '../features/expenses/components/ExpensesHeaderActions';
 import { ExpensesViewTabs, type ExpensesViewMode } from '../features/expenses/components/ExpensesViewTabs';
 import { ExpenseTimeFilterBar } from '../features/expenses/components/ExpenseTimeFilterBar';
 import { ExpensesByDateView } from '../features/expenses/components/ExpensesByDateView';
@@ -71,6 +72,29 @@ export function ExpensesPage() {
     onItemClick: handleItemClick,
   };
 
+  const headerActions = useMemo(
+    () => (
+      <ExpensesHeaderActions
+        mode={batch.mode}
+        isSaving={batch.isSaving}
+        onEnterDelete={batch.enterDeleteMode}
+        onEnterEdit={batch.enterEditMode}
+        onConfirm={() => void batch.confirmMode()}
+        onCancel={batch.requestCancel}
+      />
+    ),
+    [
+      batch.mode,
+      batch.isSaving,
+      batch.enterDeleteMode,
+      batch.enterEditMode,
+      batch.confirmMode,
+      batch.requestCancel,
+    ],
+  );
+
+  useAppHeader({ title: t('expense.pageTitle'), actions: headerActions });
+
   return (
     <div className="relative pb-20">
       {loadError && (
@@ -79,14 +103,11 @@ export function ExpensesPage() {
         </div>
       )}
 
-      <ExpensesPageHeader
-        mode={batch.mode}
-        isSaving={batch.isSaving}
-        onEnterDelete={batch.enterDeleteMode}
-        onEnterEdit={batch.enterEditMode}
-        onConfirm={() => void batch.confirmMode()}
-        onCancel={batch.requestCancel}
-      />
+      {batch.batchError && (
+        <div className="bg-rose-50 dark:bg-rose-900/30 border border-rose-200 dark:border-rose-700 text-rose-800 dark:text-rose-300 rounded-xl px-4 py-3 mb-6 text-sm">
+          {t(batch.batchError)}
+        </div>
+      )}
 
       <ExpensesViewTabs active={viewMode} onChange={setViewMode} />
 
@@ -103,9 +124,24 @@ export function ExpensesPage() {
           open={batch.editingExpense !== null}
           input={batch.editInput}
           categoryOptions={categoryOptions}
+          recurrenceSelection={batch.editRecurrenceSelection}
+          existingAttachmentUrl={batch.editingExpense?.attachmentUrl}
+          pendingAttachmentFile={batch.pendingAttachmentFile}
+          removeAttachment={batch.removeAttachment}
           isSaving={batch.isSaving}
           errorKey={batch.editError}
           onChange={batch.setEditInput}
+          onRecurrenceSelectionChange={batch.setEditRecurrenceSelection}
+          onAttachmentFileChange={(file) => {
+            batch.setPendingAttachmentFile(file);
+            if (file) {
+              batch.setRemoveAttachment(false);
+            }
+          }}
+          onRemoveAttachment={() => {
+            batch.setPendingAttachmentFile(null);
+            batch.setRemoveAttachment(true);
+          }}
           onSave={() => void batch.saveLocalEdit()}
           onClose={batch.closeEditModal}
         />

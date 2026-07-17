@@ -32,6 +32,10 @@ export async function syncRecurringExpenses(
     const dueDates = computeDueDates(template.date, rule, todayIso);
 
     for (const dueDate of dueDates) {
+      if (template.recurrenceEndDate && dueDate > template.recurrenceEndDate) {
+        continue;
+      }
+
       const key = buildExistingOccurrenceKey(template.id, dueDate);
       if (existingKeys.has(key)) continue;
 

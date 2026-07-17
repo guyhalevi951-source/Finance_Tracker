@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { ROUTES } from '../config/routes';
 import { type AppLocale } from '../config/app';
+import { useAppHeader } from '../app/hooks/useAppHeader';
 import { useAuthSession } from '../features/auth/hooks/useAuthSession';
 import { useCategories } from '../features/categories/hooks/useCategories';
 import { useExpenses } from '../features/expenses/hooks/useExpenses';
@@ -18,6 +19,8 @@ export function ExpenseDetailPage() {
   const { expenses } = useExpenses(userId);
 
   const expense = expenses.find((e) => e.id === id);
+
+  useAppHeader({ title: t('expense.detailsTitle') });
 
   if (!expense) {
     return (

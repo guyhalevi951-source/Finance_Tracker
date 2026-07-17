@@ -18,6 +18,14 @@
   "header": {
     "date": "{{date}}"
   },
+  "profile": {
+    "greetingGuest": "Hello Guest",
+    "greetingUser": "Hello {{name}}",
+    "defaultUserName": "User",
+    "goToProfile": "Go to profile",
+    "pageTitle": "Profile",
+    "placeholder": "Profile settings coming soon."
+  },
   "budget": {
     "title": "Set Monthly Budget",
     "amountLabel": "Budget amount (₪)",
@@ -75,7 +83,10 @@
       "title": "Edit expense",
       "save": "Save",
       "saving": "Saving...",
-      "cancel": "Cancel"
+      "cancel": "Cancel",
+      "attachImage": "Attach receipt image",
+      "removeAttachment": "Remove image",
+      "replaceAttachment": "Replace image"
     },
     "details": {
       "back": "Back to expenses",

@@ -63,7 +63,7 @@ export function ExpenseDetailsView({ expense, locale, customCategories }: Expens
 
   return (
     <div>
-      <div className="flex items-center gap-3 mb-8">
+      <div className="mb-8">
         <button
           onClick={() => navigate(ROUTES.expenses)}
           className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl border border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300"
@@ -71,9 +71,6 @@ export function ExpenseDetailsView({ expense, locale, customCategories }: Expens
         >
           <ArrowLeft className="w-5 h-5" />
         </button>
-        <h1 className="text-xl font-bold text-slate-800 dark:text-slate-100">
-          {t('expense.detailsTitle')}
-        </h1>
       </div>
 
       <p className="text-5xl md:text-6xl font-bold text-slate-900 dark:text-slate-50 mb-10">

@@ -15,7 +15,7 @@ import {
   DEFAULT_PAYMENT_METHOD,
   isPaymentMethodId,
 } from '../../domain/expenses/paymentMethods';
-import { parseExpenseDateToIso } from '../../domain/expenses/parseExpenseDate';
+import { parseExpenseDateToIso, isIsoDateString } from '../../domain/expenses/parseExpenseDate';
 import { validateRecurrenceRule } from '../../domain/recurrence/validateRecurrenceRule';
 import { RECURRENCE_TYPES, type RecurrenceRule } from '../../types/recurrenceRule';
 import { db } from '../firebase';
@@ -76,6 +76,10 @@ export function migrateExpense(raw: Record<string, unknown>): Expense {
   const recurrenceRule = parseRecurrenceRule(raw.recurrenceRule);
   const recurrenceSeriesId =
     typeof raw.recurrenceSeriesId === 'string' ? raw.recurrenceSeriesId : undefined;
+  const recurrenceEndDate =
+    typeof raw.recurrenceEndDate === 'string' && isIsoDateString(raw.recurrenceEndDate)
+      ? raw.recurrenceEndDate
+      : undefined;
 
   return {
     id: raw.id as string,
@@ -87,6 +91,7 @@ export function migrateExpense(raw: Record<string, unknown>): Expense {
     ...(typeof raw.attachmentUrl === 'string' ? { attachmentUrl: raw.attachmentUrl } : {}),
     ...(recurrenceRule ? { recurrenceRule } : {}),
     ...(recurrenceSeriesId ? { recurrenceSeriesId } : {}),
+    ...(recurrenceEndDate ? { recurrenceEndDate } : {}),
   };
 }
 
