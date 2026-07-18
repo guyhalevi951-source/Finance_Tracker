@@ -236,12 +236,15 @@ export function useExpenseBatchMode(
       detach: boolean,
     ): Expense[] => {
       const { target, basicFields, attachmentChange } = edit;
+      // "This and future" must cascade starting at the selected instance itself, not today —
+      // the UI promises "this and all future expenses" (RecurringEditConfirmModal).
+      const splitDateIso = scope === 'thisAndFuture' ? target.date : todayIso;
       let nextExpenses = applyRecurringBasicFieldUpdate(
         draftExpenses,
         target,
         basicFields,
         scope,
-        todayIso,
+        splitDateIso,
       );
 
       if (detach) {
