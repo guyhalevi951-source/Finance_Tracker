@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Check } from 'lucide-react';
+import { ArrowLeft, Check } from 'lucide-react';
 import {
   DEFAULT_RECURRENCE_SELECTION,
   type OccurrencesLimitPreset,
@@ -36,6 +36,27 @@ interface ExpenseRecurrencePickerModalProps {
   occurrencesTitleKey?: string;
   occurrencesCustomLabelKey?: string;
   minCustomOccurrences?: number;
+  hideOccurrencesField?: boolean;
+}
+
+function resolvePresetLabelKey(preset: RecurrencePresetId, selection: RecurrenceSelection): string {
+  if (preset === 'custom') {
+    if (selection.customMode === 'intervalDays') {
+      return 'addExpense.recurrence.everyDays';
+    }
+    return 'addExpense.recurrence.customWeekdays';
+  }
+  return `addExpense.recurrence.${preset}`;
+}
+
+function resolvePresetLabelParams(
+  preset: RecurrencePresetId,
+  selection: RecurrenceSelection,
+): Record<string, string | number> | undefined {
+  if (preset === 'custom' && selection.customMode === 'intervalDays') {
+    return { count: selection.customIntervalDays ?? 1 };
+  }
+  return undefined;
 }
 
 export function ExpenseRecurrencePickerModal({
@@ -46,10 +67,12 @@ export function ExpenseRecurrencePickerModal({
   occurrencesTitleKey,
   occurrencesCustomLabelKey,
   minCustomOccurrences,
+  hideOccurrencesField = false,
 }: ExpenseRecurrencePickerModalProps) {
   const { t } = useTranslation();
   const [pendingPreset, setPendingPreset] = useState<RecurrencePresetId>('never');
-  const [showCustomForm, setShowCustomForm] = useState(false);
+  const [presetListExpanded, setPresetListExpanded] = useState(true);
+  const [customFormActive, setCustomFormActive] = useState(false);
   const [customMode, setCustomMode] = useState<RecurrenceCustomMode>('intervalDays');
   const [intervalDays, setIntervalDays] = useState(2);
   const [weekdays, setWeekdays] = useState<number[]>([]);
@@ -60,7 +83,8 @@ export function ExpenseRecurrencePickerModal({
   useEffect(() => {
     if (!open) return;
     setPendingPreset(value.preset);
-    setShowCustomForm(value.preset === 'custom');
+    setCustomFormActive(false);
+    setPresetListExpanded(value.preset === 'never');
     setCustomMode(value.customMode ?? 'intervalDays');
     setIntervalDays(value.customIntervalDays ?? 2);
     setWeekdays(value.customWeekdays ?? []);
@@ -81,6 +105,23 @@ export function ExpenseRecurrencePickerModal({
   if (!open) return null;
 
   const isRecurring = pendingPreset !== 'never';
+  const showBackArrow = !presetListExpanded;
+
+  const resolveOccurrencesForMerge = () => {
+    if (hideOccurrencesField) {
+      return {
+        limit: value.occurrencesLimit ?? 'unlimited',
+        custom: value.customOccurrences ?? 2,
+      };
+    }
+    return { limit: occurrencesLimit, custom: customOccurrences };
+  };
+
+  const handleBackToPresetList = () => {
+    setCustomFormActive(false);
+    setPresetListExpanded(true);
+    setValidationErrorKey(null);
+  };
 
   const handlePresetSelect = (preset: RecurrencePresetId) => {
     if (preset === 'never') {
@@ -91,13 +132,15 @@ export function ExpenseRecurrencePickerModal({
 
     if (preset === 'custom') {
       setPendingPreset('custom');
-      setShowCustomForm(true);
+      setCustomFormActive(true);
+      setPresetListExpanded(false);
       setValidationErrorKey(null);
       return;
     }
 
     setPendingPreset(preset);
-    setShowCustomForm(false);
+    setCustomFormActive(false);
+    setPresetListExpanded(false);
     setValidationErrorKey(null);
   };
 
@@ -127,11 +170,8 @@ export function ExpenseRecurrencePickerModal({
 
   const handleConfirm = () => {
     const baseSelection = buildSelection();
-    const selection = mergeOccurrencesIntoSelection(
-      baseSelection,
-      occurrencesLimit,
-      customOccurrences,
-    );
+    const { limit, custom } = resolveOccurrencesForMerge();
+    const selection = mergeOccurrencesIntoSelection(baseSelection, limit, custom);
 
     const error = validateRecurrenceSelection(selection);
     if (error) {
@@ -141,6 +181,75 @@ export function ExpenseRecurrencePickerModal({
 
     onSelect(selection);
     onClose();
+  };
+
+  const handleCustomConfirm = () => {
+    const baseSelection = buildSelection();
+    const { limit, custom } = resolveOccurrencesForMerge();
+    const selection = mergeOccurrencesIntoSelection(baseSelection, limit, custom);
+
+    const error = validateRecurrenceSelection(selection);
+    if (error) {
+      setValidationErrorKey(`addExpense.validation.${error}`);
+      return;
+    }
+
+    setPendingPreset('custom');
+    setCustomFormActive(false);
+    setPresetListExpanded(false);
+    setValidationErrorKey(null);
+  };
+
+  const collapsedSelection: RecurrenceSelection =
+    pendingPreset === 'custom'
+      ? {
+          preset: 'custom',
+          customMode,
+          customIntervalDays: intervalDays,
+          customWeekdays: weekdays,
+          occurrencesLimit,
+          ...(occurrencesLimit === 'custom' ? { customOccurrences } : {}),
+        }
+      : mergeOccurrencesIntoSelection({ preset: pendingPreset }, occurrencesLimit, customOccurrences);
+
+  const selectedPresetLabelKey = resolvePresetLabelKey(pendingPreset, collapsedSelection);
+  const selectedPresetLabelParams = resolvePresetLabelParams(pendingPreset, collapsedSelection);
+
+  const renderPresetButton = (presetId: RecurrencePresetId, isSelected: boolean) => (
+    <li key={presetId}>
+      <button
+        type="button"
+        onClick={() => handlePresetSelect(presetId)}
+        className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl min-h-[48px] transition-colors ${
+          isSelected
+            ? 'bg-amber-50 dark:bg-amber-900/20 border border-amber-300 dark:border-amber-700 text-amber-700 dark:text-amber-300'
+            : 'bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700'
+        }`}
+      >
+        <span className="flex-1 text-start font-medium">
+          {t(`addExpense.recurrence.${presetId}`)}
+        </span>
+        {isSelected && presetId !== 'custom' && (
+          <Check className="w-5 h-5 shrink-0" aria-hidden />
+        )}
+      </button>
+    </li>
+  );
+
+  const renderOccurrencesField = () => {
+    if (hideOccurrencesField) return null;
+
+    return (
+      <RecurrenceOccurrencesLimitField
+        occurrencesLimit={occurrencesLimit}
+        customOccurrences={customOccurrences}
+        onOccurrencesLimitChange={setOccurrencesLimit}
+        onCustomOccurrencesChange={setCustomOccurrences}
+        occurrencesTitleKey={occurrencesTitleKey}
+        occurrencesCustomLabelKey={occurrencesCustomLabelKey}
+        minCustomOccurrences={minCustomOccurrences}
+      />
+    );
   };
 
   return (
@@ -156,69 +265,30 @@ export function ExpenseRecurrencePickerModal({
         className="w-full max-w-sm bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-6 shadow-xl max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
-        <h3
-          id="expense-recurrence-picker-title"
-          className="text-lg font-semibold text-slate-800 dark:text-slate-100 mb-4"
-        >
-          {t('addExpense.recurrence.pickerTitle')}
-        </h3>
+        <div className="flex items-center gap-3 mb-4">
+          {showBackArrow && (
+            <button
+              type="button"
+              onClick={handleBackToPresetList}
+              className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl text-slate-600 dark:text-slate-300 shrink-0"
+              aria-label={t('addExpense.recurrence.back')}
+            >
+              <ArrowLeft className="w-5 h-5 rtl:rotate-180" />
+            </button>
+          )}
+          <h3
+            id="expense-recurrence-picker-title"
+            className="flex-1 text-lg font-semibold text-slate-800 dark:text-slate-100"
+          >
+            {t('addExpense.recurrence.pickerTitle')}
+          </h3>
+        </div>
 
         {validationErrorKey && (
           <p className="text-sm text-rose-600 dark:text-rose-400 mb-3">{t(validationErrorKey)}</p>
         )}
 
-        {!showCustomForm ? (
-          <>
-            <ul className="space-y-2">
-              {RECURRENCE_PRESET_IDS.map((presetId) => {
-                const isSelected = presetId === pendingPreset;
-
-                return (
-                  <li key={presetId}>
-                    <button
-                      type="button"
-                      onClick={() => handlePresetSelect(presetId)}
-                      className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl min-h-[48px] transition-colors ${
-                        isSelected
-                          ? 'bg-amber-50 dark:bg-amber-900/20 border border-amber-300 dark:border-amber-700 text-amber-700 dark:text-amber-300'
-                          : 'bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700'
-                      }`}
-                    >
-                      <span className="flex-1 text-start font-medium">
-                        {t(`addExpense.recurrence.${presetId}`)}
-                      </span>
-                      {isSelected && presetId !== 'custom' && (
-                        <Check className="w-5 h-5 shrink-0" aria-hidden />
-                      )}
-                    </button>
-                  </li>
-                );
-              })}
-            </ul>
-
-            {isRecurring && (
-              <RecurrenceOccurrencesLimitField
-                occurrencesLimit={occurrencesLimit}
-                customOccurrences={customOccurrences}
-                onOccurrencesLimitChange={setOccurrencesLimit}
-                onCustomOccurrencesChange={setCustomOccurrences}
-                occurrencesTitleKey={occurrencesTitleKey}
-                occurrencesCustomLabelKey={occurrencesCustomLabelKey}
-                minCustomOccurrences={minCustomOccurrences}
-              />
-            )}
-
-            {isRecurring && (
-              <button
-                type="button"
-                onClick={handleConfirm}
-                className="w-full mt-4 px-4 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-medium min-h-[48px]"
-              >
-                {t('addExpense.recurrence.confirm')}
-              </button>
-            )}
-          </>
-        ) : (
+        {customFormActive ? (
           <div className="space-y-4">
             <div className="flex gap-2">
               <button
@@ -285,36 +355,43 @@ export function ExpenseRecurrencePickerModal({
               </div>
             )}
 
-            <RecurrenceOccurrencesLimitField
-              occurrencesLimit={occurrencesLimit}
-              customOccurrences={customOccurrences}
-              onOccurrencesLimitChange={setOccurrencesLimit}
-              onCustomOccurrencesChange={setCustomOccurrences}
-              occurrencesTitleKey={occurrencesTitleKey}
-              occurrencesCustomLabelKey={occurrencesCustomLabelKey}
-              minCustomOccurrences={minCustomOccurrences}
-            />
+            {renderOccurrencesField()}
 
-            <div className="flex gap-3 pt-2">
-              <button
-                type="button"
-                onClick={() => {
-                  setShowCustomForm(false);
-                  setValidationErrorKey(null);
-                }}
-                className="flex-1 px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200 min-h-[48px]"
-              >
-                {t('addExpense.recurrence.back')}
-              </button>
+            <button
+              type="button"
+              onClick={handleCustomConfirm}
+              className="w-full px-4 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-medium min-h-[48px]"
+            >
+              {t('addExpense.recurrence.confirm')}
+            </button>
+          </div>
+        ) : presetListExpanded ? (
+          <ul className="space-y-2">
+            {RECURRENCE_PRESET_IDS.map((presetId) =>
+              renderPresetButton(presetId, presetId === pendingPreset),
+            )}
+          </ul>
+        ) : (
+          <>
+            <div className="w-full flex items-center gap-3 px-4 py-3 rounded-xl min-h-[48px] bg-amber-50 dark:bg-amber-900/20 border border-amber-300 dark:border-amber-700 text-amber-700 dark:text-amber-300 mb-4">
+              <span className="flex-1 text-start font-medium">
+                {t(selectedPresetLabelKey, selectedPresetLabelParams)}
+              </span>
+              <Check className="w-5 h-5 shrink-0" aria-hidden />
+            </div>
+
+            {renderOccurrencesField()}
+
+            {isRecurring && (
               <button
                 type="button"
                 onClick={handleConfirm}
-                className="flex-1 px-4 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-medium min-h-[48px]"
+                className="w-full mt-4 px-4 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-medium min-h-[48px]"
               >
                 {t('addExpense.recurrence.confirm')}
               </button>
-            </div>
-          </div>
+            )}
+          </>
         )}
       </div>
     </div>

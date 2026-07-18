@@ -47,7 +47,9 @@
         "terminateConfirm": "Stop recurrence",
         "terminateCancel": "Cancel",
         "unnamed": "Recurring expense",
-        "saveError": "Could not save changes. Please try again."
+        "saveError": "Could not save changes. Please try again.",
+        "remainingOccurrences": "{{count}} occurrences remaining",
+        "unlimitedOccurrences": "Unlimited"
       }
     }
   },
@@ -106,9 +108,21 @@
       "saveError": "Could not save changes. Please try again.",
       "recurringDeleteTitle": "Delete recurring expense?",
       "recurringDeleteMessage": "This expense is part of a recurring series. What would you like to delete?",
+      "recurringDeleteExpenseName": "Expense",
+      "recurringDeleteAmount": "Amount",
       "recurringDeleteInstanceOnly": "Delete this instance only",
       "recurringDeleteThisAndFuture": "Delete this and future instances",
-      "recurringDeleteProgress": "{{current}} of {{total}}"
+      "recurringDeleteThisAndFutureWithCount": "Delete this and {{count}} future occurrences",
+      "recurringDeleteThisAndFutureWithCount_one": "Delete this and {{count}} future occurrence",
+      "recurringDeleteProgress": "{{current}} of {{total}}",
+      "recurringEditTitle": "Apply changes?",
+      "recurringEditMessage": "Save changes to this expense only, or to this and all future expenses?",
+      "recurringEditInstanceOnly": "This expense only",
+      "recurringEditThisAndFuture": "This and all future expenses",
+      "recurringInstanceLinkTitle": "Keep linked to series?",
+      "recurringInstanceLinkMessage": "Keep this expense linked for future series changes, or disconnect it and turn it into a one-time expense?",
+      "recurringInstanceLinkKeepConnected": "Keep connected",
+      "recurringInstanceLinkDisconnect": "Disconnect"
     },
     "editModal": {
       "title": "Edit expense",
@@ -125,7 +139,8 @@
       "description": "Description",
       "paymentMethod": "Payment method",
       "date": "Date",
-      "attachment": "Images"
+      "attachment": "Images",
+      "recurringExpense": "Recurring expense: {{schedule}}"
     },
     "validation": {
       "AMOUNT_INVALID": "Amount must be a valid number",
@@ -202,6 +217,7 @@
       "confirm": "Confirm",
       "cancel": "Cancel",
       "back": "Back",
+      "change": "Change",
       "occurrencesTitle": "How many times?",
       "occurrencesRemainingTitle": "How many more times?",
       "occurrencesRemainingCustomLabel": "Remaining times",

@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { type Expense } from '../../types/expense';
 import { applyRecurrenceDelete } from './applyRecurrenceDelete';
+import { computeDueDates } from './computeDueDates';
+import { isRecurrenceDateExcluded } from './isRecurrenceDateExcluded';
 
 const dailyRule = { type: 'daily' as const, interval: 1, occurrences: null };
 
@@ -57,6 +59,19 @@ describe('applyRecurrenceDelete', () => {
     expect(result).toHaveLength(0);
   });
 
+  it('thisAndFuture from instance does not extend an earlier recurrenceEndDate', () => {
+    const template = makeExpense({
+      id: 't1',
+      date: '2026-03-01',
+      recurrenceRule: dailyRule,
+      recurrenceEndDate: '2026-03-04',
+    });
+    const split = makeExpense({ id: 'i2', date: '2026-03-10', recurrenceSeriesId: 't1' });
+    const result = applyRecurrenceDelete([template, split], split, 'thisAndFuture');
+
+    expect(result.find((e) => e.id === 't1')?.recurrenceEndDate).toBe('2026-03-04');
+  });
+
   it('thisAndFuture from instance caps template and removes future instances', () => {
     const template = makeExpense({ id: 't1', date: '2026-03-01', recurrenceRule: dailyRule });
     const past = makeExpense({ id: 'i1', date: '2026-03-02', recurrenceSeriesId: 't1' });
@@ -87,5 +102,33 @@ describe('applyRecurrenceDelete', () => {
     expect(result.find((e) => e.id === 't1')).toBeUndefined();
     expect(result.find((e) => e.id === 'i2')).toBeUndefined();
     expect(result.find((e) => e.id === 'i1')).toBeDefined();
+  });
+
+  it('instanceOnly on last visible instance excludes date so sync will not regenerate it', () => {
+    const template = makeExpense({
+      id: 't1',
+      date: '2026-03-01',
+      recurrenceRule: dailyRule,
+      recurrenceEndDate: '2026-03-05',
+    });
+    const lastVisible = makeExpense({ id: 'i1', date: '2026-03-05', recurrenceSeriesId: 't1' });
+    const todayIso = '2026-03-10';
+
+    const afterDelete = applyRecurrenceDelete(
+      [template, lastVisible],
+      lastVisible,
+      'instanceOnly',
+    );
+
+    expect(afterDelete.find((e) => e.id === 'i1')).toBeUndefined();
+    const updatedTemplate = afterDelete.find((e) => e.id === 't1');
+    expect(updatedTemplate?.recurrenceExcludedDates).toEqual(['2026-03-05']);
+
+    const dueDates = computeDueDates(updatedTemplate!.date, dailyRule, todayIso);
+    const regeneratableDates = dueDates.filter(
+      (date) => !isRecurrenceDateExcluded(updatedTemplate!, date),
+    );
+
+    expect(regeneratableDates).not.toContain('2026-03-05');
   });
 });

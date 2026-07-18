@@ -19,6 +19,9 @@ import { filterExpensesByPeriod } from '../domain/expenses/periods';
 import { ExpenseEditModal } from '../features/expenses/components/ExpenseEditModal';
 import { DiscardChangesModal } from '../features/expenses/components/DiscardChangesModal';
 import { RecurringDeleteConfirmModal } from '../features/expenses/components/RecurringDeleteConfirmModal';
+import { RecurringEditConfirmModal } from '../features/expenses/components/RecurringEditConfirmModal';
+import { RecurringInstanceLinkConfirmModal } from '../features/expenses/components/RecurringInstanceLinkConfirmModal';
+import { DEFAULT_RECURRENCE_SELECTION } from '../types/recurrenceRule';
 import { AddExpenseFab } from '../features/expenses/components/AddExpenseFab';
 import { AddExpenseFlowModal } from '../features/expenses/components/AddExpenseFlowModal';
 import { getAllBuiltinSubCategoryIds, getSubCategoryI18nKey } from '../domain/categories/hierarchy';
@@ -33,11 +36,11 @@ export function ExpensesPage() {
 
   const { userId } = useAuthSession();
   const { customCategories } = useCategories(userId);
-  const { expenses, loadError, reload, createExpense } = useExpenses(userId);
+  const { expenses, loadError, reload, createExpense } = useExpenses();
   const addFlow = useAddExpenseFlow({ userId, createExpense });
 
-  const batch = useExpenseBatchMode(expenses, userId, reload);
   const timeFilter = useExpenseTimeFilter(locale);
+  const batch = useExpenseBatchMode(expenses, userId, reload, timeFilter.todayIso);
 
   const filteredExpenses = useMemo(
     () => filterExpensesByPeriod(batch.displayExpenses, timeFilter.range),
@@ -125,14 +128,14 @@ export function ExpensesPage() {
           open={batch.editingExpense !== null}
           input={batch.editInput}
           categoryOptions={categoryOptions}
-          recurrenceSelection={batch.editRecurrenceSelection}
+          recurrenceSelection={DEFAULT_RECURRENCE_SELECTION}
           existingAttachmentUrl={batch.editingExpense?.attachmentUrl}
           pendingAttachmentFile={batch.pendingAttachmentFile}
           removeAttachment={batch.removeAttachment}
           isSaving={batch.isSaving}
           errorKey={batch.editError}
           onChange={batch.setEditInput}
-          onRecurrenceSelectionChange={batch.setEditRecurrenceSelection}
+          onRecurrenceSelectionChange={() => {}}
           onAttachmentFileChange={(file) => {
             batch.setPendingAttachmentFile(file);
             if (file) {
@@ -145,8 +148,24 @@ export function ExpensesPage() {
           }}
           onSave={() => void batch.saveLocalEdit()}
           onClose={batch.closeEditModal}
+          hideDateField={batch.isEditingRecurringExpense}
+          hideRecurrenceField={batch.isEditingRecurringExpense}
         />
       )}
+
+      <RecurringEditConfirmModal
+        open={batch.showRecurringEditModal}
+        isSaving={batch.isSaving}
+        onConfirm={(scope) => void batch.confirmRecurringEdit(scope)}
+        onDismiss={batch.dismissRecurringEdit}
+      />
+
+      <RecurringInstanceLinkConfirmModal
+        open={batch.showRecurringInstanceLinkModal}
+        isSaving={batch.isSaving}
+        onConfirm={(link) => void batch.confirmInstanceOnlyEdit(link)}
+        onDismiss={batch.dismissInstanceOnlyEdit}
+      />
 
       <DiscardChangesModal
         open={batch.showDiscardModal}
@@ -157,6 +176,9 @@ export function ExpensesPage() {
       <RecurringDeleteConfirmModal
         open={batch.showRecurringDeleteModal}
         target={batch.recurringDeleteTarget}
+        expenses={batch.pendingDeleteDraft}
+        todayIso={timeFilter.todayIso}
+        customCategories={customCategories}
         locale={locale}
         queueIndex={batch.recurringDeleteQueueIndex}
         queueTotal={batch.recurringDeleteQueueTotal}
@@ -165,7 +187,10 @@ export function ExpensesPage() {
         onDismiss={batch.dismissRecurringDelete}
       />
 
-      <AddExpenseFab onClick={addFlow.openFlow} hidden={addFlow.open} />
+      <AddExpenseFab
+        onClick={addFlow.openFlow}
+        hidden={addFlow.open || batch.mode !== 'view'}
+      />
       <AddExpenseFlowModal
         open={addFlow.open}
         step={addFlow.step}

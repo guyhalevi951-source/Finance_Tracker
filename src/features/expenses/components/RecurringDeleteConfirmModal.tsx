@@ -1,13 +1,25 @@
+import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { X } from 'lucide-react';
 import { type Expense } from '../../../types/expense';
+import { type CustomCategory } from '../../../types/category';
 import { type RecurrenceDeleteScope } from '../../../domain/recurrence/applyRecurrenceDelete';
-import { formatExpenseDateLong } from '../../../lib/format/formatDate';
+import { countThisAndFutureDeleteOccurrences } from '../../../domain/recurrence/countThisAndFutureDeleteOccurrences';
+import { isBuiltinSubCategoryId } from '../../../domain/categories/hierarchy';
+import {
+  getBuiltinCategoryI18nKey,
+  resolveCustomCategoryLabel,
+} from '../../../domain/categories/resolveCategoryLabel';
+import { resolveExpenseDisplayLabel } from '../../../domain/expenses/resolveExpenseDisplayLabel';
+import { formatCurrencyAmount, formatExpenseDateLong } from '../../../lib/format/formatDate';
 import { type AppLocale } from '../../../config/app';
 
 interface RecurringDeleteConfirmModalProps {
   open: boolean;
   target: Expense | null;
+  expenses: Expense[];
+  todayIso: string;
+  customCategories: CustomCategory[];
   locale: AppLocale;
   queueIndex: number;
   queueTotal: number;
@@ -19,6 +31,9 @@ interface RecurringDeleteConfirmModalProps {
 export function RecurringDeleteConfirmModal({
   open,
   target,
+  expenses,
+  todayIso,
+  customCategories,
   locale,
   queueIndex,
   queueTotal,
@@ -28,7 +43,24 @@ export function RecurringDeleteConfirmModal({
 }: RecurringDeleteConfirmModalProps) {
   const { t } = useTranslation();
 
+  const futureOccurrenceCount = useMemo(() => {
+    if (!target) return 0;
+    const total = countThisAndFutureDeleteOccurrences(expenses, target, todayIso);
+    return Math.max(0, total - 1);
+  }, [expenses, target, todayIso]);
+
   if (!open || !target) return null;
+
+  const categoryLabel = isBuiltinSubCategoryId(target.category)
+    ? t(getBuiltinCategoryI18nKey(target.category))
+    : (resolveCustomCategoryLabel(target.category, customCategories, locale) ??
+      t('category.sub.other.miscellaneous'));
+  const displayName = resolveExpenseDisplayLabel(target, locale, categoryLabel);
+
+  const thisAndFutureLabel =
+    futureOccurrenceCount === 1
+      ? t('expense.batch.recurringDeleteThisAndFutureWithCount_one', { count: futureOccurrenceCount })
+      : t('expense.batch.recurringDeleteThisAndFutureWithCount', { count: futureOccurrenceCount });
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/50">
@@ -61,12 +93,34 @@ export function RecurringDeleteConfirmModal({
           </p>
         )}
 
-        <p className="text-slate-600 dark:text-slate-300 mb-2">
+        <p className="text-slate-600 dark:text-slate-300 mb-4">
           {t('expense.batch.recurringDeleteMessage')}
         </p>
-        <p className="text-sm font-medium text-slate-800 dark:text-slate-100 mb-6">
-          {formatExpenseDateLong(target.date, locale)}
-        </p>
+
+        <div className="rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700/50 px-4 py-4 mb-6 space-y-2">
+          <div>
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              {t('expense.batch.recurringDeleteExpenseName')}
+            </p>
+            <p className="font-medium text-slate-800 dark:text-slate-100 truncate">{displayName}</p>
+          </div>
+          <div>
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              {t('expense.batch.recurringDeleteAmount')}
+            </p>
+            <p className="font-medium text-slate-800 dark:text-slate-100">
+              {formatCurrencyAmount(target.amount, locale)}
+            </p>
+          </div>
+          <div>
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              {t('expense.dateLabel')}
+            </p>
+            <p className="text-sm text-slate-700 dark:text-slate-200">
+              {formatExpenseDateLong(target.date, locale)}
+            </p>
+          </div>
+        </div>
 
         <div className="flex flex-col gap-3">
           <button
@@ -77,14 +131,16 @@ export function RecurringDeleteConfirmModal({
           >
             {t('expense.batch.recurringDeleteInstanceOnly')}
           </button>
+          {futureOccurrenceCount > 0 && (
           <button
             type="button"
             onClick={() => onConfirm('thisAndFuture')}
             disabled={isSaving}
-            className="w-full px-4 py-3 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-medium min-h-[48px] disabled:opacity-60"
+            className="w-full px-4 py-3 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-medium min-h-[48px] disabled:opacity-60 whitespace-normal"
           >
-            {t('expense.batch.recurringDeleteThisAndFuture')}
+            {thisAndFutureLabel}
           </button>
+          )}
         </div>
       </div>
     </div>

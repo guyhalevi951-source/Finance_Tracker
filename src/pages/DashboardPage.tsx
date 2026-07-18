@@ -19,7 +19,7 @@ export function DashboardPage() {
   const locale = i18n.language as AppLocale;
 
   const { userId } = useAuthSession();
-  const { expenses, loadError: expensesLoadError } = useExpenses(userId);
+  const { expenses, loadError: expensesLoadError } = useExpenses();
   const { budget, budgetInput, summary, showBudgetSaved, loadError: budgetLoadError, setBudgetInput, handleSetBudget } = useBudgetTracker(expenses);
   const { loadCategoryError, clearLoadCategoryError } = useCategories(userId);
 

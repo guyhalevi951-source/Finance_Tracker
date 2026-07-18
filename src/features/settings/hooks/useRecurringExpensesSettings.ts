@@ -1,22 +1,12 @@
 import { useCallback, useMemo, useState } from 'react';
 import { type Expense } from '../../../types/expense';
-import {
-  DEFAULT_RECURRENCE_SELECTION,
-  type RecurrenceRule,
-  type RecurrenceSelection,
-} from '../../../types/recurrenceRule';
 import { type AppLocale } from '../../../config/app';
 import { validateExpenseInput, type EditExpenseInput } from '../../../domain/expenses/validateExpense';
-import { applyRecurrenceSeriesSettingsEdit } from '../../../domain/recurrence/applyRecurrenceSeriesSettingsEdit';
-import { countSeriesOccurrences } from '../../../domain/recurrence/countSeriesOccurrences';
+import { applyRecurringBasicFieldUpdate } from '../../../domain/recurrence/applyRecurringBasicFieldUpdate';
+import { resolveThisAndFutureAttachmentTarget } from '../../../domain/recurrence/resolveThisAndFutureAttachmentTarget';
 import { listActiveRecurrenceTemplates } from '../../../domain/recurrence/listActiveRecurrenceTemplates';
-import {
-  remainingOccurrencesToRuleLimit,
-  ruleLimitToRemainingSelection,
-} from '../../../domain/recurrence/occurrencesRemaining';
-import { ruleToSelection, selectionToRule } from '../../../domain/recurrence/presets';
 import { terminateRecurrenceSeries } from '../../../domain/recurrence/terminateRecurrenceSeries';
-import { validateRecurrenceSelection } from '../../../domain/recurrence/validateRecurrenceRule';
+import { dayAfterIso } from '../../../domain/expenses/shiftIsoDate';
 import { resolveBilingualText } from '../../../domain/i18n/resolveBilingualText';
 import { useTodayIso } from '../../../lib/hooks/useTodayIso';
 import { applyExpenseBatch } from '../../../services/expenses/expenseRepository';
@@ -33,50 +23,6 @@ export interface UseRecurringExpensesSettingsParams {
   locale: AppLocale;
 }
 
-function selectionToRuleWithRemaining(
-  selection: RecurrenceSelection,
-  currentCount: number,
-): RecurrenceRule | null {
-  const baseRule = selectionToRule(selection);
-  if (!baseRule) return null;
-
-  const limit = selection.occurrencesLimit ?? 'unlimited';
-  if (limit === 'unlimited') {
-    return { ...baseRule, occurrences: null };
-  }
-
-  if (limit === 'custom') {
-    const remaining = selection.customOccurrences ?? 0;
-    return {
-      ...baseRule,
-      occurrences: remainingOccurrencesToRuleLimit(remaining, currentCount),
-    };
-  }
-
-  const remaining = Number.parseInt(limit, 10);
-  return {
-    ...baseRule,
-    occurrences: remainingOccurrencesToRuleLimit(remaining, currentCount),
-  };
-}
-
-function buildRecurrenceSelectionForTemplate(
-  template: Expense,
-  expenses: Expense[],
-): RecurrenceSelection {
-  if (!template.recurrenceRule) {
-    return DEFAULT_RECURRENCE_SELECTION;
-  }
-
-  const base = ruleToSelection(template.recurrenceRule);
-  const remainingFields = ruleLimitToRemainingSelection(
-    template.recurrenceRule,
-    countSeriesOccurrences(expenses, template.id),
-  );
-
-  return { ...base, ...remainingFields };
-}
-
 export function useRecurringExpensesSettings({
   userId,
   expenses,
@@ -87,8 +33,6 @@ export function useRecurringExpensesSettings({
 
   const [editingTemplate, setEditingTemplate] = useState<Expense | null>(null);
   const [editInput, setEditInput] = useState<EditExpenseInput | null>(null);
-  const [editRecurrenceSelection, setEditRecurrenceSelection] =
-    useState<RecurrenceSelection>(DEFAULT_RECURRENCE_SELECTION);
   const [pendingAttachmentFile, setPendingAttachmentFile] = useState<File | null>(null);
   const [removeAttachment, setRemoveAttachment] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<Expense | null>(null);
@@ -103,7 +47,6 @@ export function useRecurringExpensesSettings({
   const resetEditSession = useCallback(() => {
     setEditingTemplate(null);
     setEditInput(null);
-    setEditRecurrenceSelection(DEFAULT_RECURRENCE_SELECTION);
     setPendingAttachmentFile(null);
     setRemoveAttachment(false);
     setErrorKey(null);
@@ -119,12 +62,11 @@ export function useRecurringExpensesSettings({
         paymentMethod: template.paymentMethod,
         date: template.date,
       });
-      setEditRecurrenceSelection(buildRecurrenceSelectionForTemplate(template, expenses));
       setPendingAttachmentFile(null);
       setRemoveAttachment(false);
       setErrorKey(null);
     },
-    [expenses, locale],
+    [locale],
   );
 
   const closeEdit = useCallback(() => {
@@ -149,16 +91,6 @@ export function useRecurringExpensesSettings({
       return;
     }
 
-    const recurrenceError = validateRecurrenceSelection(editRecurrenceSelection);
-    const limit = editRecurrenceSelection.occurrencesLimit ?? 'unlimited';
-    const isZeroRemaining =
-      limit === 'custom' && (editRecurrenceSelection.customOccurrences ?? 0) === 0;
-
-    if (recurrenceError && !isZeroRemaining) {
-      setErrorKey(recurrenceError);
-      return;
-    }
-
     setIsSaving(true);
     setErrorKey(null);
 
@@ -169,66 +101,56 @@ export function useRecurringExpensesSettings({
           ? editingTemplate.description
           : await createBilingualText(result.value.description, locale);
 
-      let updated: Expense = {
-        ...editingTemplate,
+      const basicFields = {
         description,
         amount: result.value.amount,
         category: result.value.category,
         paymentMethod: result.value.paymentMethod as Expense['paymentMethod'],
-        date: editingTemplate.date,
       };
 
-      const currentCount = countSeriesOccurrences(expenses, editingTemplate.id);
-      const newRule = selectionToRule(editRecurrenceSelection);
-      const customRemaining = editRecurrenceSelection.customOccurrences ?? 0;
-      const shouldTerminate =
-        newRule === null ||
-        (limit === 'custom' && customRemaining === 0);
+      const futureFromIso = dayAfterIso(todayIso);
 
-      let nextExpenses: Expense[];
-      let targetId = editingTemplate.id;
+      let nextExpenses = applyRecurringBasicFieldUpdate(
+        expenses,
+        editingTemplate,
+        basicFields,
+        'thisAndFuture',
+        futureFromIso,
+      );
 
-      if (shouldTerminate) {
-        nextExpenses = terminateRecurrenceSeries(expenses, editingTemplate, todayIso);
-        nextExpenses = nextExpenses.map((expense) =>
-          expense.id === editingTemplate.id ? { ...expense, ...updated } : expense,
-        );
-      } else {
-        const resolvedRule = selectionToRuleWithRemaining(editRecurrenceSelection, currentCount);
-        nextExpenses = applyRecurrenceSeriesSettingsEdit(
-          expenses,
-          editingTemplate,
-          updated,
-          resolvedRule,
-          todayIso,
-        );
-
-        const newTemplate = nextExpenses.find(
-          (expense) =>
-            expense.id !== editingTemplate.id &&
-            expense.date === todayIso &&
-            expense.recurrenceRule !== undefined,
-        );
-        if (newTemplate) {
-          targetId = newTemplate.id;
-        }
-      }
+      const attachmentTarget = resolveThisAndFutureAttachmentTarget(
+        nextExpenses,
+        editingTemplate,
+        futureFromIso,
+      );
 
       if (removeAttachment) {
-        await deleteExpenseAttachment(userId, targetId);
-        const { attachmentUrl, ...withoutAttachment } = updated;
-        updated = withoutAttachment;
-        nextExpenses = nextExpenses.map((expense) =>
-          expense.id === targetId ? { ...expense, ...withoutAttachment } : expense,
-        );
+        if (editingTemplate.attachmentUrl) {
+          await deleteExpenseAttachment(userId, editingTemplate.id);
+        }
+        if (
+          attachmentTarget.id !== editingTemplate.id &&
+          attachmentTarget.attachmentUrl
+        ) {
+          await deleteExpenseAttachment(userId, attachmentTarget.id);
+        }
+
+        const stripIds = new Set([attachmentTarget.id, editingTemplate.id]);
+        nextExpenses = nextExpenses.map((expense) => {
+          if (!stripIds.has(expense.id) || !expense.attachmentUrl) {
+            return expense;
+          }
+          const { attachmentUrl, ...withoutAttachment } = expense;
+          return withoutAttachment;
+        });
       } else if (pendingAttachmentFile) {
         const attachmentUrl = await uploadExpenseAttachment(
           userId,
-          targetId,
+          attachmentTarget.id,
           pendingAttachmentFile,
         );
         nextExpenses = nextExpenses.map((expense) =>
-          expense.id === targetId ? { ...expense, attachmentUrl } : expense,
+          expense.id === attachmentTarget.id ? { ...expense, attachmentUrl } : expense,
         );
       }
 
@@ -248,7 +170,6 @@ export function useRecurringExpensesSettings({
     }
   }, [
     editInput,
-    editRecurrenceSelection,
     editingTemplate,
     expenses,
     locale,
@@ -282,7 +203,6 @@ export function useRecurringExpensesSettings({
     activeTemplates,
     editingTemplate,
     editInput,
-    editRecurrenceSelection,
     pendingAttachmentFile,
     removeAttachment,
     deleteTarget,
@@ -295,7 +215,6 @@ export function useRecurringExpensesSettings({
     saveEdit,
     confirmDelete,
     setEditInput,
-    setEditRecurrenceSelection,
     setPendingAttachmentFile,
     setRemoveAttachment,
   };

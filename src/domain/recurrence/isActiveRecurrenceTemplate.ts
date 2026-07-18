@@ -1,7 +1,7 @@
 import { type Expense } from '../../types/expense';
 import { canGenerateOccurrence } from './canGenerateOccurrence';
 import { computeDueDates } from './computeDueDates';
-import { countSeriesOccurrences } from './countSeriesOccurrences';
+import { countConsumedSeriesOccurrences } from './countSeriesOccurrences';
 import { isRecurrenceDateExcluded } from './isRecurrenceDateExcluded';
 import { isoDateToDate, toIsoDate } from '../expenses/parseExpenseDate';
 
@@ -51,7 +51,7 @@ export function isActiveRecurrenceTemplate(
     return false;
   }
 
-  const currentCount = countSeriesOccurrences(expenses, template.id);
+  const currentCount = countConsumedSeriesOccurrences(expenses, template);
   if (!canGenerateOccurrence(rule.occurrences, currentCount, 0)) {
     return false;
   }

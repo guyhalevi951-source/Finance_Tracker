@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { type Expense } from '../../types/expense';
-import { countSeriesOccurrences } from './countSeriesOccurrences';
+import { countConsumedSeriesOccurrences, countSeriesOccurrences } from './countSeriesOccurrences';
 
 function makeExpense(overrides: Partial<Expense> & Pick<Expense, 'id'>): Expense {
   return {
@@ -27,5 +27,18 @@ describe('countSeriesOccurrences', () => {
     const other = makeExpense({ id: 'other' });
 
     expect(countSeriesOccurrences([template, other], 't1')).toBe(1);
+  });
+});
+
+describe('countConsumedSeriesOccurrences', () => {
+  it('adds excluded dates to the materialized count', () => {
+    const template = makeExpense({
+      id: 't1',
+      date: '2026-03-01',
+      recurrenceExcludedDates: ['2026-03-02'],
+    });
+    const instance = makeExpense({ id: 'i1', date: '2026-03-03', recurrenceSeriesId: 't1' });
+
+    expect(countConsumedSeriesOccurrences([template, instance], template)).toBe(3);
   });
 });

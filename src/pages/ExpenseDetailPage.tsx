@@ -16,7 +16,7 @@ export function ExpenseDetailPage() {
 
   const { userId } = useAuthSession();
   const { customCategories } = useCategories(userId);
-  const { expenses } = useExpenses(userId);
+  const { expenses } = useExpenses();
 
   const expense = expenses.find((e) => e.id === id);
 
@@ -40,6 +40,7 @@ export function ExpenseDetailPage() {
   return (
     <ExpenseDetailsView
       expense={expense}
+      expenses={expenses}
       locale={locale}
       customCategories={customCategories}
     />

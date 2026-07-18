@@ -1,20 +1,13 @@
 import { type Expense } from '../../types/expense';
 import { type RecurrenceRule } from '../../types/recurrenceRule';
 import { isoDateToDate, toIsoDate } from '../expenses/parseExpenseDate';
+import { capTemplateEndDate } from './earliestEndDate';
+import { stripRecurrenceFields } from './stripRecurrenceFields';
 
 function dayBefore(iso: string): string {
   const date = isoDateToDate(iso);
   date.setDate(date.getDate() - 1);
   return toIsoDate(date);
-}
-
-function stripRecurrenceFields(expense: Expense): Expense {
-  const { recurrenceRule, recurrenceSeriesId, recurrenceEndDate, ...rest } = expense;
-  return rest;
-}
-
-function capTemplateEndDate(expense: Expense, endDate: string): Expense {
-  return { ...expense, recurrenceEndDate: endDate };
 }
 
 function applyRecurrenceRule(expense: Expense, rule: RecurrenceRule): Expense {

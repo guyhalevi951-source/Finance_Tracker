@@ -13,6 +13,7 @@ import {
   isRecurrenceActive,
   resolveRecurrenceLabelDescriptor,
 } from '../../../domain/recurrence/resolveRecurrenceLabelKey';
+import { resolveOccurrencesLimitLabelDescriptor } from '../../../domain/recurrence/resolveOccurrencesLimitLabelKey';
 import { ExpenseNumpad, formatNumpadDisplay } from './ExpenseNumpad';
 import { ExpenseDatePickerModal } from './ExpenseDatePickerModal';
 import { ExpensePaymentMethodPickerModal } from './ExpensePaymentMethodPickerModal';
@@ -71,6 +72,11 @@ export function ExpenseEntryStep({
   const recurrenceDescriptor = resolveRecurrenceLabelDescriptor(recurrenceSelection);
   const recurrenceLabel = t(recurrenceDescriptor.key, recurrenceDescriptor.params);
   const recurrenceActive = isRecurrenceActive(recurrenceSelection);
+  const occurrencesDescriptor = resolveOccurrencesLimitLabelDescriptor(recurrenceSelection);
+  const recurrenceOccurrencesLabel = occurrencesDescriptor
+    ? occurrencesDescriptor.literal ??
+      t(occurrencesDescriptor.key, occurrencesDescriptor.params)
+    : null;
 
   return (
     <div className="flex flex-col h-full">
@@ -141,6 +147,7 @@ export function ExpenseEntryStep({
             paymentMethodLabel={paymentMethodLabel}
             onPaymentMethodClick={() => setPaymentMethodModalOpen(true)}
             recurrenceLabel={recurrenceLabel}
+            recurrenceOccurrencesLabel={recurrenceOccurrencesLabel}
             recurrenceActive={recurrenceActive}
             onRecurrenceClick={() => setRecurrenceModalOpen(true)}
             onSubmit={onSubmit}

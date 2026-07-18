@@ -1,19 +1,20 @@
 import { useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { type Expense } from '../../../types/expense';
-import {
-  DEFAULT_RECURRENCE_SELECTION,
-  type RecurrenceSelection,
-} from '../../../types/recurrenceRule';
 import { validateExpenseInput, type EditExpenseInput } from '../../../domain/expenses/validateExpense';
-import { applyRecurrenceChangeOnEdit } from '../../../domain/recurrence/applyRecurrenceChangeOnEdit';
+import { detachRecurringInstance } from '../../../domain/recurrence/detachRecurringInstance';
+import {
+  applyRecurringBasicFieldUpdate,
+  type RecurrenceBasicFieldEditScope,
+  type RecurringBasicFields,
+} from '../../../domain/recurrence/applyRecurringBasicFieldUpdate';
 import {
   applyRecurrenceDelete,
   type RecurrenceDeleteScope,
 } from '../../../domain/recurrence/applyRecurrenceDelete';
 import { isRecurringExpense } from '../../../domain/recurrence/isRecurringExpense';
-import { ruleToSelection, selectionToRule } from '../../../domain/recurrence/presets';
-import { validateRecurrenceSelection } from '../../../domain/recurrence/validateRecurrenceRule';
+import { requiresRecurringDeletePrompt } from '../../../domain/recurrence/requiresRecurringDeletePrompt';
+import { sortExpensesByDateDescending } from '../../../domain/expenses/sortExpensesByDateDescending';
 import { applyExpenseBatch } from '../../../services/expenses/expenseRepository';
 import {
   deleteExpenseAttachment,
@@ -30,6 +31,12 @@ type PendingAttachmentChange = {
   file: File | null;
 };
 
+interface PendingRecurringEdit {
+  target: Expense;
+  basicFields: RecurringBasicFields;
+  attachmentChange: PendingAttachmentChange;
+}
+
 export interface UseExpenseBatchModeReturn {
   mode: ExpenseBatchMode;
   displayExpenses: Expense[];
@@ -37,8 +44,8 @@ export interface UseExpenseBatchModeReturn {
   selectedIds: Set<string>;
   showDiscardModal: boolean;
   editingExpense: Expense | null;
+  isEditingRecurringExpense: boolean;
   editInput: EditExpenseInput | null;
-  editRecurrenceSelection: RecurrenceSelection;
   pendingAttachmentFile: File | null;
   removeAttachment: boolean;
   isSaving: boolean;
@@ -46,18 +53,24 @@ export interface UseExpenseBatchModeReturn {
   batchError: string | null;
   showRecurringDeleteModal: boolean;
   recurringDeleteTarget: Expense | null;
+  pendingDeleteDraft: Expense[];
   recurringDeleteQueueIndex: number;
   recurringDeleteQueueTotal: number;
+  showRecurringEditModal: boolean;
+  showRecurringInstanceLinkModal: boolean;
   enterDeleteMode: () => void;
   enterEditMode: () => void;
   toggleSelected: (id: string) => void;
   openEditModal: (expense: Expense) => void;
   closeEditModal: () => void;
   setEditInput: (input: EditExpenseInput) => void;
-  setEditRecurrenceSelection: (selection: RecurrenceSelection) => void;
   setPendingAttachmentFile: (file: File | null) => void;
   setRemoveAttachment: (remove: boolean) => void;
   saveLocalEdit: () => Promise<void>;
+  confirmRecurringEdit: (scope: RecurrenceBasicFieldEditScope) => Promise<void>;
+  dismissRecurringEdit: () => void;
+  confirmInstanceOnlyEdit: (link: 'connected' | 'detached') => Promise<void>;
+  dismissInstanceOnlyEdit: () => void;
   confirmMode: () => Promise<void>;
   confirmRecurringDelete: (scope: RecurrenceDeleteScope) => Promise<void>;
   dismissRecurringDelete: () => void;
@@ -73,28 +86,11 @@ function cloneExpenses(expenses: Expense[]): Expense[] {
   }));
 }
 
-function resolveRecurrenceSelectionForExpense(
-  expense: Expense,
-  expenses: Expense[],
-): RecurrenceSelection {
-  if (expense.recurrenceRule) {
-    return ruleToSelection(expense.recurrenceRule);
-  }
-
-  if (expense.recurrenceSeriesId) {
-    const template = expenses.find((item) => item.id === expense.recurrenceSeriesId);
-    if (template?.recurrenceRule) {
-      return ruleToSelection(template.recurrenceRule);
-    }
-  }
-
-  return DEFAULT_RECURRENCE_SELECTION;
-}
-
 export function useExpenseBatchMode(
   committedExpenses: Expense[],
   userId: string | null,
   onCommittedChange: () => Promise<void>,
+  todayIso: string,
 ): UseExpenseBatchModeReturn {
   const { i18n } = useTranslation();
   const [mode, setMode] = useState<ExpenseBatchMode>('view');
@@ -103,13 +99,16 @@ export function useExpenseBatchMode(
   const [showDiscardModal, setShowDiscardModal] = useState(false);
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
   const [editInput, setEditInput] = useState<EditExpenseInput | null>(null);
-  const [editRecurrenceSelection, setEditRecurrenceSelection] =
-    useState<RecurrenceSelection>(DEFAULT_RECURRENCE_SELECTION);
   const [pendingAttachmentFile, setPendingAttachmentFile] = useState<File | null>(null);
   const [removeAttachment, setRemoveAttachment] = useState(false);
   const [pendingAttachmentChanges, setPendingAttachmentChanges] = useState<
     Map<string, PendingAttachmentChange>
   >(new Map());
+  const [pendingRecurringEdit, setPendingRecurringEdit] = useState<PendingRecurringEdit | null>(
+    null,
+  );
+  const [pendingInstanceOnlyEdit, setPendingInstanceOnlyEdit] =
+    useState<PendingRecurringEdit | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [editError, setEditError] = useState<string | null>(null);
   const [batchError, setBatchError] = useState<string | null>(null);
@@ -119,8 +118,13 @@ export function useExpenseBatchMode(
   const [recurringDeleteQueueTotal, setRecurringDeleteQueueTotal] = useState(0);
   const [pendingDeleteDraft, setPendingDeleteDraft] = useState<Expense[]>([]);
   const [deleteBaselineExpenses, setDeleteBaselineExpenses] = useState<Expense[]>([]);
+  const [editBaselineExpenses, setEditBaselineExpenses] = useState<Expense[]>([]);
 
   const displayExpenses = mode === 'view' ? committedExpenses : draftExpenses;
+  const isEditingRecurringExpense =
+    editingExpense !== null && isRecurringExpense(editingExpense);
+  const showRecurringEditModal = pendingRecurringEdit !== null;
+  const showRecurringInstanceLinkModal = pendingInstanceOnlyEdit !== null;
 
   const resetRecurringDeleteSession = useCallback(() => {
     setShowRecurringDeleteModal(false);
@@ -134,9 +138,10 @@ export function useExpenseBatchMode(
   const resetEditSession = useCallback(() => {
     setEditingExpense(null);
     setEditInput(null);
-    setEditRecurrenceSelection(DEFAULT_RECURRENCE_SELECTION);
     setPendingAttachmentFile(null);
     setRemoveAttachment(false);
+    setPendingRecurringEdit(null);
+    setPendingInstanceOnlyEdit(null);
     setEditError(null);
   }, []);
 
@@ -151,6 +156,7 @@ export function useExpenseBatchMode(
 
   const enterEditMode = useCallback(() => {
     setMode('editing');
+    setEditBaselineExpenses(cloneExpenses(committedExpenses));
     setDraftExpenses(cloneExpenses(committedExpenses));
     setSelectedIds(new Set());
     setShowDiscardModal(false);
@@ -170,7 +176,6 @@ export function useExpenseBatchMode(
   const openEditModal = useCallback(
     (expense: Expense) => {
       const locale = i18n.language as AppLocale;
-      const sourceExpenses = mode === 'view' ? committedExpenses : draftExpenses;
       setEditingExpense(expense);
       setEditInput({
         description: resolveBilingualText(expense.description, locale),
@@ -179,17 +184,75 @@ export function useExpenseBatchMode(
         paymentMethod: expense.paymentMethod,
         date: expense.date,
       });
-      setEditRecurrenceSelection(resolveRecurrenceSelectionForExpense(expense, sourceExpenses));
       setPendingAttachmentFile(null);
       setRemoveAttachment(false);
       setEditError(null);
     },
-    [committedExpenses, draftExpenses, i18n.language, mode],
+    [i18n.language],
   );
 
   const closeEditModal = useCallback(() => {
     resetEditSession();
   }, [resetEditSession]);
+
+  const dismissRecurringEdit = useCallback(() => {
+    resetEditSession();
+    setIsSaving(false);
+  }, [resetEditSession]);
+
+  const applyEditToDraft = useCallback(
+    (
+      nextExpenses: Expense[],
+      expenseId: string,
+      attachmentChange: PendingAttachmentChange,
+    ): Expense[] => {
+      let updated = nextExpenses.find((expense) => expense.id === expenseId);
+      if (!updated) return nextExpenses;
+
+      if (attachmentChange.remove) {
+        const { attachmentUrl, ...withoutAttachment } = updated;
+        updated = withoutAttachment;
+      }
+
+      const result = nextExpenses.map((expense) =>
+        expense.id === expenseId ? updated! : expense,
+      );
+
+      setPendingAttachmentChanges((prev) => {
+        const next = new Map(prev);
+        next.set(expenseId, attachmentChange);
+        return next;
+      });
+
+      return result;
+    },
+    [],
+  );
+
+  const applyPendingRecurringEdit = useCallback(
+    (
+      edit: PendingRecurringEdit,
+      scope: RecurrenceBasicFieldEditScope,
+      detach: boolean,
+    ): Expense[] => {
+      const { target, basicFields, attachmentChange } = edit;
+      let nextExpenses = applyRecurringBasicFieldUpdate(
+        draftExpenses,
+        target,
+        basicFields,
+        scope,
+        todayIso,
+      );
+
+      if (detach) {
+        const updatedTarget = nextExpenses.find((expense) => expense.id === target.id) ?? target;
+        nextExpenses = detachRecurringInstance(nextExpenses, updatedTarget);
+      }
+
+      return applyEditToDraft(nextExpenses, target.id, attachmentChange);
+    },
+    [applyEditToDraft, draftExpenses, todayIso],
+  );
 
   const saveLocalEdit = useCallback(async () => {
     if (!editingExpense || !editInput) return;
@@ -197,12 +260,6 @@ export function useExpenseBatchMode(
     const result = validateExpenseInput(editInput);
     if (!result.ok) {
       setEditError(result.error);
-      return;
-    }
-
-    const recurrenceError = validateRecurrenceSelection(editRecurrenceSelection);
-    if (recurrenceError) {
-      setEditError(recurrenceError);
       return;
     }
 
@@ -217,53 +274,50 @@ export function useExpenseBatchMode(
           ? editingExpense.description
           : await createBilingualText(result.value.description, locale);
 
-      let updated: Expense = {
-        ...editingExpense,
+      const basicFields: RecurringBasicFields = {
         description,
         amount: result.value.amount,
         category: result.value.category,
         paymentMethod: result.value.paymentMethod as Expense['paymentMethod'],
-        date: result.value.date,
       };
 
-      const newRule = selectionToRule(editRecurrenceSelection);
-      let nextExpenses = draftExpenses.map((expense) =>
-        expense.id === updated.id ? updated : expense,
-      );
-      nextExpenses = applyRecurrenceChangeOnEdit(nextExpenses, updated, newRule);
-      updated = nextExpenses.find((expense) => expense.id === editingExpense.id) ?? updated;
-
-      const pendingChange: PendingAttachmentChange = {
+      const attachmentChange: PendingAttachmentChange = {
         remove: removeAttachment,
         file: pendingAttachmentFile,
       };
 
-      setPendingAttachmentChanges((prev) => {
-        const next = new Map(prev);
-        next.set(editingExpense.id, pendingChange);
-        return next;
-      });
-
-      if (removeAttachment) {
-        const { attachmentUrl, ...withoutAttachment } = updated;
-        updated = withoutAttachment;
+      if (isRecurringExpense(editingExpense)) {
+        setPendingRecurringEdit({
+          target: editingExpense,
+          basicFields,
+          attachmentChange,
+        });
+        setIsSaving(false);
+        return;
       }
 
-      nextExpenses = nextExpenses.map((expense) =>
+      let updated: Expense = {
+        ...editingExpense,
+        ...basicFields,
+        date: result.value.date,
+      };
+
+      let nextExpenses = draftExpenses.map((expense) =>
         expense.id === updated.id ? updated : expense,
       );
+      nextExpenses = applyEditToDraft(nextExpenses, editingExpense.id, attachmentChange);
 
       setDraftExpenses(nextExpenses);
       resetEditSession();
+      setIsSaving(false);
     } catch {
       setEditError('translationError');
-    } finally {
       setIsSaving(false);
     }
   }, [
+    applyEditToDraft,
     draftExpenses,
     editInput,
-    editRecurrenceSelection,
     editingExpense,
     i18n.language,
     pendingAttachmentFile,
@@ -274,6 +328,7 @@ export function useExpenseBatchMode(
   const resetToView = useCallback(() => {
     setMode('view');
     setDraftExpenses([]);
+    setEditBaselineExpenses([]);
     setSelectedIds(new Set());
     setShowDiscardModal(false);
     setPendingAttachmentChanges(new Map());
@@ -283,11 +338,27 @@ export function useExpenseBatchMode(
   }, [resetEditSession, resetRecurringDeleteSession]);
 
   const persistBatch = useCallback(
-    async (nextExpensesInput: Expense[], baselineExpenses: Expense[]) => {
+    async (
+      nextExpensesInput: Expense[],
+      baselineExpenses: Expense[],
+      options?: { allowEmpty?: boolean },
+    ) => {
       setIsSaving(true);
       setBatchError(null);
 
       let nextExpenses = nextExpensesInput;
+
+      // Guard against stale draft overwriting storage with an empty list after
+      // expenses were created/reloaded while batch mode held an outdated snapshot.
+      if (
+        nextExpenses.length === 0 &&
+        baselineExpenses.length > 0 &&
+        options?.allowEmpty !== true
+      ) {
+        setBatchError('expense.batch.saveError');
+        setIsSaving(false);
+        return false;
+      }
 
       const removedIds = new Set(
         baselineExpenses
@@ -347,29 +418,123 @@ export function useExpenseBatchMode(
     [onCommittedChange, pendingAttachmentChanges, resetToView, userId],
   );
 
+  const persistRecurringEdit = useCallback(
+    async (nextExpenses: Expense[]) => {
+      const baseline =
+        editBaselineExpenses.length > 0 ? editBaselineExpenses : committedExpenses;
+      setDraftExpenses(nextExpenses);
+      return persistBatch(nextExpenses, baseline);
+    },
+    [committedExpenses, editBaselineExpenses, persistBatch],
+  );
+
+  const confirmRecurringEdit = useCallback(
+    async (scope: RecurrenceBasicFieldEditScope) => {
+      if (!pendingRecurringEdit) return;
+
+      if (scope === 'instanceOnly') {
+        setPendingInstanceOnlyEdit(pendingRecurringEdit);
+        setPendingRecurringEdit(null);
+        setIsSaving(false);
+        return;
+      }
+
+      setIsSaving(true);
+      setEditError(null);
+
+      try {
+        const nextExpenses = applyPendingRecurringEdit(pendingRecurringEdit, scope, false);
+        const ok = await persistRecurringEdit(nextExpenses);
+        if (!ok) {
+          setEditError('expense.batch.saveError');
+          return;
+        }
+        resetEditSession();
+      } catch {
+        setEditError('translationError');
+      } finally {
+        setIsSaving(false);
+      }
+    },
+    [applyPendingRecurringEdit, pendingRecurringEdit, persistRecurringEdit, resetEditSession],
+  );
+
+  const confirmInstanceOnlyEdit = useCallback(
+    async (link: 'connected' | 'detached') => {
+      if (!pendingInstanceOnlyEdit) return;
+
+      setIsSaving(true);
+      setEditError(null);
+
+      try {
+        const nextExpenses = applyPendingRecurringEdit(
+          pendingInstanceOnlyEdit,
+          'instanceOnly',
+          link === 'detached',
+        );
+        const ok = await persistRecurringEdit(nextExpenses);
+        if (!ok) {
+          setEditError('expense.batch.saveError');
+          return;
+        }
+        resetEditSession();
+      } catch {
+        setEditError('translationError');
+      } finally {
+        setIsSaving(false);
+      }
+    },
+    [applyPendingRecurringEdit, pendingInstanceOnlyEdit, persistRecurringEdit, resetEditSession],
+  );
+
+  const dismissInstanceOnlyEdit = useCallback(() => {
+    setPendingInstanceOnlyEdit(null);
+    setIsSaving(false);
+  }, []);
+
   const confirmMode = useCallback(async () => {
     if (mode === 'deleting') {
-      const selectedExpenses = draftExpenses.filter((expense) => selectedIds.has(expense.id));
-      const recurring = selectedExpenses.filter(isRecurringExpense);
-      const oneOffIds = new Set(
-        selectedExpenses.filter((expense) => !isRecurringExpense(expense)).map((expense) => expense.id),
+      const selectedExpenses = sortExpensesByDateDescending(
+        draftExpenses.filter((expense) => selectedIds.has(expense.id)),
       );
 
-      const afterOneOffDelete = draftExpenses.filter((expense) => !oneOffIds.has(expense.id));
+      const recurringWithFuture = selectedExpenses.filter(
+        (expense) =>
+          isRecurringExpense(expense) &&
+          requiresRecurringDeletePrompt(draftExpenses, expense, todayIso),
+      );
+      const recurringLastOnly = selectedExpenses.filter(
+        (expense) =>
+          isRecurringExpense(expense) &&
+          !requiresRecurringDeletePrompt(draftExpenses, expense, todayIso),
+      );
+      const nonRecurring = selectedExpenses.filter((expense) => !isRecurringExpense(expense));
 
-      if (recurring.length > 0) {
+      let workingDraft = draftExpenses;
+
+      for (const expense of recurringLastOnly) {
+        const target = workingDraft.find((item) => item.id === expense.id) ?? expense;
+        workingDraft = applyRecurrenceDelete(workingDraft, target, 'instanceOnly');
+      }
+
+      const nonRecurringIds = new Set(nonRecurring.map((expense) => expense.id));
+      workingDraft = workingDraft.filter((expense) => !nonRecurringIds.has(expense.id));
+
+      if (recurringWithFuture.length > 0) {
         setDeleteBaselineExpenses(draftExpenses);
-        setPendingDeleteDraft(afterOneOffDelete);
-        setDraftExpenses(afterOneOffDelete);
-        setSelectedIds(new Set(recurring.map((expense) => expense.id)));
-        setRecurringDeleteQueue(recurring);
-        setRecurringDeleteQueueTotal(recurring.length);
-        setRecurringDeleteTarget(recurring[0]);
+        setPendingDeleteDraft(workingDraft);
+        setDraftExpenses(workingDraft);
+        setSelectedIds(new Set(recurringWithFuture.map((expense) => expense.id)));
+        setRecurringDeleteQueue(recurringWithFuture);
+        setRecurringDeleteQueueTotal(recurringWithFuture.length);
+        setRecurringDeleteTarget(recurringWithFuture[0]);
         setShowRecurringDeleteModal(true);
         return;
       }
 
-      const ok = await persistBatch(afterOneOffDelete, draftExpenses);
+      const ok = await persistBatch(workingDraft, draftExpenses, {
+        allowEmpty: selectedExpenses.length === draftExpenses.length,
+      });
       if (ok) {
         setDraftExpenses([]);
         setSelectedIds(new Set());
@@ -377,8 +542,9 @@ export function useExpenseBatchMode(
       return;
     }
 
-    await persistBatch(draftExpenses, draftExpenses);
-  }, [draftExpenses, mode, persistBatch, selectedIds]);
+    // Edit mode must never wipe storage via a stale empty draft.
+    await persistBatch(draftExpenses, editBaselineExpenses.length > 0 ? editBaselineExpenses : draftExpenses);
+  }, [draftExpenses, editBaselineExpenses, mode, persistBatch, selectedIds, todayIso]);
 
   const confirmRecurringDelete = useCallback(
     async (scope: RecurrenceDeleteScope) => {
@@ -402,7 +568,9 @@ export function useExpenseBatchMode(
       setRecurringDeleteTarget(null);
       setRecurringDeleteQueue([]);
 
-      const ok = await persistBatch(nextDraft, deleteBaselineExpenses);
+      const ok = await persistBatch(nextDraft, deleteBaselineExpenses, {
+        allowEmpty: nextDraft.length === 0,
+      });
       if (ok) {
         resetRecurringDeleteSession();
       }
@@ -440,8 +608,8 @@ export function useExpenseBatchMode(
     selectedIds,
     showDiscardModal,
     editingExpense,
+    isEditingRecurringExpense,
     editInput,
-    editRecurrenceSelection,
     pendingAttachmentFile,
     removeAttachment,
     isSaving,
@@ -449,21 +617,27 @@ export function useExpenseBatchMode(
     batchError,
     showRecurringDeleteModal,
     recurringDeleteTarget,
+    pendingDeleteDraft,
     recurringDeleteQueueIndex:
       recurringDeleteQueueTotal > 0
         ? recurringDeleteQueueTotal - recurringDeleteQueue.length + 1
         : 0,
     recurringDeleteQueueTotal,
+    showRecurringEditModal,
+    showRecurringInstanceLinkModal,
     enterDeleteMode,
     enterEditMode,
     toggleSelected,
     openEditModal,
     closeEditModal,
     setEditInput,
-    setEditRecurrenceSelection,
     setPendingAttachmentFile,
     setRemoveAttachment,
     saveLocalEdit,
+    confirmRecurringEdit,
+    dismissRecurringEdit,
+    confirmInstanceOnlyEdit,
+    dismissInstanceOnlyEdit,
     confirmMode,
     confirmRecurringDelete,
     dismissRecurringDelete,

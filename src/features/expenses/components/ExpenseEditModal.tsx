@@ -11,6 +11,10 @@ import { type RecurrenceSelection } from '../../../types/recurrenceRule';
 import { preventNumberInputScroll } from '../../../lib/input/preventNumberInputScroll';
 import { ExpenseAttachmentField } from './ExpenseAttachmentField';
 import { ExpenseRecurrencePickerModal } from './ExpenseRecurrencePickerModal';
+import {
+  mergeOccurrencesIntoSelection,
+  RecurrenceOccurrencesLimitField,
+} from './RecurrenceOccurrencesLimitField';
 
 interface ExpenseEditModalProps {
   open: boolean;
@@ -29,6 +33,8 @@ interface ExpenseEditModalProps {
   onSave: () => void;
   onClose: () => void;
   hideDateField?: boolean;
+  hideRecurrenceField?: boolean;
+  dateLabelKey?: string;
   modalTitleKey?: string;
   occurrencesTitleKey?: string;
   occurrencesCustomLabelKey?: string;
@@ -52,6 +58,8 @@ export function ExpenseEditModal({
   onSave,
   onClose,
   hideDateField = false,
+  hideRecurrenceField = false,
+  dateLabelKey = 'expense.dateLabel',
   modalTitleKey = 'expense.editModal.title',
   occurrencesTitleKey,
   occurrencesCustomLabelKey,
@@ -155,7 +163,7 @@ export function ExpenseEditModal({
             {!hideDateField && (
             <div>
               <label className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-2">
-                {t('expense.dateLabel')}
+                {t(dateLabelKey)}
               </label>
               <input
                 type="date"
@@ -165,6 +173,8 @@ export function ExpenseEditModal({
               />
             </div>
             )}
+            {!hideRecurrenceField && (
+            <>
             <div>
               <label className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-2">
                 {t('addExpense.recurrence.selectRecurrence')}
@@ -181,6 +191,32 @@ export function ExpenseEditModal({
                 {recurrenceLabel}
               </button>
             </div>
+            {recurrenceActive && (
+              <RecurrenceOccurrencesLimitField
+                variant="inline"
+                occurrencesLimit={recurrenceSelection.occurrencesLimit ?? 'unlimited'}
+                customOccurrences={recurrenceSelection.customOccurrences ?? 2}
+                onOccurrencesLimitChange={(limit) =>
+                  onRecurrenceSelectionChange(
+                    mergeOccurrencesIntoSelection(
+                      recurrenceSelection,
+                      limit,
+                      recurrenceSelection.customOccurrences ?? 2,
+                    ),
+                  )
+                }
+                onCustomOccurrencesChange={(count) =>
+                  onRecurrenceSelectionChange(
+                    mergeOccurrencesIntoSelection(recurrenceSelection, 'custom', count),
+                  )
+                }
+                occurrencesTitleKey={occurrencesTitleKey}
+                occurrencesCustomLabelKey={occurrencesCustomLabelKey}
+                minCustomOccurrences={minCustomOccurrences}
+              />
+            )}
+            </>
+            )}
             <ExpenseAttachmentField
               existingAttachmentUrl={existingAttachmentUrl}
               pendingAttachmentFile={pendingAttachmentFile}
@@ -211,15 +247,15 @@ export function ExpenseEditModal({
         </div>
       </div>
 
+      {!hideRecurrenceField && (
       <ExpenseRecurrencePickerModal
         open={recurrenceModalOpen}
         value={recurrenceSelection}
         onSelect={onRecurrenceSelectionChange}
         onClose={() => setRecurrenceModalOpen(false)}
-        occurrencesTitleKey={occurrencesTitleKey}
-        occurrencesCustomLabelKey={occurrencesCustomLabelKey}
-        minCustomOccurrences={minCustomOccurrences}
+        hideOccurrencesField
       />
+      )}
     </>
   );
 }

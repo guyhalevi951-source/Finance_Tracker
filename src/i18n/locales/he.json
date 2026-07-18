@@ -47,7 +47,9 @@
         "terminateConfirm": "הפסק חזרה",
         "terminateCancel": "ביטול",
         "unnamed": "הוצאה חוזרת",
-        "saveError": "לא ניתן לשמור את השינויים. נסה שוב."
+        "saveError": "לא ניתן לשמור את השינויים. נסה שוב.",
+        "remainingOccurrences": "{{count}} חזרות נשארו",
+        "unlimitedOccurrences": "ללא הגבלה"
       }
     }
   },
@@ -106,9 +108,21 @@
       "saveError": "לא ניתן לשמור את השינויים. נסה שוב.",
       "recurringDeleteTitle": "למחוק הוצאה חוזרת?",
       "recurringDeleteMessage": "ההוצאה הזו היא חלק מסדרה חוזרת. מה תרצה למחוק?",
+      "recurringDeleteExpenseName": "הוצאה",
+      "recurringDeleteAmount": "סכום",
       "recurringDeleteInstanceOnly": "מחק אירוע זה בלבד",
       "recurringDeleteThisAndFuture": "מחק אירוע זה ואת כל הבאים אחריו",
-      "recurringDeleteProgress": "{{current}} מתוך {{total}}"
+      "recurringDeleteThisAndFutureWithCount": "מחק אירוע זה ו-{{count}} הופעות עתידיות",
+      "recurringDeleteThisAndFutureWithCount_one": "מחק אירוע זה והופעה עתידית אחת",
+      "recurringDeleteProgress": "{{current}} מתוך {{total}}",
+      "recurringEditTitle": "להחיל שינויים?",
+      "recurringEditMessage": "האם לשמור את השינוי רק להוצאה זו, או גם לכל ההוצאות העתידיות?",
+      "recurringEditInstanceOnly": "רק להוצאה זו",
+      "recurringEditThisAndFuture": "להוצאה זו ולכל ההוצאות העתידיות",
+      "recurringInstanceLinkTitle": "להשאיר מחובר לשרשרת?",
+      "recurringInstanceLinkMessage": "האם ברצונך להשאיר את ההוצאה מחוברת לשרשרת לשינויים עתידיים, או לנתק אותה ולהפוך אותה להוצאה חד-פעמית?",
+      "recurringInstanceLinkKeepConnected": "להשאיר מחובר",
+      "recurringInstanceLinkDisconnect": "לנתק"
     },
     "editModal": {
       "title": "עריכת הוצאה",
@@ -125,7 +139,8 @@
       "description": "תיאור",
       "paymentMethod": "אמצעי תשלום",
       "date": "תאריך",
-      "attachment": "תמונות"
+      "attachment": "תמונות",
+      "recurringExpense": "הוצאה חוזרת: {{schedule}}"
     },
     "validation": {
       "AMOUNT_INVALID": "הסכום חייב להיות מספר תקין",
@@ -202,6 +217,7 @@
       "confirm": "אישור",
       "cancel": "ביטול",
       "back": "חזרה",
+      "change": "שנה",
       "occurrencesTitle": "כמה פעמים?",
       "occurrencesRemainingTitle": "כמה פעמים נוספות?",
       "occurrencesRemainingCustomLabel": "מספר פעמים שנותר",

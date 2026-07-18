@@ -6,6 +6,7 @@ import {
 } from '../../../domain/categories/hierarchy';
 import { getBuiltinParentI18nKey } from '../../../domain/categories/resolveCategoryLabel';
 import { getCategoryUI } from '../categoryUi';
+import { expenseCompactLabelClass } from './expenseCompactButtonStyles';
 
 interface CategorySelectionStepProps {
   onCancel: () => void;
@@ -55,7 +56,7 @@ export function CategorySelectionStep({ onCancel, onSelectSubCategory }: Categor
                     >
                       <Icon className="w-6 h-6" />
                     </span>
-                    <span className="text-xs text-center text-slate-700 dark:text-slate-300 leading-tight line-clamp-2 w-full">
+                    <span className={`text-xs text-slate-700 dark:text-slate-300 w-full ${expenseCompactLabelClass}`}>
                       {t(getSubCategoryI18nKey(subId))}
                     </span>
                   </button>

@@ -1,46 +1,12 @@
-import { useState, useEffect, useCallback } from 'react';
-import { type Expense } from '../../../types/expense';
-import { loadExpenses, saveExpense } from '../../../services/expenses/expenseRepository';
-import { syncRecurringExpenses } from '../../../services/recurrence/recurringExpenseSyncService';
-import { useTodayIso } from '../../../lib/hooks/useTodayIso';
+import { useContext } from 'react';
+import { ExpensesContext, type ExpensesContextValue } from '../../../app/providers/ExpensesProvider';
 
-export interface UseExpensesReturn {
-  expenses: Expense[];
-  loadError: boolean;
-  createExpense: (expense: Expense) => Promise<void>;
-  reload: () => Promise<void>;
-}
+export type UseExpensesReturn = ExpensesContextValue;
 
-export function useExpenses(userId: string | null): UseExpensesReturn {
-  const [expenses, setExpenses] = useState<Expense[]>([]);
-  const [loadError, setLoadError] = useState(false);
-  const todayIso = useTodayIso();
-
-  const reload = useCallback(async () => {
-    try {
-      const loaded = await loadExpenses(userId);
-      const { expenses: synced } = await syncRecurringExpenses(userId, loaded, todayIso);
-      setExpenses(synced);
-      setLoadError(false);
-    } catch {
-      setLoadError(true);
-      setExpenses([]);
-    }
-  }, [userId, todayIso]);
-
-  useEffect(() => {
-    void reload();
-  }, [reload]);
-
-  const createExpense = useCallback(async (expense: Expense) => {
-    await saveExpense(userId, expense);
-    await reload();
-  }, [userId, reload]);
-
-  return {
-    expenses,
-    loadError,
-    createExpense,
-    reload,
-  };
+export function useExpenses(): UseExpensesReturn {
+  const context = useContext(ExpensesContext);
+  if (!context) {
+    throw new Error('useExpenses must be used within ExpensesProvider');
+  }
+  return context;
 }

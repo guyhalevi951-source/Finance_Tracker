@@ -6,6 +6,7 @@ import { useAuthSession } from '../features/auth/hooks/useAuthSession';
 import { useCategories } from '../features/categories/hooks/useCategories';
 import { useExpenses } from '../features/expenses/hooks/useExpenses';
 import { ExpenseEditModal } from '../features/expenses/components/ExpenseEditModal';
+import { DEFAULT_RECURRENCE_SELECTION } from '../types/recurrenceRule';
 import {
   SettingsSection,
   TerminateRecurrenceConfirmModal,
@@ -20,7 +21,7 @@ export function ProfilePage() {
   const locale = i18n.language as AppLocale;
   const { userId, displayName, isLoading } = useAuthSession();
   const { customCategories } = useCategories(userId);
-  const { expenses, reload } = useExpenses(userId);
+  const { expenses, reload } = useExpenses();
 
   const recurringSettings = useRecurringExpensesSettings({
     userId,
@@ -61,6 +62,7 @@ export function ProfilePage() {
 
       <SettingsSection
         activeTemplates={recurringSettings.activeTemplates}
+        expenses={expenses}
         locale={locale}
         customCategories={customCategories}
         onEdit={recurringSettings.openEdit}
@@ -72,23 +74,21 @@ export function ProfilePage() {
           open
           input={recurringSettings.editInput}
           categoryOptions={categoryOptions}
-          recurrenceSelection={recurringSettings.editRecurrenceSelection}
+          recurrenceSelection={DEFAULT_RECURRENCE_SELECTION}
           existingAttachmentUrl={recurringSettings.editingTemplate.attachmentUrl}
           pendingAttachmentFile={recurringSettings.pendingAttachmentFile}
           removeAttachment={recurringSettings.removeAttachment}
           isSaving={recurringSettings.isSaving}
           errorKey={recurringSettings.errorKey}
           onChange={recurringSettings.setEditInput}
-          onRecurrenceSelectionChange={recurringSettings.setEditRecurrenceSelection}
+          onRecurrenceSelectionChange={() => {}}
           onAttachmentFileChange={recurringSettings.setPendingAttachmentFile}
           onRemoveAttachment={() => recurringSettings.setRemoveAttachment(true)}
           onSave={() => void recurringSettings.saveEdit()}
           onClose={recurringSettings.closeEdit}
           hideDateField
+          hideRecurrenceField
           modalTitleKey="profile.settings.recurring.editTitle"
-          occurrencesTitleKey="addExpense.recurrence.occurrencesRemainingTitle"
-          occurrencesCustomLabelKey="addExpense.recurrence.occurrencesRemainingCustomLabel"
-          minCustomOccurrences={0}
         />
       )}
 

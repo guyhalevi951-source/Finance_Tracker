@@ -1,15 +1,11 @@
 import { type Expense } from '../../types/expense';
 import { isoDateToDate, toIsoDate } from '../expenses/parseExpenseDate';
+import { earliestEndDate } from './earliestEndDate';
 
 function dayBefore(iso: string): string {
   const date = isoDateToDate(iso);
   date.setDate(date.getDate() - 1);
   return toIsoDate(date);
-}
-
-function earliestEndDate(existing: string | undefined, candidate: string): string {
-  if (!existing) return candidate;
-  return existing < candidate ? existing : candidate;
 }
 
 export function terminateRecurrenceSeries(

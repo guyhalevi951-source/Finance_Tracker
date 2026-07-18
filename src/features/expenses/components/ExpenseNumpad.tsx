@@ -8,6 +8,7 @@ import {
   numpadBackspace,
 } from '../../../domain/expenses/numpadAmount';
 import { PaymentMethodIcon } from './PaymentMethodIcon';
+import { expenseCompactLabelClass } from './expenseCompactButtonStyles';
 
 interface ExpenseNumpadProps {
   amountDigits: string;
@@ -18,6 +19,7 @@ interface ExpenseNumpadProps {
   paymentMethodLabel: string;
   onPaymentMethodClick: () => void;
   recurrenceLabel: string;
+  recurrenceOccurrencesLabel?: string | null;
   recurrenceActive: boolean;
   onRecurrenceClick: () => void;
   onSubmit: () => void;
@@ -33,6 +35,7 @@ export function ExpenseNumpad({
   paymentMethodLabel,
   onPaymentMethodClick,
   recurrenceLabel,
+  recurrenceOccurrencesLabel,
   recurrenceActive,
   onRecurrenceClick,
   onSubmit,
@@ -53,7 +56,7 @@ export function ExpenseNumpad({
     'min-h-[56px] rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-100 text-xl font-medium hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors active:scale-95';
 
   const sideActionBtn =
-    'min-h-[56px] rounded-xl bg-slate-100 dark:bg-slate-800 text-amber-500 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors flex flex-col items-center justify-center gap-0.5 px-1 active:scale-95';
+    'min-h-[56px] h-auto py-1 rounded-xl bg-slate-100 dark:bg-slate-800 text-amber-500 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors flex flex-col items-center justify-center gap-0.5 px-1 active:scale-95';
 
   const recurrenceColor = recurrenceActive ? 'text-emerald-500' : 'text-rose-500';
 
@@ -70,7 +73,7 @@ export function ExpenseNumpad({
         className={sideActionBtn}
       >
         <Calendar className="w-5 h-5" />
-        <span className="text-[10px] font-medium leading-tight text-center">{dateLabel}</span>
+        <span className={`font-medium ${expenseCompactLabelClass}`}>{dateLabel}</span>
       </button>
 
       {['4', '5', '6'].map((d) => (
@@ -85,7 +88,7 @@ export function ExpenseNumpad({
         className={sideActionBtn}
       >
         <PaymentMethodIcon methodId={paymentMethodId} className="w-5 h-5" />
-        <span className="text-[10px] font-medium leading-tight text-center line-clamp-2">
+        <span className={`font-medium ${expenseCompactLabelClass}`}>
           {paymentMethodLabel}
         </span>
       </button>
@@ -102,9 +105,14 @@ export function ExpenseNumpad({
         className={`${sideActionBtn} ${recurrenceColor}`}
       >
         <Clock className="w-5 h-5" />
-        <span className="text-[10px] font-medium leading-tight text-center line-clamp-2">
+        <span className={`font-medium ${expenseCompactLabelClass}`}>
           {recurrenceLabel}
         </span>
+        {recurrenceActive && recurrenceOccurrencesLabel && (
+          <span className={`text-[8px] font-normal opacity-80 ${expenseCompactLabelClass}`}>
+            {recurrenceOccurrencesLabel}
+          </span>
+        )}
       </button>
 
       <button type="button" className={digitBtn} onClick={() => handleKey('.')}>

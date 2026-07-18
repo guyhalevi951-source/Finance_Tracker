@@ -8,13 +8,15 @@ import {
   getBuiltinCategoryI18nKey,
   resolveCustomCategoryLabel,
 } from '../../../domain/categories/resolveCategoryLabel';
-import { resolveBilingualText } from '../../../domain/i18n/resolveBilingualText';
+import { resolveExpenseDisplayLabel } from '../../../domain/expenses/resolveExpenseDisplayLabel';
 import { hasBilingualTextContent } from '../../../domain/i18n/buildBilingualText';
 import { resolveRecurrenceLabelDescriptorFromRule } from '../../../domain/recurrence/resolveRecurrenceLabelKey';
+import { resolveRemainingOccurrencesLabelDescriptor } from '../../../domain/recurrence/resolveRemainingOccurrencesLabel';
 import { formatCurrencyAmount } from '../../../lib/format/formatDate';
 
 interface ActiveRecurringExpenseListItemProps {
   template: Expense;
+  expenses: Expense[];
   locale: AppLocale;
   customCategories: CustomCategory[];
   onEdit: () => void;
@@ -23,6 +25,7 @@ interface ActiveRecurringExpenseListItemProps {
 
 export function ActiveRecurringExpenseListItem({
   template,
+  expenses,
   locale,
   customCategories,
   onEdit,
@@ -34,15 +37,16 @@ export function ActiveRecurringExpenseListItem({
     ? t(getBuiltinCategoryI18nKey(template.category))
     : (resolveCustomCategoryLabel(template.category, customCategories, locale) ??
       t('category.sub.other.miscellaneous'));
-  const descriptionText = resolveBilingualText(template.description, locale);
+  const displayName = resolveExpenseDisplayLabel(template, locale, categoryLabel);
   const hasDescription = hasBilingualTextContent(template.description);
-  const displayName = hasDescription ? descriptionText : categoryLabel;
 
   const rule = template.recurrenceRule;
   const scheduleDescriptor = rule
     ? resolveRecurrenceLabelDescriptorFromRule(rule)
     : { key: 'addExpense.recurrence.never' };
   const scheduleLabel = t(scheduleDescriptor.key, scheduleDescriptor.params);
+  const remainingDescriptor = resolveRemainingOccurrencesLabelDescriptor(template, expenses);
+  const remainingLabel = t(remainingDescriptor.key, remainingDescriptor.params);
 
   return (
     <li className="flex items-center gap-3 px-4 py-4 min-h-[64px]">
@@ -50,6 +54,9 @@ export function ActiveRecurringExpenseListItem({
         <p className="font-medium text-slate-800 dark:text-slate-100 truncate">{displayName}</p>
         <p className="text-sm text-slate-500 dark:text-slate-400 truncate">
           {formatCurrencyAmount(template.amount, locale)} · {scheduleLabel}
+        </p>
+        <p className="text-xs text-slate-400 dark:text-slate-500 truncate mt-0.5">
+          {remainingLabel}
         </p>
         {hasDescription && (
           <p className="text-xs text-slate-400 dark:text-slate-500 truncate mt-0.5">

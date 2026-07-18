@@ -9,6 +9,7 @@ import { ActiveRecurringExpenseListItem } from './ActiveRecurringExpenseListItem
 
 interface SettingsSectionProps {
   activeTemplates: Expense[];
+  expenses: Expense[];
   locale: AppLocale;
   customCategories: CustomCategory[];
   onEdit: (template: Expense) => void;
@@ -17,6 +18,7 @@ interface SettingsSectionProps {
 
 export function SettingsSection({
   activeTemplates,
+  expenses,
   locale,
   customCategories,
   onEdit,
@@ -54,6 +56,7 @@ export function SettingsSection({
                   <ActiveRecurringExpenseListItem
                     key={template.id}
                     template={template}
+                    expenses={expenses}
                     locale={locale}
                     customCategories={customCategories}
                     onEdit={() => onEdit(template)}

@@ -16,21 +16,38 @@ import { isBuiltinSubCategoryId } from '../../../domain/categories/hierarchy';
 import { getBuiltinCategoryI18nKey, resolveCustomCategoryLabel } from '../../../domain/categories/resolveCategoryLabel';
 import { ROUTES } from '../../../config/routes';
 import { type AppLocale } from '../../../config/app';
+import { resolveRecurrenceRuleForExpense } from '../../../domain/recurrence/resolveRecurrenceRuleForExpense';
+import { resolveRecurrenceLabelDescriptorFromRule } from '../../../domain/recurrence/resolveRecurrenceLabelKey';
+
 import { formatCurrencyAmount, formatExpenseDateLong } from '../../../lib/format/formatDate';
 
 interface ExpenseDetailsViewProps {
   expense: Expense;
+  expenses: Expense[];
   locale: AppLocale;
   customCategories: CustomCategory[];
 }
 
-export function ExpenseDetailsView({ expense, locale, customCategories }: ExpenseDetailsViewProps) {
+export function ExpenseDetailsView({
+  expense,
+  expenses,
+  locale,
+  customCategories,
+}: ExpenseDetailsViewProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
 
   const categoryLabel = isBuiltinSubCategoryId(expense.category)
     ? t(getBuiltinCategoryI18nKey(expense.category))
     : (resolveCustomCategoryLabel(expense.category, customCategories, locale) ?? t('category.sub.other.miscellaneous'));
+
+  const recurrenceRule = resolveRecurrenceRuleForExpense(expenses, expense);
+  const recurrenceDescriptor = recurrenceRule
+    ? resolveRecurrenceLabelDescriptorFromRule(recurrenceRule)
+    : null;
+  const recurrenceLabel = recurrenceDescriptor
+    ? t(recurrenceDescriptor.key, recurrenceDescriptor.params)
+    : null;
 
   const rows = [
     { icon: Folder, label: t('expense.details.category'), value: categoryLabel },
@@ -73,9 +90,17 @@ export function ExpenseDetailsView({ expense, locale, customCategories }: Expens
         </button>
       </div>
 
-      <p className="text-5xl md:text-6xl font-bold text-slate-900 dark:text-slate-50 mb-10">
+      <p className="text-5xl md:text-6xl font-bold text-slate-900 dark:text-slate-50 mb-4">
         {formatCurrencyAmount(expense.amount, locale)}
       </p>
+
+      {recurrenceLabel && (
+        <p className="text-sm text-slate-500 dark:text-slate-400 mb-10">
+          {t('expense.details.recurringExpense', { schedule: recurrenceLabel })}
+        </p>
+      )}
+
+      {!recurrenceLabel && <div className="mb-6" />}
 
       <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 divide-y divide-slate-100 dark:divide-slate-700">
         {rows.map(({ icon: Icon, label, value }) => (
