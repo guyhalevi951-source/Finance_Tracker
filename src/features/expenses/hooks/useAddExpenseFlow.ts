@@ -14,6 +14,7 @@ import {
 import { selectionToRule } from '../../../domain/recurrence/presets';
 import { validateRecurrenceSelection } from '../../../domain/recurrence/validateRecurrenceRule';
 import { toIsoDate } from '../../../domain/expenses/parseExpenseDate';
+import { useTodayIso } from '../../../lib/hooks/useTodayIso';
 import { createBilingualText } from '../../../services/translation/createBilingualText';
 import { uploadExpenseAttachment } from '../../../services/attachments/expenseAttachmentService';
 import { type AppLocale } from '../../../config/app';
@@ -27,6 +28,7 @@ export interface UseAddExpenseFlowOptions {
 
 export function useAddExpenseFlow({ userId, createExpense }: UseAddExpenseFlowOptions) {
   const { i18n } = useTranslation();
+  const todayIso = useTodayIso();
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState<AddExpenseStep>('category');
   const [selectedSubCategoryId, setSelectedSubCategoryId] = useState<string | null>(null);
@@ -81,13 +83,16 @@ export function useAddExpenseFlow({ userId, createExpense }: UseAddExpenseFlowOp
     const locale = i18n.language as AppLocale;
     const description = note.trim();
 
-    const result = validateExpenseInput({
-      description,
-      amount: amountDigits === '' ? '0' : amountDigits,
-      category: selectedSubCategoryId,
-      paymentMethod,
-      date,
-    });
+    const result = validateExpenseInput(
+      {
+        description,
+        amount: amountDigits === '' ? '0' : amountDigits,
+        category: selectedSubCategoryId,
+        paymentMethod,
+        date,
+      },
+      todayIso,
+    );
 
     if (!result.ok) {
       setErrorKey(`expense.validation.${result.error}`);
@@ -150,6 +155,7 @@ export function useAddExpenseFlow({ userId, createExpense }: UseAddExpenseFlowOp
     paymentMethod,
     recurrenceSelection,
     attachmentFile,
+    todayIso,
     i18n.language,
     userId,
     createExpense,

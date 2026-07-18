@@ -9,13 +9,24 @@ import { buildCalendarGrid } from './buildCalendarGrid';
 export interface CustomDatePickerProps {
   open: boolean;
   value: string;
+  maxDate?: string;
   onConfirm: (isoDate: string) => void;
   onCancel: () => void;
+}
+
+function monthIndex(date: Date): number {
+  return date.getFullYear() * 12 + date.getMonth();
+}
+
+function clampToMaxDate(isoDate: string, maxDate?: string): string {
+  if (maxDate && isoDate > maxDate) return maxDate;
+  return isoDate;
 }
 
 export function CustomDatePicker({
   open,
   value,
+  maxDate,
   onConfirm,
   onCancel,
 }: CustomDatePickerProps) {
@@ -26,9 +37,10 @@ export function CustomDatePicker({
 
   useEffect(() => {
     if (!open) return;
-    setDraftDate(value);
-    setViewMonth(isoDateToDate(value));
-  }, [open, value]);
+    const clamped = clampToMaxDate(value, maxDate);
+    setDraftDate(clamped);
+    setViewMonth(isoDateToDate(clamped));
+  }, [open, value, maxDate]);
 
   useEffect(() => {
     if (!open) return;
@@ -49,12 +61,23 @@ export function CustomDatePicker({
     locale,
   );
 
+  const canGoNextMonth = useMemo(() => {
+    if (!maxDate) return true;
+    const nextMonth = new Date(viewMonth.getFullYear(), viewMonth.getMonth() + 1, 1);
+    return monthIndex(nextMonth) <= monthIndex(isoDateToDate(maxDate));
+  }, [maxDate, viewMonth]);
+
   const goToPreviousMonth = () => {
     setViewMonth((current) => new Date(current.getFullYear(), current.getMonth() - 1, 1));
   };
 
   const goToNextMonth = () => {
+    if (!canGoNextMonth) return;
     setViewMonth((current) => new Date(current.getFullYear(), current.getMonth() + 1, 1));
+  };
+
+  const handleConfirm = () => {
+    onConfirm(clampToMaxDate(draftDate, maxDate));
   };
 
   if (!open) return null;
@@ -89,8 +112,14 @@ export function CustomDatePicker({
           <button
             type="button"
             onClick={goToNextMonth}
+            disabled={!canGoNextMonth}
             aria-label={t('calendar.nextMonth')}
-            className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 shrink-0"
+            aria-disabled={!canGoNextMonth}
+            className={`min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl shrink-0 ${
+              canGoNextMonth
+                ? 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'
+                : 'text-slate-200 dark:text-slate-700 cursor-not-allowed'
+            }`}
           >
             <ChevronRight className="w-5 h-5 rtl:rotate-180" aria-hidden />
           </button>
@@ -108,20 +137,27 @@ export function CustomDatePicker({
 
           {weeks.flat().map((cell) => {
             const isSelected = cell.iso === draftDate;
+            const isFuture = maxDate != null && cell.iso > maxDate;
             const dayNumber = isoDateToDate(cell.iso).getDate();
 
             return (
               <button
                 key={cell.iso}
                 type="button"
+                disabled={isFuture}
                 aria-pressed={isSelected}
-                onClick={() => setDraftDate(cell.iso)}
+                aria-disabled={isFuture}
+                onClick={() => {
+                  if (!isFuture) setDraftDate(cell.iso);
+                }}
                 className={`h-11 w-11 mx-auto flex items-center justify-center rounded-full text-sm font-medium transition-colors ${
-                  isSelected
-                    ? 'bg-amber-400 text-slate-900'
-                    : cell.inCurrentMonth
-                      ? 'text-slate-900 dark:text-white hover:bg-slate-100 dark:hover:bg-slate-800'
-                      : 'text-slate-300 dark:text-slate-600 hover:bg-slate-50 dark:hover:bg-slate-800/60'
+                  isFuture
+                    ? 'text-slate-200 dark:text-slate-700 cursor-not-allowed'
+                    : isSelected
+                      ? 'bg-amber-400 text-slate-900'
+                      : cell.inCurrentMonth
+                        ? 'text-slate-900 dark:text-white hover:bg-slate-100 dark:hover:bg-slate-800'
+                        : 'text-slate-300 dark:text-slate-600 hover:bg-slate-50 dark:hover:bg-slate-800/60'
                 }`}
               >
                 {dayNumber}
@@ -140,7 +176,7 @@ export function CustomDatePicker({
           </button>
           <button
             type="button"
-            onClick={() => onConfirm(draftDate)}
+            onClick={handleConfirm}
             className="min-h-[44px] px-2 text-sm font-medium text-amber-600 dark:text-amber-400"
           >
             {t('calendar.confirm')}

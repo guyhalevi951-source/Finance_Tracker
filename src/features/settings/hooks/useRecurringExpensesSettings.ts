@@ -84,7 +84,7 @@ export function useRecurringExpensesSettings({
   const saveEdit = useCallback(async () => {
     if (!editingTemplate || !editInput) return;
 
-    const result = validateExpenseInput(editInput);
+    const result = validateExpenseInput(editInput, todayIso);
     if (!result.ok) {
       setErrorKey(result.error);
       return;

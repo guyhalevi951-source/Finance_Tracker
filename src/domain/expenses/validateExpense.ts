@@ -6,7 +6,8 @@ export type ExpenseValidationError =
   | 'AMOUNT_INVALID'
   | 'AMOUNT_NOT_POSITIVE'
   | 'PAYMENT_METHOD_INVALID'
-  | 'DATE_INVALID';
+  | 'DATE_INVALID'
+  | 'DATE_IN_FUTURE';
 
 export interface NewExpenseInput {
   description: string;
@@ -38,6 +39,7 @@ export interface EditExpenseInput {
  */
 export function validateExpenseInput(
   input: NewExpenseInput | EditExpenseInput,
+  todayIso: string,
 ): Result<ValidatedExpenseInput, ExpenseValidationError> {
   const amount = parseFloat(input.amount);
   if (isNaN(amount)) return err('AMOUNT_INVALID');
@@ -45,6 +47,7 @@ export function validateExpenseInput(
 
   if (!isPaymentMethodId(input.paymentMethod)) return err('PAYMENT_METHOD_INVALID');
   if (!isIsoDateString(input.date)) return err('DATE_INVALID');
+  if (input.date > todayIso) return err('DATE_IN_FUTURE');
 
   return ok({
     description: input.description.trim(),

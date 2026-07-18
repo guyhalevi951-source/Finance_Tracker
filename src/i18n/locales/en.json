@@ -161,6 +161,7 @@
       "AMOUNT_NOT_POSITIVE": "Amount must be greater than zero",
       "PAYMENT_METHOD_INVALID": "Invalid payment method",
       "DATE_INVALID": "Invalid date",
+      "DATE_IN_FUTURE": "Date cannot be in the future",
       "translationError": "Could not translate description. Please try again."
     },
     "formTitle": "Add New Expense",
@@ -323,18 +324,25 @@
     "manage": "Settings",
     "management": {
       "title": "Category management",
+      "back": "Back",
       "addButton": "Add category",
+      "resetDefaults": "Reset to defaults",
       "loading": "Loading categories…",
       "dragHandle": "Drag to reorder",
       "deleteConfirmTitle": "Delete category?",
       "deleteConfirmMessage": "Subcategories from \"{{name}}\" will move under Other. Their names and icons stay the same.",
       "deleteConfirmConfirm": "Delete",
       "deleteConfirmCancel": "Cancel",
+      "resetConfirmTitle": "Reset categories?",
+      "resetConfirmMessage": "Are you sure you want to reset all categories to their default state? Custom categories will be lost.",
+      "resetConfirmConfirm": "Reset",
+      "resetConfirmCancel": "Cancel",
       "errors": {
         "cannotDeleteOther": "The Other category cannot be deleted.",
         "saveFailed": "Could not save category. Please try again.",
         "deleteFailed": "Could not delete category. Please try again.",
-        "reorderFailed": "Could not save category order. Please try again."
+        "reorderFailed": "Could not save category order. Please try again.",
+        "resetFailed": "Could not reset categories. Please try again."
       }
     },
     "editor": {

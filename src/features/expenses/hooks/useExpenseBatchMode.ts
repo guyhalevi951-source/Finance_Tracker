@@ -277,7 +277,7 @@ export function useExpenseBatchMode(
   const saveLocalEdit = useCallback(async () => {
     if (!editingExpense || !editInput) return;
 
-    const result = validateExpenseInput(editInput);
+    const result = validateExpenseInput(editInput, todayIso);
     if (!result.ok) {
       setEditError(result.error);
       return;
@@ -343,6 +343,7 @@ export function useExpenseBatchMode(
     pendingAttachmentFile,
     removeAttachment,
     resetEditSession,
+    todayIso,
   ]);
 
   const resetToView = useCallback(() => {

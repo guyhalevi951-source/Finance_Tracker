@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AppShell } from './app/AppShell';
 import { ExpensesProvider } from './app/providers/ExpensesProvider';
+import { CategoriesProvider } from './app/providers/CategoriesProvider';
 import { ROUTES } from './config/routes';
 import { DashboardPage } from './pages/DashboardPage';
 import { ExpensesPage } from './pages/ExpensesPage';
@@ -13,7 +14,8 @@ function App() {
   return (
     <BrowserRouter>
       <ExpensesProvider>
-        <Routes>
+        <CategoriesProvider>
+          <Routes>
           <Route element={<AppShell />}>
             <Route path={ROUTES.dashboard} element={<DashboardPage />} />
             <Route path={ROUTES.expenses} element={<ExpensesPage />} />
@@ -24,6 +26,7 @@ function App() {
             <Route path={ROUTES.categoryEdit} element={<CategoryEditorPage />} />
           </Route>
         </Routes>
+        </CategoriesProvider>
       </ExpensesProvider>
     </BrowserRouter>
   );

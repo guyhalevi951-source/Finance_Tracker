@@ -11,6 +11,7 @@ import {
 import { type RecurrenceSelection } from '../../../types/recurrenceRule';
 import { preventNumberInputScroll } from '../../../lib/input/preventNumberInputScroll';
 import { formatExpenseDateNumeric } from '../../../lib/format/formatDate';
+import { useTodayIso } from '../../../lib/hooks/useTodayIso';
 import { CustomDatePicker } from '../../../components/calendar';
 import { ExpenseAttachmentField } from './ExpenseAttachmentField';
 import { ExpenseRecurrencePickerModal } from './ExpenseRecurrencePickerModal';
@@ -70,6 +71,7 @@ export function ExpenseEditModal({
 }: ExpenseEditModalProps) {
   const { t, i18n } = useTranslation();
   const locale = i18n.language as AppLocale;
+  const todayIso = useTodayIso();
   const [recurrenceModalOpen, setRecurrenceModalOpen] = useState(false);
   const [dateModalOpen, setDateModalOpen] = useState(false);
   const recurrenceDescriptor = resolveRecurrenceLabelDescriptor(recurrenceSelection);
@@ -267,6 +269,7 @@ export function ExpenseEditModal({
         <CustomDatePicker
           open={dateModalOpen}
           value={input.date}
+          maxDate={todayIso}
           onConfirm={(isoDate) => {
             onChange({ ...input, date: isoDate });
             setDateModalOpen(false);

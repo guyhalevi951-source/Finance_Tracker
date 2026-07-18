@@ -21,6 +21,8 @@ import {
 } from '../../domain/categories/categoryIconLibrary';
 import { DEFAULT_CATEGORY_COLOR } from '../../domain/categories/categoryColorPalette';
 import { PROTECTED_MAIN_CATEGORY_ID } from '../../domain/categories/reassignSubCategoriesOnDelete';
+import { mergeSubCategoryRecords } from '../../domain/categories/mergeSubCategoryRecords';
+import { getFactoryDefaultCategoryCatalog } from '../../domain/categories/factoryCategoryCatalog';
 
 const GUEST_SUB_STORAGE_KEY = 'customCategories';
 const GUEST_MAIN_STORAGE_KEY = 'mainCategories';
@@ -207,6 +209,20 @@ export async function ensureDefaultCategoriesSeeded(
   const existingSubs = await loadSubCategories(userId);
 
   if (mains.length > 0) {
+    const seed = buildDefaultCategorySeed();
+    const existingIds = new Set(existingSubs.map((sub) => sub.id));
+    const missingBuiltinSubs = seed.subs.filter((sub) => !existingIds.has(sub.id));
+
+    if (missingBuiltinSubs.length > 0) {
+      const repairedSubs = mergeSubCategoryRecords(existingSubs, missingBuiltinSubs);
+      if (userId) {
+        await saveSubCategories(userId, missingBuiltinSubs);
+      } else {
+        saveGuestSubCategories(repairedSubs);
+      }
+      return { mainCategories: mains, subCategories: repairedSubs };
+    }
+
     return { mainCategories: mains, subCategories: existingSubs };
   }
 
@@ -283,7 +299,9 @@ export async function saveSubCategories(
     }
     await batch.commit();
   } else {
-    saveGuestSubCategories(categories);
+    const existing = loadGuestSubCategories();
+    const merged = mergeSubCategoryRecords(existing, categories);
+    saveGuestSubCategories(merged);
   }
 }
 
@@ -297,6 +315,39 @@ export async function deleteSubCategory(
     const existing = loadGuestSubCategories();
     saveGuestSubCategories(existing.filter((c) => c.id !== categoryId));
   }
+}
+
+export async function resetCategoriesToDefaults(
+  userId: string | null,
+): Promise<CategoryCatalog> {
+  const catalog = getFactoryDefaultCategoryCatalog();
+  const seedMainIds = new Set(catalog.mainCategories.map((main) => main.id));
+  const seedSubIds = new Set(catalog.subCategories.map((sub) => sub.id));
+
+  if (userId) {
+    const existingMains = await loadAuthMainCategories(userId);
+    const existingSubs = await loadAuthSubCategories(userId);
+
+    for (const main of existingMains) {
+      if (!seedMainIds.has(main.id)) {
+        await deleteAuthMainCategory(userId, main.id);
+      }
+    }
+    for (const sub of existingSubs) {
+      if (!seedSubIds.has(sub.id)) {
+        await deleteAuthSubCategory(userId, sub.id);
+      }
+    }
+    await persistSeed(userId, {
+      mains: catalog.mainCategories,
+      subs: catalog.subCategories,
+    });
+  } else {
+    saveGuestMainCategories(catalog.mainCategories);
+    saveGuestSubCategories(catalog.subCategories);
+  }
+
+  return catalog;
 }
 
 /** @deprecated Use loadSubCategories */

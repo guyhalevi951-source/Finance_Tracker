@@ -1,7 +1,11 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { expenseDetailPath, ROUTES } from '../config/routes';
+import {
+  CATEGORY_RETURN_TO_ADD_EXPENSE_KEY,
+  type ExpensesLocationState,
+} from '../config/categoryNavigation';
 import { type AppLocale } from '../config/app';
 import { useAppHeader } from '../app/hooks/useAppHeader';
 import { useAuthSession } from '../features/auth/hooks/useAuthSession';
@@ -32,12 +36,22 @@ export function ExpensesPage() {
   const { t, i18n } = useTranslation();
   const locale = i18n.language as AppLocale;
   const navigate = useNavigate();
+  const location = useLocation();
   const [viewMode, setViewMode] = useState<ExpensesViewMode>('date');
 
   const { userId } = useAuthSession();
   const { mainCategories, subCategories } = useCategories(userId);
   const { expenses, loadError, reload, createExpense } = useExpenses();
   const addFlow = useAddExpenseFlow({ userId, createExpense });
+  const { openFlow } = addFlow;
+
+  useEffect(() => {
+    const state = location.state as ExpensesLocationState | null;
+    if (state?.openAddExpenseCategories) {
+      openFlow();
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+  }, [location.state, location.pathname, openFlow, navigate]);
 
   const timeFilter = useExpenseTimeFilter(locale);
   const batch = useExpenseBatchMode(expenses, userId, reload, timeFilter.todayIso);
@@ -222,6 +236,7 @@ export function ExpensesPage() {
         onSelectSubCategory={addFlow.selectSubCategory}
         onBackToCategories={addFlow.goBackToCategories}
         onManageCategories={() => {
+          sessionStorage.setItem(CATEGORY_RETURN_TO_ADD_EXPENSE_KEY, '1');
           addFlow.closeFlow();
           navigate(ROUTES.categoryManagement);
         }}

@@ -161,6 +161,7 @@
       "AMOUNT_NOT_POSITIVE": "הסכום חייב להיות גדול מאפס",
       "PAYMENT_METHOD_INVALID": "אמצעי תשלום לא תקין",
       "DATE_INVALID": "תאריך לא תקין",
+      "DATE_IN_FUTURE": "לא ניתן לבחור תאריך עתידי",
       "translationError": "לא ניתן לתרגם את התיאור. נסה שוב."
     },
     "formTitle": "הוסף הוצאה חדשה",
@@ -323,18 +324,25 @@
     "manage": "הגדרות",
     "management": {
       "title": "ניהול קטגוריות",
+      "back": "חזרה",
       "addButton": "הוסף קטגוריה",
+      "resetDefaults": "איפוס לברירת מחדל",
       "loading": "טוען קטגוריות…",
       "dragHandle": "גרור לסידור מחדש",
       "deleteConfirmTitle": "למחוק קטגוריה?",
       "deleteConfirmMessage": "תת-קטגוריות מ\"{{name}}\" יועברו תחת \"אחר\". השם והאייקון שלהן יישמרו.",
       "deleteConfirmConfirm": "מחק",
       "deleteConfirmCancel": "ביטול",
+      "resetConfirmTitle": "לאפס קטגוריות?",
+      "resetConfirmMessage": "האם אתה בטוח שברצונך לאפס את כל הקטגוריות למצב ברירת המחדל? קטגוריות מותאמות אישית יימחקו.",
+      "resetConfirmConfirm": "איפוס",
+      "resetConfirmCancel": "ביטול",
       "errors": {
         "cannotDeleteOther": "לא ניתן למחוק את קטגוריית \"אחר\".",
         "saveFailed": "לא ניתן לשמור קטגוריה. נסה שוב.",
         "deleteFailed": "לא ניתן למחוק קטגוריה. נסה שוב.",
-        "reorderFailed": "לא ניתן לשמור את סדר הקטגוריות. נסה שוב."
+        "reorderFailed": "לא ניתן לשמור את סדר הקטגוריות. נסה שוב.",
+        "resetFailed": "לא ניתן לאפס קטגוריות. נסה שוב."
       }
     },
     "editor": {

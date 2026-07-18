@@ -2,7 +2,7 @@ import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ArrowLeft, Camera } from 'lucide-react';
 import { getSubCategoryI18nKey } from '../../../domain/categories/hierarchy';
-import { toIsoDate } from '../../../domain/expenses/parseExpenseDate';
+import { useTodayIso } from '../../../lib/hooks/useTodayIso';
 import { formatExpenseDateNumeric } from '../../../lib/format/formatDate';
 import { type AppLocale } from '../../../config/app';
 import { type PaymentMethodId } from '../../../types/paymentMethod';
@@ -66,7 +66,7 @@ export function ExpenseEntryStep({
   const [paymentMethodModalOpen, setPaymentMethodModalOpen] = useState(false);
   const [recurrenceModalOpen, setRecurrenceModalOpen] = useState(false);
 
-  const todayIso = toIsoDate(new Date());
+  const todayIso = useTodayIso();
   const dateLabel = date === todayIso ? t('addExpense.today') : formatExpenseDateNumeric(date, locale);
   const paymentMethodLabel = t(`expense.paymentMethod.${paymentMethod}`);
   const recurrenceDescriptor = resolveRecurrenceLabelDescriptor(recurrenceSelection);
@@ -159,6 +159,7 @@ export function ExpenseEntryStep({
       <CustomDatePicker
         open={dateModalOpen}
         value={date}
+        maxDate={todayIso}
         onConfirm={(isoDate) => {
           onDateChange(isoDate);
           setDateModalOpen(false);
