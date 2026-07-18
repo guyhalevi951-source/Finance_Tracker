@@ -16,6 +16,11 @@
   "theme": {
     "toggle": "החלף מצב כהה"
   },
+  "calendar": {
+    "dialogLabel": "בחר תאריך",
+    "prevMonth": "חודש קודם",
+    "nextMonth": "חודש הבא"
+  },
   "nav": {
     "dashboard": "לוח בקרה",
     "expenses": "הוצאות"
@@ -185,7 +190,6 @@
     "attachImage": "צרף תמונת קבלה",
     "attachmentError": "לא ניתן לצרף תמונה. נסה שוב.",
     "attachmentTooLarge": "התמונה גדולה מדי. גודל מקסימלי 500 KB.",
-    "datePickerTitle": "בחר תאריך",
     "dateConfirm": "אישור",
     "dateCancel": "ביטול",
     "paymentMethodPickerTitle": "בחר אמצעי תשלום",

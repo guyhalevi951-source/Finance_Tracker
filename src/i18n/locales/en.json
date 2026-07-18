@@ -16,6 +16,11 @@
   "theme": {
     "toggle": "Toggle dark mode"
   },
+  "calendar": {
+    "dialogLabel": "Choose a date",
+    "prevMonth": "Previous month",
+    "nextMonth": "Next month"
+  },
   "nav": {
     "dashboard": "Dashboard",
     "expenses": "Expenses"
@@ -185,7 +190,6 @@
     "attachImage": "Attach receipt image",
     "attachmentError": "Could not attach image. Please try again.",
     "attachmentTooLarge": "Image is too large. Maximum size is 500 KB.",
-    "datePickerTitle": "Select date",
     "dateConfirm": "Confirm",
     "dateCancel": "Cancel",
     "paymentMethodPickerTitle": "Select payment method",

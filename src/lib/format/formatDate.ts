@@ -5,12 +5,22 @@ const DATE_LOCALES: Record<AppLocale, string> = {
   he: 'he-IL',
 };
 
+const WEEKDAY_INITIALS: Record<AppLocale, readonly string[]> = {
+  en: ['S', 'M', 'T', 'W', 'T', 'F', 'S'],
+  he: ['א', 'ב', 'ג', 'ד', 'ה', 'ו', 'ש'],
+};
+
 export function formatDate(date: Date, locale: AppLocale): string {
   return date.toLocaleDateString(DATE_LOCALES[locale], { month: 'long', year: 'numeric' });
 }
 
 export function formatDateShort(date: Date, locale: AppLocale): string {
   return date.toLocaleDateString(DATE_LOCALES[locale]);
+}
+
+/** Single-letter weekday headers, Sun → Sat. */
+export function getWeekdayInitials(locale: AppLocale): readonly string[] {
+  return WEEKDAY_INITIALS[locale];
 }
 
 export function formatExpenseDateLong(iso: string, locale: AppLocale): string {
