@@ -2,14 +2,8 @@ import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { X } from 'lucide-react';
 import { type Expense } from '../../../types/expense';
-import { type CustomCategory } from '../../../types/category';
-import { type RecurrenceDeleteScope } from '../../../domain/recurrence/applyRecurrenceDelete';
-import { countThisAndFutureDeleteOccurrences } from '../../../domain/recurrence/countThisAndFutureDeleteOccurrences';
-import { isBuiltinSubCategoryId } from '../../../domain/categories/hierarchy';
-import {
-  getBuiltinCategoryI18nKey,
-  resolveCustomCategoryLabel,
-} from '../../../domain/categories/resolveCategoryLabel';
+import { type SubCategoryRecord } from '../../../types/category';
+import { resolveSubCategoryLabel } from '../../../domain/categories/resolveCategoryLabel';
 import { resolveExpenseDisplayLabel } from '../../../domain/expenses/resolveExpenseDisplayLabel';
 import { formatCurrencyAmount, formatExpenseDateLong } from '../../../lib/format/formatDate';
 import { type AppLocale } from '../../../config/app';
@@ -19,7 +13,7 @@ interface RecurringDeleteConfirmModalProps {
   target: Expense | null;
   expenses: Expense[];
   todayIso: string;
-  customCategories: CustomCategory[];
+  subCategories: SubCategoryRecord[];
   locale: AppLocale;
   queueIndex: number;
   queueTotal: number;
@@ -33,7 +27,7 @@ export function RecurringDeleteConfirmModal({
   target,
   expenses,
   todayIso,
-  customCategories,
+  subCategories,
   locale,
   queueIndex,
   queueTotal,
@@ -51,10 +45,7 @@ export function RecurringDeleteConfirmModal({
 
   if (!open || !target) return null;
 
-  const categoryLabel = isBuiltinSubCategoryId(target.category)
-    ? t(getBuiltinCategoryI18nKey(target.category))
-    : (resolveCustomCategoryLabel(target.category, customCategories, locale) ??
-      t('category.sub.other.miscellaneous'));
+  const categoryLabel = resolveSubCategoryLabel(target.category, subCategories, locale, t);
   const displayName = resolveExpenseDisplayLabel(target, locale, categoryLabel);
 
   const thisAndFutureLabel =

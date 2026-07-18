@@ -1,7 +1,6 @@
 /**
- * SSOT for 2-level built-in category hierarchy.
- * Expenses persist a leaf sub-category ID (e.g. 'food.groceries').
- * Parent IDs are used for grouping and icon/color resolution only.
+ * Seed-only source of truth for default built-in hierarchy + legacy id migration.
+ * Live category display/order is owned by per-user CategoryRecord data.
  */
 
 export const BUILTIN_PARENT_CATEGORY_IDS = [

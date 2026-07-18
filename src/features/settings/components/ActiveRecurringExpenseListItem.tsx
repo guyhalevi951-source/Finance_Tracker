@@ -1,13 +1,8 @@
 import { useTranslation } from 'react-i18next';
 import { Pencil, Trash2 } from 'lucide-react';
 import { type Expense } from '../../../types/expense';
-import { type CustomCategory } from '../../../types/category';
-import { type AppLocale } from '../../../config/app';
-import { isBuiltinSubCategoryId } from '../../../domain/categories/hierarchy';
-import {
-  getBuiltinCategoryI18nKey,
-  resolveCustomCategoryLabel,
-} from '../../../domain/categories/resolveCategoryLabel';
+import { type MainCategoryRecord, type SubCategoryRecord } from '../../../types/category';
+import { resolveSubCategoryLabel } from '../../../domain/categories/resolveCategoryLabel';
 import { resolveExpenseDisplayLabel } from '../../../domain/expenses/resolveExpenseDisplayLabel';
 import { hasBilingualTextContent } from '../../../domain/i18n/buildBilingualText';
 import { resolveRecurrenceLabelDescriptorFromRule } from '../../../domain/recurrence/resolveRecurrenceLabelKey';
@@ -19,7 +14,7 @@ interface ActiveRecurringExpenseListItemProps {
   template: Expense;
   expenses: Expense[];
   locale: AppLocale;
-  customCategories: CustomCategory[];
+  subCategories: SubCategoryRecord[];
   onEdit: () => void;
   onDelete: () => void;
 }
@@ -28,17 +23,14 @@ export function ActiveRecurringExpenseListItem({
   template,
   expenses,
   locale,
-  customCategories,
+  subCategories,
   onEdit,
   onDelete,
 }: ActiveRecurringExpenseListItemProps) {
   const { t } = useTranslation();
   const display = resolveSettingsSeriesDisplayFields(template);
 
-  const categoryLabel = isBuiltinSubCategoryId(display.category)
-    ? t(getBuiltinCategoryI18nKey(display.category))
-    : (resolveCustomCategoryLabel(display.category, customCategories, locale) ??
-      t('category.sub.other.miscellaneous'));
+  const categoryLabel = resolveSubCategoryLabel(display.category, subCategories, locale, t);
   const displayExpense = { ...template, ...display };
   const displayName = resolveExpenseDisplayLabel(displayExpense, locale, categoryLabel);
   const hasDescription = hasBilingualTextContent(display.description);

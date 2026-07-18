@@ -13,14 +13,13 @@ import {
   useRecurringExpensesSettings,
 } from '../features/settings';
 import { type AppLocale } from '../config/app';
-import { getAllBuiltinSubCategoryIds, getSubCategoryI18nKey } from '../domain/categories/hierarchy';
 import { resolveBilingualText } from '../domain/i18n/resolveBilingualText';
 
 export function ProfilePage() {
   const { t, i18n } = useTranslation();
   const locale = i18n.language as AppLocale;
   const { userId, displayName, isLoading } = useAuthSession();
-  const { customCategories } = useCategories(userId);
+  const { subCategories } = useCategories(userId);
   const { expenses, reload } = useExpenses();
 
   const recurringSettings = useRecurringExpensesSettings({
@@ -41,14 +40,12 @@ export function ProfilePage() {
         });
 
   const categoryOptions = useMemo(
-    () => [
-      ...getAllBuiltinSubCategoryIds().map((id) => ({ id, label: t(getSubCategoryI18nKey(id)) })),
-      ...customCategories.map((c) => ({
+    () =>
+      subCategories.map((c) => ({
         id: c.id,
         label: resolveBilingualText(c.labels, locale),
       })),
-    ],
-    [customCategories, locale, t],
+    [subCategories, locale],
   );
 
   return (
@@ -64,7 +61,7 @@ export function ProfilePage() {
         activeTemplates={recurringSettings.activeTemplates}
         expenses={expenses}
         locale={locale}
-        customCategories={customCategories}
+        subCategories={subCategories}
         onEdit={recurringSettings.openEdit}
         onDelete={recurringSettings.openDelete}
       />

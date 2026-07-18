@@ -1,19 +1,23 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, type LucideIcon } from 'lucide-react';
+import { ArrowLeft, Settings, type LucideIcon } from 'lucide-react';
 import {
-  BUILTIN_PARENT_CATEGORY_IDS,
-  getSubCategoriesForParent,
-  getSubCategoryI18nKey,
-  type BuiltinParentCategoryId,
-} from '../../../domain/categories/hierarchy';
-import { getBuiltinParentI18nKey } from '../../../domain/categories/resolveCategoryLabel';
-import { getSubCategoryUI, PARENT_CATEGORY_UI } from '../categoryUi';
+  type MainCategoryRecord,
+  type SubCategoryRecord,
+} from '../../../types/category';
+import { resolveBilingualText } from '../../../domain/i18n/resolveBilingualText';
+import { type AppLocale } from '../../../config/app';
+import { getSubCategoriesForParentFromCatalog } from '../../../domain/categories/resolveParentCategoryId';
+import { getMainCategoryUI, getSubCategoryUI } from '../categoryUi';
 import { expenseCompactLabelClass } from './expenseCompactButtonStyles';
 
 interface CategorySelectionStepProps {
+  locale: AppLocale;
+  mainCategories: MainCategoryRecord[];
+  subCategories: SubCategoryRecord[];
   onCancel: () => void;
   onSelectSubCategory: (subId: string) => void;
+  onManageCategories: () => void;
 }
 
 interface CategoryGridItemProps {
@@ -42,11 +46,21 @@ function CategoryGridItem({ icon: Icon, color, label, onClick }: CategoryGridIte
   );
 }
 
-export function CategorySelectionStep({ onCancel, onSelectSubCategory }: CategorySelectionStepProps) {
+export function CategorySelectionStep({
+  locale,
+  mainCategories,
+  subCategories,
+  onCancel,
+  onSelectSubCategory,
+  onManageCategories,
+}: CategorySelectionStepProps) {
   const { t } = useTranslation();
-  const [selectedParentId, setSelectedParentId] = useState<BuiltinParentCategoryId | null>(null);
+  const [selectedParentId, setSelectedParentId] = useState<string | null>(null);
 
   const isSubView = selectedParentId !== null;
+  const sortedMains = [...mainCategories].sort(
+    (a, b) => a.sortOrder - b.sortOrder || a.id.localeCompare(b.id),
+  );
 
   return (
     <div className="flex flex-col h-full">
@@ -71,7 +85,13 @@ export function CategorySelectionStep({ onCancel, onSelectSubCategory }: Categor
         )}
         <h1 className="text-lg font-semibold text-slate-800 dark:text-slate-100 truncate px-2">
           {isSubView && selectedParentId
-            ? t(getBuiltinParentI18nKey(selectedParentId))
+            ? resolveBilingualText(
+                mainCategories.find((m) => m.id === selectedParentId)?.labels ?? {
+                  en: '',
+                  he: '',
+                },
+                locale,
+              )
             : t('addExpense.title')}
         </h1>
         {isSubView ? (
@@ -90,30 +110,40 @@ export function CategorySelectionStep({ onCancel, onSelectSubCategory }: Categor
       <div className="flex-1 overflow-y-auto px-4 py-6">
         {!isSubView ? (
           <div className="grid grid-cols-4 gap-x-2 gap-y-6">
-            {BUILTIN_PARENT_CATEGORY_IDS.map((parentId) => {
-              const { icon: Icon, color } = PARENT_CATEGORY_UI[parentId];
+            {sortedMains.map((main) => {
+              const { icon: Icon, color } = getMainCategoryUI(main.id, mainCategories);
               return (
                 <CategoryGridItem
-                  key={parentId}
+                  key={main.id}
                   icon={Icon}
                   color={color}
-                  label={t(getBuiltinParentI18nKey(parentId))}
-                  onClick={() => setSelectedParentId(parentId)}
+                  label={resolveBilingualText(main.labels, locale)}
+                  onClick={() => setSelectedParentId(main.id)}
                 />
               );
             })}
+            <CategoryGridItem
+              icon={Settings}
+              color="bg-slate-600"
+              label={t('category.manage')}
+              onClick={onManageCategories}
+            />
           </div>
         ) : (
           <div className="grid grid-cols-4 gap-x-2 gap-y-6">
-            {getSubCategoriesForParent(selectedParentId).map((subId) => {
-              const { icon: Icon, color } = getSubCategoryUI(subId);
+            {getSubCategoriesForParentFromCatalog(subCategories, selectedParentId!).map((sub) => {
+              const { icon: Icon, color } = getSubCategoryUI(
+                sub.id,
+                mainCategories,
+                subCategories,
+              );
               return (
                 <CategoryGridItem
-                  key={subId}
+                  key={sub.id}
                   icon={Icon}
                   color={color}
-                  label={t(getSubCategoryI18nKey(subId))}
-                  onClick={() => onSelectSubCategory(subId)}
+                  label={resolveBilingualText(sub.labels, locale)}
+                  onClick={() => onSelectSubCategory(sub.id)}
                 />
               );
             })}

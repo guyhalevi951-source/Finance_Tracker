@@ -9,11 +9,10 @@ import {
   ImageIcon,
 } from 'lucide-react';
 import { type Expense } from '../../../types/expense';
-import { type CustomCategory } from '../../../types/category';
+import { type SubCategoryRecord } from '../../../types/category';
+import { resolveSubCategoryLabel } from '../../../domain/categories/resolveCategoryLabel';
 import { resolveBilingualText } from '../../../domain/i18n/resolveBilingualText';
 import { hasBilingualTextContent } from '../../../domain/i18n/buildBilingualText';
-import { isBuiltinSubCategoryId } from '../../../domain/categories/hierarchy';
-import { getBuiltinCategoryI18nKey, resolveCustomCategoryLabel } from '../../../domain/categories/resolveCategoryLabel';
 import { ROUTES } from '../../../config/routes';
 import { type AppLocale } from '../../../config/app';
 import { resolveRecurrenceRuleForExpense } from '../../../domain/recurrence/resolveRecurrenceRuleForExpense';
@@ -25,21 +24,19 @@ interface ExpenseDetailsViewProps {
   expense: Expense;
   expenses: Expense[];
   locale: AppLocale;
-  customCategories: CustomCategory[];
+  subCategories: SubCategoryRecord[];
 }
 
 export function ExpenseDetailsView({
   expense,
   expenses,
   locale,
-  customCategories,
+  subCategories,
 }: ExpenseDetailsViewProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
 
-  const categoryLabel = isBuiltinSubCategoryId(expense.category)
-    ? t(getBuiltinCategoryI18nKey(expense.category))
-    : (resolveCustomCategoryLabel(expense.category, customCategories, locale) ?? t('category.sub.other.miscellaneous'));
+  const categoryLabel = resolveSubCategoryLabel(expense.category, subCategories, locale, t);
 
   const recurrenceRule = resolveRecurrenceRuleForExpense(expenses, expense);
   const recurrenceDescriptor = recurrenceRule

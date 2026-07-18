@@ -7,6 +7,7 @@ export const FIRESTORE_COLLECTIONS = {
   users: 'users',
   transactions: 'transactions',
   categories: 'categories',
+  mainCategories: 'mainCategories',
   expenses: 'expenses',
   accounts: 'accounts',
   budgets: 'budgets',

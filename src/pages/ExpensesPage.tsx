@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import { expenseDetailPath } from '../config/routes';
+import { expenseDetailPath, ROUTES } from '../config/routes';
 import { type AppLocale } from '../config/app';
 import { useAppHeader } from '../app/hooks/useAppHeader';
 import { useAuthSession } from '../features/auth/hooks/useAuthSession';
@@ -25,7 +25,6 @@ import { RecurringInstanceLinkConfirmModal } from '../features/expenses/componen
 import { DEFAULT_RECURRENCE_SELECTION } from '../types/recurrenceRule';
 import { AddExpenseFab } from '../features/expenses/components/AddExpenseFab';
 import { AddExpenseFlowModal } from '../features/expenses/components/AddExpenseFlowModal';
-import { getAllBuiltinSubCategoryIds, getSubCategoryI18nKey } from '../domain/categories/hierarchy';
 import { resolveBilingualText } from '../domain/i18n/resolveBilingualText';
 import { type Expense } from '../types/expense';
 
@@ -36,7 +35,7 @@ export function ExpensesPage() {
   const [viewMode, setViewMode] = useState<ExpensesViewMode>('date');
 
   const { userId } = useAuthSession();
-  const { customCategories } = useCategories(userId);
+  const { mainCategories, subCategories } = useCategories(userId);
   const { expenses, loadError, reload, createExpense } = useExpenses();
   const addFlow = useAddExpenseFlow({ userId, createExpense });
 
@@ -48,13 +47,10 @@ export function ExpensesPage() {
     [batch.displayExpenses, timeFilter.range],
   );
 
-  const categoryOptions = [
-    ...getAllBuiltinSubCategoryIds().map((id) => ({ id, label: t(getSubCategoryI18nKey(id)) })),
-    ...customCategories.map((c) => ({
-      id: c.id,
-      label: resolveBilingualText(c.labels, locale),
-    })),
-  ];
+  const categoryOptions = subCategories.map((c) => ({
+    id: c.id,
+    label: resolveBilingualText(c.labels, locale),
+  }));
 
   const handleItemClick = (expense: Expense) => {
     if (batch.mode === 'deleting') {
@@ -71,7 +67,8 @@ export function ExpensesPage() {
   const listProps = {
     expenses: filteredExpenses,
     locale,
-    customCategories,
+    mainCategories,
+    subCategories,
     mode: batch.mode,
     selectedIds: batch.selectedIds,
     onItemClick: handleItemClick,
@@ -177,7 +174,7 @@ export function ExpensesPage() {
       <UnifiedRecurringBulkDeleteModal
         open={batch.showUnifiedBulkDeleteModal}
         group={batch.bulkDeleteGroup}
-        customCategories={customCategories}
+        subCategories={subCategories}
         locale={locale}
         isSaving={batch.isSaving}
         onConfirm={(scope) => void batch.confirmUnifiedBulkDelete(scope)}
@@ -189,7 +186,7 @@ export function ExpensesPage() {
         target={batch.recurringDeleteTarget}
         expenses={batch.pendingDeleteDraft}
         todayIso={timeFilter.todayIso}
-        customCategories={customCategories}
+        subCategories={subCategories}
         locale={locale}
         queueIndex={batch.recurringDeleteQueueIndex}
         queueTotal={batch.recurringDeleteQueueTotal}
@@ -224,7 +221,13 @@ export function ExpensesPage() {
         onClose={addFlow.closeFlow}
         onSelectSubCategory={addFlow.selectSubCategory}
         onBackToCategories={addFlow.goBackToCategories}
+        onManageCategories={() => {
+          addFlow.closeFlow();
+          navigate(ROUTES.categoryManagement);
+        }}
         onSubmit={() => void addFlow.submit()}
+        mainCategories={mainCategories}
+        subCategories={subCategories}
       />
     </div>
   );

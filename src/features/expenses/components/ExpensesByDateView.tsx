@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { type Expense } from '../../../types/expense';
 import { type ExpenseBatchMode } from '../hooks/useExpenseBatchMode';
-import { type CustomCategory } from '../../../types/category';
+import { type MainCategoryRecord, type SubCategoryRecord } from '../../../types/category';
 import { type AppLocale } from '../../../config/app';
 import { groupExpensesByDate } from '../../../domain/expenses/groupByDate';
 import { formatCurrencyAmount, formatExpenseDateLong } from '../../../lib/format/formatDate';
@@ -10,7 +10,8 @@ import { ExpenseListItem } from './ExpenseListItem';
 interface ExpensesByDateViewProps {
   expenses: Expense[];
   locale: AppLocale;
-  customCategories: CustomCategory[];
+  mainCategories: MainCategoryRecord[];
+  subCategories: SubCategoryRecord[];
   mode: ExpenseBatchMode;
   selectedIds: Set<string>;
   onItemClick: (expense: Expense) => void;
@@ -19,7 +20,8 @@ interface ExpensesByDateViewProps {
 export function ExpensesByDateView({
   expenses,
   locale,
-  customCategories,
+  mainCategories,
+  subCategories,
   mode,
   selectedIds,
   onItemClick,
@@ -57,7 +59,8 @@ export function ExpensesByDateView({
                 key={expense.id}
                 expense={expense}
                 locale={locale}
-                customCategories={customCategories}
+                mainCategories={mainCategories}
+                subCategories={subCategories}
                 mode={mode}
                 selected={selectedIds.has(expense.id)}
                 onItemClick={() => onItemClick(expense)}

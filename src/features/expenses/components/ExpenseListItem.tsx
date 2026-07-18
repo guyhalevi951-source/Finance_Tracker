@@ -5,9 +5,11 @@ import { type ExpenseBatchMode } from '../hooks/useExpenseBatchMode';
 import { resolveBilingualText } from '../../../domain/i18n/resolveBilingualText';
 import { hasBilingualTextContent } from '../../../domain/i18n/buildBilingualText';
 import { migrateCategoryId } from '../../../domain/categories/constants';
-import { isBuiltinSubCategoryId } from '../../../domain/categories/hierarchy';
-import { getBuiltinCategoryI18nKey, resolveCustomCategoryLabel } from '../../../domain/categories/resolveCategoryLabel';
-import { type CustomCategory } from '../../../types/category';
+import {
+  type MainCategoryRecord,
+  type SubCategoryRecord,
+} from '../../../types/category';
+import { resolveSubCategoryLabel } from '../../../domain/categories/resolveCategoryLabel';
 import { type AppLocale } from '../../../config/app';
 import { formatCurrencyAmount, formatExpenseDateNumeric } from '../../../lib/format/formatDate';
 import { getSubCategoryUI } from '../categoryUi';
@@ -16,7 +18,10 @@ import { ExpenseIconBadges } from './ExpenseIconBadges';
 interface ExpenseListItemProps {
   expense: Expense;
   locale: AppLocale;
-  customCategories: CustomCategory[];
+  mainCategories: MainCategoryRecord[];
+  subCategories: SubCategoryRecord[];
+  /** @deprecated Use subCategories */
+  customCategories?: SubCategoryRecord[];
   mode: ExpenseBatchMode;
   selected: boolean;
   showNestedDate?: boolean;
@@ -27,7 +32,8 @@ interface ExpenseListItemProps {
 export function ExpenseListItem({
   expense,
   locale,
-  customCategories,
+  mainCategories,
+  subCategories,
   mode,
   selected,
   showNestedDate = false,
@@ -36,10 +42,8 @@ export function ExpenseListItem({
 }: ExpenseListItemProps) {
   const { t } = useTranslation();
   const categoryId = migrateCategoryId(expense.category);
-  const { icon: Icon, color } = getSubCategoryUI(categoryId);
-  const categoryLabel = isBuiltinSubCategoryId(categoryId)
-    ? t(getBuiltinCategoryI18nKey(categoryId))
-    : (resolveCustomCategoryLabel(categoryId, customCategories, locale) ?? t('category.sub.other.miscellaneous'));
+  const { icon: Icon, color } = getSubCategoryUI(categoryId, mainCategories, subCategories);
+  const categoryLabel = resolveSubCategoryLabel(categoryId, subCategories, locale, t);
   const descriptionText = resolveBilingualText(expense.description, locale);
   const hasDescription = hasBilingualTextContent(expense.description);
 

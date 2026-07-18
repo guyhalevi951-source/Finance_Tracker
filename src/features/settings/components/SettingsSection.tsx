@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ChevronDown } from 'lucide-react';
 import { type Expense } from '../../../types/expense';
-import { type CustomCategory } from '../../../types/category';
+import { type SubCategoryRecord } from '../../../types/category';
 import { type AppLocale } from '../../../config/app';
 import { SettingsCategoryPanel } from './SettingsCategoryPanel';
 import { ActiveRecurringExpenseListItem } from './ActiveRecurringExpenseListItem';
@@ -11,7 +11,7 @@ interface SettingsSectionProps {
   activeTemplates: Expense[];
   expenses: Expense[];
   locale: AppLocale;
-  customCategories: CustomCategory[];
+  subCategories: SubCategoryRecord[];
   onEdit: (template: Expense) => void;
   onDelete: (template: Expense) => void;
 }
@@ -20,7 +20,7 @@ export function SettingsSection({
   activeTemplates,
   expenses,
   locale,
-  customCategories,
+  subCategories,
   onEdit,
   onDelete,
 }: SettingsSectionProps) {
@@ -58,7 +58,7 @@ export function SettingsSection({
                     template={template}
                     expenses={expenses}
                     locale={locale}
-                    customCategories={customCategories}
+                    subCategories={subCategories}
                     onEdit={() => onEdit(template)}
                     onDelete={() => onDelete(template)}
                   />

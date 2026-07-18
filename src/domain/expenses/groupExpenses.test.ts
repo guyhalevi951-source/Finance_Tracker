@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { groupExpensesByDate } from './groupByDate';
 import { groupExpensesByCategory } from './groupByCategory';
+import { buildDefaultCategorySeed } from '../categories/seedDefaultCategories';
 import type { Expense } from '../../types/expense';
 
 const makeExpense = (overrides: Partial<Expense>): Expense => ({
@@ -29,11 +30,15 @@ describe('groupExpensesByDate', () => {
 
 describe('groupExpensesByCategory', () => {
   it('groups by parent category and sums totals', () => {
-    const groups = groupExpensesByCategory([
-      makeExpense({ id: 'a', category: 'food.groceries', amount: 10 }),
-      makeExpense({ id: 'b', category: 'food.restaurants', amount: 15 }),
-      makeExpense({ id: 'c', category: 'housing.rent', amount: 100 }),
-    ]);
+    const { subs } = buildDefaultCategorySeed();
+    const groups = groupExpensesByCategory(
+      [
+        makeExpense({ id: 'a', category: 'food.groceries', amount: 10 }),
+        makeExpense({ id: 'b', category: 'food.restaurants', amount: 15 }),
+        makeExpense({ id: 'c', category: 'housing.rent', amount: 100 }),
+      ],
+      subs,
+    );
     expect(groups).toHaveLength(2);
     expect(groups[0].categoryId).toBe('housing');
     expect(groups[0].total).toBe(100);

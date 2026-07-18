@@ -3,11 +3,13 @@ import { useTranslation } from 'react-i18next';
 import { ChevronDown } from 'lucide-react';
 import { type Expense } from '../../../types/expense';
 import { type ExpenseBatchMode } from '../hooks/useExpenseBatchMode';
-import { type CustomCategory } from '../../../types/category';
+import {
+  type MainCategoryRecord,
+  type SubCategoryRecord,
+} from '../../../types/category';
 import { type AppLocale } from '../../../config/app';
 import { groupExpensesByCategory } from '../../../domain/expenses/groupByCategory';
-import { isBuiltinParentCategoryId } from '../../../domain/categories/hierarchy';
-import { getBuiltinParentI18nKey } from '../../../domain/categories/resolveCategoryLabel';
+import { resolveMainCategoryLabel } from '../../../domain/categories/resolveCategoryLabel';
 import { formatCurrencyAmount } from '../../../lib/format/formatDate';
 import { getCategoryUI } from '../categoryUi';
 import { ExpenseListItem } from './ExpenseListItem';
@@ -15,7 +17,8 @@ import { ExpenseListItem } from './ExpenseListItem';
 interface ExpensesByCategoryViewProps {
   expenses: Expense[];
   locale: AppLocale;
-  customCategories: CustomCategory[];
+  mainCategories: MainCategoryRecord[];
+  subCategories: SubCategoryRecord[];
   mode: ExpenseBatchMode;
   selectedIds: Set<string>;
   onItemClick: (expense: Expense) => void;
@@ -24,13 +27,14 @@ interface ExpensesByCategoryViewProps {
 export function ExpensesByCategoryView({
   expenses,
   locale,
-  customCategories,
+  mainCategories,
+  subCategories,
   mode,
   selectedIds,
   onItemClick,
 }: ExpensesByCategoryViewProps) {
   const { t } = useTranslation();
-  const groups = groupExpensesByCategory(expenses);
+  const groups = groupExpensesByCategory(expenses, subCategories);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
 
   const toggleExpanded = (categoryId: string) => {
@@ -54,10 +58,17 @@ export function ExpensesByCategoryView({
   return (
     <div className="space-y-3">
       {groups.map((group) => {
-        const { icon: Icon, color } = getCategoryUI(group.categoryId);
-        const categoryLabel = isBuiltinParentCategoryId(group.categoryId)
-          ? t(getBuiltinParentI18nKey(group.categoryId))
-          : t('category.parent.other');
+        const { icon: Icon, color } = getCategoryUI(
+          group.categoryId,
+          mainCategories,
+          subCategories,
+        );
+        const categoryLabel = resolveMainCategoryLabel(
+          group.categoryId,
+          mainCategories,
+          locale,
+          t,
+        );
         const isOpen = expanded.has(group.categoryId);
 
         return (
@@ -91,7 +102,8 @@ export function ExpensesByCategoryView({
                     key={expense.id}
                     expense={expense}
                     locale={locale}
-                    customCategories={customCategories}
+                    mainCategories={mainCategories}
+                    subCategories={subCategories}
                     mode={mode}
                     selected={selectedIds.has(expense.id)}
                     showNestedDate

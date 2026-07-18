@@ -1,14 +1,8 @@
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { X } from 'lucide-react';
-import { type CustomCategory } from '../../../types/category';
-import { type BulkSeriesDeleteScope } from '../../../domain/recurrence/applyBulkSeriesDelete';
-import { type SeriesExpenseGroup } from '../../../domain/recurrence/groupExpensesBySeriesRootId';
-import { isBuiltinSubCategoryId } from '../../../domain/categories/hierarchy';
-import {
-  getBuiltinCategoryI18nKey,
-  resolveCustomCategoryLabel,
-} from '../../../domain/categories/resolveCategoryLabel';
+import { type SubCategoryRecord } from '../../../types/category';
+import { resolveSubCategoryLabel } from '../../../domain/categories/resolveCategoryLabel';
 import { resolveExpenseDisplayLabel } from '../../../domain/expenses/resolveExpenseDisplayLabel';
 import { formatCurrencyAmount, formatExpenseDateLong } from '../../../lib/format/formatDate';
 import { type AppLocale } from '../../../config/app';
@@ -16,7 +10,7 @@ import { type AppLocale } from '../../../config/app';
 interface UnifiedRecurringBulkDeleteModalProps {
   open: boolean;
   group: SeriesExpenseGroup | null;
-  customCategories: CustomCategory[];
+  subCategories: SubCategoryRecord[];
   locale: AppLocale;
   isSaving: boolean;
   onConfirm: (scope: BulkSeriesDeleteScope) => void;
@@ -26,7 +20,7 @@ interface UnifiedRecurringBulkDeleteModalProps {
 export function UnifiedRecurringBulkDeleteModal({
   open,
   group,
-  customCategories,
+  subCategories,
   locale,
   isSaving,
   onConfirm,
@@ -43,10 +37,7 @@ export function UnifiedRecurringBulkDeleteModal({
 
   if (!open || !group || !representative) return null;
 
-  const categoryLabel = isBuiltinSubCategoryId(representative.category)
-    ? t(getBuiltinCategoryI18nKey(representative.category))
-    : (resolveCustomCategoryLabel(representative.category, customCategories, locale) ??
-      t('category.sub.other.miscellaneous'));
+  const categoryLabel = resolveSubCategoryLabel(representative.category, subCategories, locale, t);
   const displayName = resolveExpenseDisplayLabel(representative, locale, categoryLabel);
 
   const dateRangeLabel =

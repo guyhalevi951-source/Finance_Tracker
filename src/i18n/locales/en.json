@@ -319,7 +319,49 @@
     "addCustomButton": "Add",
     "addingCustomButton": "Translating...",
     "customTranslationError": "Could not translate category. Please try again.",
-    "loadError": "Could not load custom categories. Please refresh the page."
+    "loadError": "Could not load custom categories. Please refresh the page.",
+    "manage": "Settings",
+    "management": {
+      "title": "Category management",
+      "addButton": "Add category",
+      "loading": "Loading categories…",
+      "dragHandle": "Drag to reorder",
+      "deleteConfirmTitle": "Delete category?",
+      "deleteConfirmMessage": "Subcategories from \"{{name}}\" will move under Other. Their names and icons stay the same.",
+      "deleteConfirmConfirm": "Delete",
+      "deleteConfirmCancel": "Cancel",
+      "errors": {
+        "cannotDeleteOther": "The Other category cannot be deleted.",
+        "saveFailed": "Could not save category. Please try again.",
+        "deleteFailed": "Could not delete category. Please try again.",
+        "reorderFailed": "Could not save category order. Please try again."
+      }
+    },
+    "editor": {
+      "titleCreate": "Add category",
+      "titleEdit": "Edit category",
+      "nameLabel": "Category name",
+      "colorLabel": "Color",
+      "iconLabel": "Icon",
+      "saveButton": "Save",
+      "notFound": "Category not found."
+    },
+    "iconGroup": {
+      "life": "Life",
+      "food": "Food & Drink",
+      "shopping": "Shopping",
+      "home": "Home",
+      "transport": "Transport",
+      "health": "Health & Beauty",
+      "finance": "Finance & Bills",
+      "entertainment": "Entertainment",
+      "education": "Education",
+      "sports": "Sports & Fitness",
+      "nature": "Nature & Pets",
+      "work": "Work & Tech",
+      "travel": "Travel",
+      "other": "Other"
+    }
   },
   "errors": {
     "corruptedData": "Saved data was corrupted — starting fresh with empty data."

@@ -1,5 +1,6 @@
 import { type Expense } from '../../types/expense';
-import { getParentCategoryId } from '../categories/hierarchy';
+import { type SubCategoryRecord } from '../../types/category';
+import { resolveParentCategoryId } from '../categories/resolveParentCategoryId';
 import { sumAmounts } from '../money/arithmetic';
 import { isoDateToDate } from './parseExpenseDate';
 
@@ -9,11 +10,14 @@ export interface ExpenseCategoryGroup {
   expenses: Expense[];
 }
 
-export function groupExpensesByCategory(expenses: Expense[]): ExpenseCategoryGroup[] {
+export function groupExpensesByCategory(
+  expenses: Expense[],
+  subCategories: SubCategoryRecord[],
+): ExpenseCategoryGroup[] {
   const map = new Map<string, Expense[]>();
 
   for (const expense of expenses) {
-    const parentId = getParentCategoryId(expense.category);
+    const parentId = resolveParentCategoryId(expense.category, subCategories);
     const existing = map.get(parentId);
     if (existing) {
       existing.push(expense);

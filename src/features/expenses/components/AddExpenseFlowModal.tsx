@@ -1,6 +1,7 @@
 import { type AppLocale } from '../../../config/app';
 import { type PaymentMethodId } from '../../../types/paymentMethod';
 import { type RecurrenceSelection } from '../../../types/recurrenceRule';
+import { type MainCategoryRecord, type SubCategoryRecord } from '../../../types/category';
 import { type AddExpenseStep } from '../hooks/useAddExpenseFlow';
 import { CategorySelectionStep } from './CategorySelectionStep';
 import { ExpenseEntryStep } from './ExpenseEntryStep';
@@ -9,6 +10,8 @@ interface AddExpenseFlowModalProps {
   open: boolean;
   step: AddExpenseStep;
   locale: AppLocale;
+  mainCategories: MainCategoryRecord[];
+  subCategories: SubCategoryRecord[];
   selectedSubCategoryId: string | null;
   amountDigits: string;
   onAmountChange: (value: string) => void;
@@ -27,6 +30,7 @@ interface AddExpenseFlowModalProps {
   onClose: () => void;
   onSelectSubCategory: (subId: string) => void;
   onBackToCategories: () => void;
+  onManageCategories: () => void;
   onSubmit: () => void;
 }
 
@@ -34,6 +38,8 @@ export function AddExpenseFlowModal({
   open,
   step,
   locale,
+  mainCategories,
+  subCategories,
   selectedSubCategoryId,
   amountDigits,
   onAmountChange,
@@ -52,6 +58,7 @@ export function AddExpenseFlowModal({
   onClose,
   onSelectSubCategory,
   onBackToCategories,
+  onManageCategories,
   onSubmit,
 }: AddExpenseFlowModalProps) {
   if (!open) return null;
@@ -59,7 +66,14 @@ export function AddExpenseFlowModal({
   return (
     <div className="fixed inset-0 z-50 bg-white dark:bg-slate-900 flex flex-col">
       {step === 'category' && (
-        <CategorySelectionStep onCancel={onClose} onSelectSubCategory={onSelectSubCategory} />
+        <CategorySelectionStep
+          locale={locale}
+          mainCategories={mainCategories}
+          subCategories={subCategories}
+          onCancel={onClose}
+          onSelectSubCategory={onSelectSubCategory}
+          onManageCategories={onManageCategories}
+        />
       )}
       {step === 'entry' && selectedSubCategoryId && (
         <ExpenseEntryStep

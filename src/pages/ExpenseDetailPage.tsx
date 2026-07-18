@@ -15,7 +15,7 @@ export function ExpenseDetailPage() {
   const { id } = useParams<{ id: string }>();
 
   const { userId } = useAuthSession();
-  const { customCategories } = useCategories(userId);
+  const { subCategories } = useCategories(userId);
   const { expenses } = useExpenses();
 
   const expense = expenses.find((e) => e.id === id);
@@ -42,7 +42,7 @@ export function ExpenseDetailPage() {
       expense={expense}
       expenses={expenses}
       locale={locale}
-      customCategories={customCategories}
+      subCategories={subCategories}
     />
   );
 }

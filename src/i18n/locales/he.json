@@ -319,7 +319,49 @@
     "addCustomButton": "הוסף",
     "addingCustomButton": "מתרגם...",
     "customTranslationError": "לא ניתן לתרגם את הקטגוריה. נסה שוב.",
-    "loadError": "לא ניתן לטעון קטגוריות מותאמות. נסה לרענן את הדף."
+    "loadError": "לא ניתן לטעון קטגוריות מותאמות. נסה לרענן את הדף.",
+    "manage": "הגדרות",
+    "management": {
+      "title": "ניהול קטגוריות",
+      "addButton": "הוסף קטגוריה",
+      "loading": "טוען קטגוריות…",
+      "dragHandle": "גרור לסידור מחדש",
+      "deleteConfirmTitle": "למחוק קטגוריה?",
+      "deleteConfirmMessage": "תת-קטגוריות מ\"{{name}}\" יועברו תחת \"אחר\". השם והאייקון שלהן יישמרו.",
+      "deleteConfirmConfirm": "מחק",
+      "deleteConfirmCancel": "ביטול",
+      "errors": {
+        "cannotDeleteOther": "לא ניתן למחוק את קטגוריית \"אחר\".",
+        "saveFailed": "לא ניתן לשמור קטגוריה. נסה שוב.",
+        "deleteFailed": "לא ניתן למחוק קטגוריה. נסה שוב.",
+        "reorderFailed": "לא ניתן לשמור את סדר הקטגוריות. נסה שוב."
+      }
+    },
+    "editor": {
+      "titleCreate": "הוסף קטגוריה",
+      "titleEdit": "ערוך קטגוריה",
+      "nameLabel": "שם קטגוריה",
+      "colorLabel": "צבע",
+      "iconLabel": "אייקון",
+      "saveButton": "שמור",
+      "notFound": "הקטגוריה לא נמצאה."
+    },
+    "iconGroup": {
+      "life": "חיים",
+      "food": "אוכל ושתייה",
+      "shopping": "קניות",
+      "home": "בית",
+      "transport": "תחבורה",
+      "health": "בריאות ויופי",
+      "finance": "כספים וחשבונות",
+      "entertainment": "בילויים",
+      "education": "חינוך",
+      "sports": "ספורט וכושר",
+      "nature": "טבע וחיות",
+      "work": "עבודה וטכנולוגיה",
+      "travel": "נסיעות",
+      "other": "אחר"
+    }
   },
   "errors": {
     "corruptedData": "נתונים שמורים פגומים — מתחיל מחדש עם נתונים ריקים."
