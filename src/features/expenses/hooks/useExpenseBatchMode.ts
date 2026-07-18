@@ -12,6 +12,14 @@ import {
   applyRecurrenceDelete,
   type RecurrenceDeleteScope,
 } from '../../../domain/recurrence/applyRecurrenceDelete';
+import {
+  applyBulkSeriesDelete,
+  type BulkSeriesDeleteScope,
+} from '../../../domain/recurrence/applyBulkSeriesDelete';
+import {
+  findBulkEligibleSeriesGroups,
+  type SeriesExpenseGroup,
+} from '../../../domain/recurrence/groupExpensesBySeriesRootId';
 import { isRecurringExpense } from '../../../domain/recurrence/isRecurringExpense';
 import { requiresRecurringDeletePrompt } from '../../../domain/recurrence/requiresRecurringDeletePrompt';
 import { sortExpensesByDateDescending } from '../../../domain/expenses/sortExpensesByDateDescending';
@@ -52,6 +60,8 @@ export interface UseExpenseBatchModeReturn {
   editError: string | null;
   batchError: string | null;
   showRecurringDeleteModal: boolean;
+  showUnifiedBulkDeleteModal: boolean;
+  bulkDeleteGroup: SeriesExpenseGroup | null;
   recurringDeleteTarget: Expense | null;
   pendingDeleteDraft: Expense[];
   recurringDeleteQueueIndex: number;
@@ -73,6 +83,7 @@ export interface UseExpenseBatchModeReturn {
   dismissInstanceOnlyEdit: () => void;
   confirmMode: () => Promise<void>;
   confirmRecurringDelete: (scope: RecurrenceDeleteScope) => Promise<void>;
+  confirmUnifiedBulkDelete: (scope: BulkSeriesDeleteScope) => Promise<void>;
   dismissRecurringDelete: () => void;
   requestCancel: () => void;
   confirmDiscard: () => void;
@@ -113,6 +124,9 @@ export function useExpenseBatchMode(
   const [editError, setEditError] = useState<string | null>(null);
   const [batchError, setBatchError] = useState<string | null>(null);
   const [showRecurringDeleteModal, setShowRecurringDeleteModal] = useState(false);
+  const [showUnifiedBulkDeleteModal, setShowUnifiedBulkDeleteModal] = useState(false);
+  const [bulkDeleteQueue, setBulkDeleteQueue] = useState<SeriesExpenseGroup[]>([]);
+  const [bulkDeleteGroup, setBulkDeleteGroup] = useState<SeriesExpenseGroup | null>(null);
   const [recurringDeleteTarget, setRecurringDeleteTarget] = useState<Expense | null>(null);
   const [recurringDeleteQueue, setRecurringDeleteQueue] = useState<Expense[]>([]);
   const [recurringDeleteQueueTotal, setRecurringDeleteQueueTotal] = useState(0);
@@ -128,6 +142,9 @@ export function useExpenseBatchMode(
 
   const resetRecurringDeleteSession = useCallback(() => {
     setShowRecurringDeleteModal(false);
+    setShowUnifiedBulkDeleteModal(false);
+    setBulkDeleteQueue([]);
+    setBulkDeleteGroup(null);
     setRecurringDeleteTarget(null);
     setRecurringDeleteQueue([]);
     setRecurringDeleteQueueTotal(0);
@@ -501,17 +518,21 @@ export function useExpenseBatchMode(
         draftExpenses.filter((expense) => selectedIds.has(expense.id)),
       );
 
-      const recurringWithFuture = selectedExpenses.filter(
-        (expense) =>
-          isRecurringExpense(expense) &&
-          requiresRecurringDeletePrompt(draftExpenses, expense, todayIso),
-      );
-      const recurringLastOnly = selectedExpenses.filter(
-        (expense) =>
-          isRecurringExpense(expense) &&
-          !requiresRecurringDeletePrompt(draftExpenses, expense, todayIso),
-      );
       const nonRecurring = selectedExpenses.filter((expense) => !isRecurringExpense(expense));
+      const recurringSelected = selectedExpenses.filter((expense) => isRecurringExpense(expense));
+      const bulkGroups = findBulkEligibleSeriesGroups(recurringSelected);
+      const bulkEligibleIds = new Set(
+        bulkGroups.flatMap((group) => group.expenses.map((expense) => expense.id)),
+      );
+      const recurringSingles = recurringSelected.filter(
+        (expense) => !bulkEligibleIds.has(expense.id),
+      );
+      const recurringWithFuture = recurringSingles.filter((expense) =>
+        requiresRecurringDeletePrompt(draftExpenses, expense, todayIso),
+      );
+      const recurringLastOnly = recurringSingles.filter(
+        (expense) => !requiresRecurringDeletePrompt(draftExpenses, expense, todayIso),
+      );
 
       let workingDraft = draftExpenses;
 
@@ -523,15 +544,22 @@ export function useExpenseBatchMode(
       const nonRecurringIds = new Set(nonRecurring.map((expense) => expense.id));
       workingDraft = workingDraft.filter((expense) => !nonRecurringIds.has(expense.id));
 
-      if (recurringWithFuture.length > 0) {
+      if (bulkGroups.length > 0 || recurringWithFuture.length > 0) {
         setDeleteBaselineExpenses(draftExpenses);
         setPendingDeleteDraft(workingDraft);
         setDraftExpenses(workingDraft);
-        setSelectedIds(new Set(recurringWithFuture.map((expense) => expense.id)));
+        setSelectedIds(new Set());
+        setBulkDeleteQueue(bulkGroups);
+        setBulkDeleteGroup(bulkGroups[0] ?? null);
         setRecurringDeleteQueue(recurringWithFuture);
         setRecurringDeleteQueueTotal(recurringWithFuture.length);
-        setRecurringDeleteTarget(recurringWithFuture[0]);
-        setShowRecurringDeleteModal(true);
+        setRecurringDeleteTarget(recurringWithFuture[0] ?? null);
+
+        if (bulkGroups.length > 0) {
+          setShowUnifiedBulkDeleteModal(true);
+        } else {
+          setShowRecurringDeleteModal(true);
+        }
         return;
       }
 
@@ -548,6 +576,58 @@ export function useExpenseBatchMode(
     // Edit mode must never wipe storage via a stale empty draft.
     await persistBatch(draftExpenses, editBaselineExpenses.length > 0 ? editBaselineExpenses : draftExpenses);
   }, [draftExpenses, editBaselineExpenses, mode, persistBatch, selectedIds, todayIso]);
+
+  const finishDeletePromptSession = useCallback(
+    async (nextDraft: Expense[]) => {
+      const ok = await persistBatch(nextDraft, deleteBaselineExpenses, {
+        allowEmpty: nextDraft.length === 0,
+      });
+      if (ok) {
+        resetRecurringDeleteSession();
+      }
+    },
+    [deleteBaselineExpenses, persistBatch, resetRecurringDeleteSession],
+  );
+
+  const confirmUnifiedBulkDelete = useCallback(
+    async (scope: BulkSeriesDeleteScope) => {
+      if (!bulkDeleteGroup) return;
+
+      let nextDraft = applyBulkSeriesDelete(
+        pendingDeleteDraft,
+        bulkDeleteGroup.expenses,
+        scope,
+      );
+      const remainingBulk = bulkDeleteQueue.slice(1);
+
+      if (remainingBulk.length > 0) {
+        setPendingDeleteDraft(nextDraft);
+        setBulkDeleteQueue(remainingBulk);
+        setBulkDeleteGroup(remainingBulk[0]);
+        return;
+      }
+
+      setShowUnifiedBulkDeleteModal(false);
+      setBulkDeleteQueue([]);
+      setBulkDeleteGroup(null);
+
+      if (recurringDeleteQueue.length > 0) {
+        setPendingDeleteDraft(nextDraft);
+        setRecurringDeleteTarget(recurringDeleteQueue[0]);
+        setShowRecurringDeleteModal(true);
+        return;
+      }
+
+      await finishDeletePromptSession(nextDraft);
+    },
+    [
+      bulkDeleteGroup,
+      bulkDeleteQueue,
+      finishDeletePromptSession,
+      pendingDeleteDraft,
+      recurringDeleteQueue,
+    ],
+  );
 
   const confirmRecurringDelete = useCallback(
     async (scope: RecurrenceDeleteScope) => {
@@ -571,20 +651,13 @@ export function useExpenseBatchMode(
       setRecurringDeleteTarget(null);
       setRecurringDeleteQueue([]);
 
-      const ok = await persistBatch(nextDraft, deleteBaselineExpenses, {
-        allowEmpty: nextDraft.length === 0,
-      });
-      if (ok) {
-        resetRecurringDeleteSession();
-      }
+      await finishDeletePromptSession(nextDraft);
     },
     [
-      deleteBaselineExpenses,
+      finishDeletePromptSession,
       pendingDeleteDraft,
-      persistBatch,
       recurringDeleteQueue,
       recurringDeleteTarget,
-      resetRecurringDeleteSession,
     ],
   );
 
@@ -619,6 +692,8 @@ export function useExpenseBatchMode(
     editError,
     batchError,
     showRecurringDeleteModal,
+    showUnifiedBulkDeleteModal,
+    bulkDeleteGroup,
     recurringDeleteTarget,
     pendingDeleteDraft,
     recurringDeleteQueueIndex:
@@ -643,6 +718,7 @@ export function useExpenseBatchMode(
     dismissInstanceOnlyEdit,
     confirmMode,
     confirmRecurringDelete,
+    confirmUnifiedBulkDelete,
     dismissRecurringDelete,
     requestCancel,
     confirmDiscard,
