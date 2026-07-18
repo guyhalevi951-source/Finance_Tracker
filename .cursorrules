@@ -587,7 +587,6 @@ Run mentally before every PR-sized change:
 | Auth session IO | `src/services/auth/authSessionService.ts` |
 | Auth session React hook | `src/features/auth/hooks/useAuthSession.ts` |
 | Date/number locale formatting | `src/lib/format/formatDate.ts` |
-| Date picker / calendar UI (all app date selection) | `src/components/calendar/CustomDatePicker.tsx` |
 
 ### 14.8 i18n Red Flags — Stop Immediately
 
