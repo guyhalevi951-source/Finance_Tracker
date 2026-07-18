@@ -2,11 +2,9 @@ import { useCallback, useMemo, useState } from 'react';
 import { type Expense } from '../../../types/expense';
 import { type AppLocale } from '../../../config/app';
 import { validateExpenseInput, type EditExpenseInput } from '../../../domain/expenses/validateExpense';
-import { applyRecurringBasicFieldUpdate } from '../../../domain/recurrence/applyRecurringBasicFieldUpdate';
-import { resolveThisAndFutureAttachmentTarget } from '../../../domain/recurrence/resolveThisAndFutureAttachmentTarget';
+import { applyRecurringSettingsFieldUpdate, resolveSettingsSeriesDisplayFields } from '../../../domain/recurrence/applyRecurringSettingsFieldUpdate';
 import { listActiveRecurrenceTemplates } from '../../../domain/recurrence/listActiveRecurrenceTemplates';
 import { terminateRecurrenceSeries } from '../../../domain/recurrence/terminateRecurrenceSeries';
-import { dayAfterIso } from '../../../domain/expenses/shiftIsoDate';
 import { resolveBilingualText } from '../../../domain/i18n/resolveBilingualText';
 import { useTodayIso } from '../../../lib/hooks/useTodayIso';
 import { applyExpenseBatch } from '../../../services/expenses/expenseRepository';
@@ -54,12 +52,13 @@ export function useRecurringExpensesSettings({
 
   const openEdit = useCallback(
     (template: Expense) => {
+      const display = resolveSettingsSeriesDisplayFields(template);
       setEditingTemplate(template);
       setEditInput({
-        description: resolveBilingualText(template.description, locale),
-        amount: String(template.amount),
-        category: template.category,
-        paymentMethod: template.paymentMethod,
+        description: resolveBilingualText(display.description, locale),
+        amount: String(display.amount),
+        category: display.category,
+        paymentMethod: display.paymentMethod,
         date: template.date,
       });
       setPendingAttachmentFile(null);
@@ -95,10 +94,11 @@ export function useRecurringExpensesSettings({
     setErrorKey(null);
 
     try {
-      const currentText = resolveBilingualText(editingTemplate.description, locale);
+      const currentDisplay = resolveSettingsSeriesDisplayFields(editingTemplate);
+      const currentText = resolveBilingualText(currentDisplay.description, locale);
       const description =
         result.value.description === currentText
-          ? editingTemplate.description
+          ? currentDisplay.description
           : await createBilingualText(result.value.description, locale);
 
       const basicFields = {
@@ -108,36 +108,20 @@ export function useRecurringExpensesSettings({
         paymentMethod: result.value.paymentMethod as Expense['paymentMethod'],
       };
 
-      const futureFromIso = dayAfterIso(todayIso);
-
-      let nextExpenses = applyRecurringBasicFieldUpdate(
+      let nextExpenses = applyRecurringSettingsFieldUpdate(
         expenses,
         editingTemplate,
         basicFields,
-        'thisAndFuture',
-        futureFromIso,
-      );
-
-      const attachmentTarget = resolveThisAndFutureAttachmentTarget(
-        nextExpenses,
-        editingTemplate,
-        futureFromIso,
+        todayIso,
       );
 
       if (removeAttachment) {
         if (editingTemplate.attachmentUrl) {
           await deleteExpenseAttachment(userId, editingTemplate.id);
         }
-        if (
-          attachmentTarget.id !== editingTemplate.id &&
-          attachmentTarget.attachmentUrl
-        ) {
-          await deleteExpenseAttachment(userId, attachmentTarget.id);
-        }
 
-        const stripIds = new Set([attachmentTarget.id, editingTemplate.id]);
         nextExpenses = nextExpenses.map((expense) => {
-          if (!stripIds.has(expense.id) || !expense.attachmentUrl) {
+          if (expense.id !== editingTemplate.id || !expense.attachmentUrl) {
             return expense;
           }
           const { attachmentUrl, ...withoutAttachment } = expense;
@@ -146,11 +130,11 @@ export function useRecurringExpensesSettings({
       } else if (pendingAttachmentFile) {
         const attachmentUrl = await uploadExpenseAttachment(
           userId,
-          attachmentTarget.id,
+          editingTemplate.id,
           pendingAttachmentFile,
         );
         nextExpenses = nextExpenses.map((expense) =>
-          expense.id === attachmentTarget.id ? { ...expense, attachmentUrl } : expense,
+          expense.id === editingTemplate.id ? { ...expense, attachmentUrl } : expense,
         );
       }
 

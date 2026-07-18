@@ -36,6 +36,12 @@ function mergeBasicFields(expense: Expense, fields: RecurringBasicFields): Expen
   };
 }
 
+function clearPending(expense: Expense): Expense {
+  if (!expense.recurrencePendingBasicFields) return expense;
+  const { recurrencePendingBasicFields: _pending, ...rest } = expense;
+  return rest;
+}
+
 function shouldUpdateMaterializedThisAndFuture(
   expense: Expense,
   rootId: string,
@@ -64,11 +70,13 @@ function buildSuccessorTemplate(
   const {
     recurrenceSeriesId: _seriesId,
     recurrenceEndDate: _endDate,
+    recurrencePendingBasicFields: _pending,
     ...rest
   } = merged;
 
   // Do not copy recurrenceEndDate: that field caps the *old* series portion after a
   // prior split/termination. The successor is a fresh continuation.
+  // Do not copy Settings pending — successor already carries the applied fields.
   return {
     ...rest,
     recurrenceRule: template.recurrenceRule,
@@ -186,7 +194,7 @@ function applyThisAndFutureWithSeriesSplit(
   const successorId = successorTemplate.id;
   const continuationIds = findContinuationTemplateIds(expenses, template, splitDateIso);
 
-  const cappedOldTemplate = capTemplateEndDate(template, endDate);
+  const cappedOldTemplate = clearPending(capTemplateEndDate(template, endDate));
 
   const withoutAbsorbed = expenses.filter((expense) => {
     if (expense.id === template.id) return true;
@@ -278,11 +286,11 @@ function applyThisAndFutureInPlace(
 
   return expenses.map((expense) => {
     if (shouldUpdateMaterializedThisAndFuture(expense, rootId, splitDateIso)) {
-      return mergeBasicFields(expense, updatedFields);
+      return clearPending(mergeBasicFields(expense, updatedFields));
     }
 
     if (continuationIds.has(expense.id)) {
-      return mergeBasicFields(expense, updatedFields);
+      return clearPending(mergeBasicFields(expense, updatedFields));
     }
 
     if (

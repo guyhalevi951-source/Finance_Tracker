@@ -33,6 +33,16 @@ describe('isActiveRecurrenceTemplate', () => {
     expect(isActiveRecurrenceTemplate(template, [template], '2026-07-10')).toBe(false);
   });
 
+  it('returns false when recurrence end date is today (today is locked, not managed)', () => {
+    const template = makeExpense({
+      id: 't1',
+      date: '2026-07-01',
+      recurrenceRule: dailyRule,
+      recurrenceEndDate: '2026-07-10',
+    });
+    expect(isActiveRecurrenceTemplate(template, [template], '2026-07-10')).toBe(false);
+  });
+
   it('returns false when occurrence limit is reached', () => {
     const template = makeExpense({
       id: 't1',
@@ -82,5 +92,35 @@ describe('listActiveRecurrenceTemplates', () => {
     const result = listActiveRecurrenceTemplates([active, ended, instance], '2026-07-10');
     expect(result).toHaveLength(1);
     expect(result[0].id).toBe('t1');
+  });
+
+  it('after settings-style split, only the tomorrow successor stays active', () => {
+    const capped = makeExpense({
+      id: 't1',
+      date: '2026-07-01',
+      amount: 99,
+      recurrenceRule: dailyRule,
+      recurrenceEndDate: '2026-07-10',
+    });
+    const todayInstance = makeExpense({
+      id: 'iToday',
+      date: '2026-07-10',
+      amount: 99,
+      recurrenceSeriesId: 't1',
+    });
+    const successor = makeExpense({
+      id: 't2',
+      date: '2026-07-11',
+      amount: 100,
+      recurrenceRule: dailyRule,
+    });
+
+    const result = listActiveRecurrenceTemplates(
+      [capped, todayInstance, successor],
+      '2026-07-10',
+    );
+    expect(result).toHaveLength(1);
+    expect(result[0].id).toBe('t2');
+    expect(result[0].amount).toBe(100);
   });
 });

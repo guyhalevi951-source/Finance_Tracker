@@ -4,12 +4,13 @@ import { isRecurringExpense } from '../../../domain/recurrence/isRecurringExpens
 import { type ExpenseBatchMode } from '../hooks/useExpenseBatchMode';
 import { resolveBilingualText } from '../../../domain/i18n/resolveBilingualText';
 import { hasBilingualTextContent } from '../../../domain/i18n/buildBilingualText';
+import { migrateCategoryId } from '../../../domain/categories/constants';
 import { isBuiltinSubCategoryId } from '../../../domain/categories/hierarchy';
 import { getBuiltinCategoryI18nKey, resolveCustomCategoryLabel } from '../../../domain/categories/resolveCategoryLabel';
 import { type CustomCategory } from '../../../types/category';
 import { type AppLocale } from '../../../config/app';
 import { formatCurrencyAmount, formatExpenseDateNumeric } from '../../../lib/format/formatDate';
-import { getCategoryUI } from '../categoryUi';
+import { getSubCategoryUI } from '../categoryUi';
 import { ExpenseIconBadges } from './ExpenseIconBadges';
 
 interface ExpenseListItemProps {
@@ -34,10 +35,11 @@ export function ExpenseListItem({
   onItemClick,
 }: ExpenseListItemProps) {
   const { t } = useTranslation();
-  const { icon: Icon, color } = getCategoryUI(expense.category);
-  const categoryLabel = isBuiltinSubCategoryId(expense.category)
-    ? t(getBuiltinCategoryI18nKey(expense.category))
-    : (resolveCustomCategoryLabel(expense.category, customCategories, locale) ?? t('category.sub.other.miscellaneous'));
+  const categoryId = migrateCategoryId(expense.category);
+  const { icon: Icon, color } = getSubCategoryUI(categoryId);
+  const categoryLabel = isBuiltinSubCategoryId(categoryId)
+    ? t(getBuiltinCategoryI18nKey(categoryId))
+    : (resolveCustomCategoryLabel(categoryId, customCategories, locale) ?? t('category.sub.other.miscellaneous'));
   const descriptionText = resolveBilingualText(expense.description, locale);
   const hasDescription = hasBilingualTextContent(expense.description);
 

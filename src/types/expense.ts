@@ -2,6 +2,15 @@ import { type BilingualText } from './bilingual';
 import { type PaymentMethodId } from './paymentMethod';
 import { type RecurrenceRule } from './recurrenceRule';
 
+/** Basic fields scheduled to apply from effectiveFromIso onward (Settings edits). */
+export interface RecurrencePendingBasicFields {
+  effectiveFromIso: string;
+  description: BilingualText;
+  amount: number;
+  category: string;
+  paymentMethod: PaymentMethodId;
+}
+
 export interface Expense {
   id: string;
   description: BilingualText;
@@ -21,4 +30,9 @@ export interface Expense {
   recurrenceEndDate?: string;
   /** ISO dates the template must never auto-generate (manual instance deletions) */
   recurrenceExcludedDates?: string[];
+  /**
+   * Settings-scheduled field changes for dates on/after effectiveFromIso.
+   * Does not materialize those dates until sync runs when the calendar reaches them.
+   */
+  recurrencePendingBasicFields?: RecurrencePendingBasicFields;
 }

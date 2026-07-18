@@ -7,7 +7,7 @@ import {
   deleteDoc,
   type Firestore,
 } from 'firebase/firestore';
-import { type Expense } from '../../types/expense';
+import { type Expense, type RecurrencePendingBasicFields } from '../../types/expense';
 import { FIRESTORE_COLLECTIONS } from '../../config/firebase/collections';
 import { wrapLegacyText } from '../../domain/i18n/buildBilingualText';
 import { migrateCategoryId } from '../../domain/categories/constants';
@@ -72,6 +72,38 @@ function parseRecurrenceRule(raw: unknown): RecurrenceRule | undefined {
   return rule;
 }
 
+function parseRecurrencePendingBasicFields(raw: unknown): RecurrencePendingBasicFields | undefined {
+  if (typeof raw !== 'object' || raw === null) return undefined;
+  const obj = raw as Record<string, unknown>;
+
+  if (typeof obj.effectiveFromIso !== 'string' || !isIsoDateString(obj.effectiveFromIso)) {
+    return undefined;
+  }
+  if (typeof obj.amount !== 'number') return undefined;
+  if (typeof obj.category !== 'string') return undefined;
+  if (typeof obj.paymentMethod !== 'string' || !isPaymentMethodId(obj.paymentMethod)) {
+    return undefined;
+  }
+
+  const descriptionRaw = obj.description;
+  if (
+    typeof descriptionRaw !== 'object' ||
+    descriptionRaw === null ||
+    typeof (descriptionRaw as Record<string, unknown>).en !== 'string' ||
+    typeof (descriptionRaw as Record<string, unknown>).he !== 'string'
+  ) {
+    return undefined;
+  }
+
+  return {
+    effectiveFromIso: obj.effectiveFromIso,
+    description: descriptionRaw as RecurrencePendingBasicFields['description'],
+    amount: obj.amount,
+    category: migrateCategoryId(obj.category),
+    paymentMethod: obj.paymentMethod,
+  };
+}
+
 export function migrateExpense(raw: Record<string, unknown>): Expense {
   const description =
     typeof raw.description === 'string'
@@ -91,6 +123,9 @@ export function migrateExpense(raw: Record<string, unknown>): Expense {
         (date): date is string => typeof date === 'string' && isIsoDateString(date),
       )
     : undefined;
+  const recurrencePendingBasicFields = parseRecurrencePendingBasicFields(
+    raw.recurrencePendingBasicFields,
+  );
 
   return {
     id: raw.id as string,
@@ -106,6 +141,7 @@ export function migrateExpense(raw: Record<string, unknown>): Expense {
     ...(recurrenceExcludedDates && recurrenceExcludedDates.length > 0
       ? { recurrenceExcludedDates }
       : {}),
+    ...(recurrencePendingBasicFields ? { recurrencePendingBasicFields } : {}),
   };
 }
 

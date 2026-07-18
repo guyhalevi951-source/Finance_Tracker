@@ -12,6 +12,7 @@ import { resolveExpenseDisplayLabel } from '../../../domain/expenses/resolveExpe
 import { hasBilingualTextContent } from '../../../domain/i18n/buildBilingualText';
 import { resolveRecurrenceLabelDescriptorFromRule } from '../../../domain/recurrence/resolveRecurrenceLabelKey';
 import { resolveRemainingOccurrencesLabelDescriptor } from '../../../domain/recurrence/resolveRemainingOccurrencesLabel';
+import { resolveSettingsSeriesDisplayFields } from '../../../domain/recurrence/applyRecurringSettingsFieldUpdate';
 import { formatCurrencyAmount } from '../../../lib/format/formatDate';
 
 interface ActiveRecurringExpenseListItemProps {
@@ -32,13 +33,15 @@ export function ActiveRecurringExpenseListItem({
   onDelete,
 }: ActiveRecurringExpenseListItemProps) {
   const { t } = useTranslation();
+  const display = resolveSettingsSeriesDisplayFields(template);
 
-  const categoryLabel = isBuiltinSubCategoryId(template.category)
-    ? t(getBuiltinCategoryI18nKey(template.category))
-    : (resolveCustomCategoryLabel(template.category, customCategories, locale) ??
+  const categoryLabel = isBuiltinSubCategoryId(display.category)
+    ? t(getBuiltinCategoryI18nKey(display.category))
+    : (resolveCustomCategoryLabel(display.category, customCategories, locale) ??
       t('category.sub.other.miscellaneous'));
-  const displayName = resolveExpenseDisplayLabel(template, locale, categoryLabel);
-  const hasDescription = hasBilingualTextContent(template.description);
+  const displayExpense = { ...template, ...display };
+  const displayName = resolveExpenseDisplayLabel(displayExpense, locale, categoryLabel);
+  const hasDescription = hasBilingualTextContent(display.description);
 
   const rule = template.recurrenceRule;
   const scheduleDescriptor = rule
@@ -53,7 +56,7 @@ export function ActiveRecurringExpenseListItem({
       <div className="flex-1 min-w-0">
         <p className="font-medium text-slate-800 dark:text-slate-100 truncate">{displayName}</p>
         <p className="text-sm text-slate-500 dark:text-slate-400 truncate">
-          {formatCurrencyAmount(template.amount, locale)} · {scheduleLabel}
+          {formatCurrencyAmount(display.amount, locale)} · {scheduleLabel}
         </p>
         <p className="text-xs text-slate-400 dark:text-slate-500 truncate mt-0.5">
           {remainingLabel}

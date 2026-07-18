@@ -1,14 +1,17 @@
 import { type Expense } from '../../types/expense';
 import { generateExpenseId } from '../expenses/generateId';
+import { resolveRecurrenceGenerationFields } from './applyRecurringSettingsFieldUpdate';
 
 export function buildGeneratedExpense(template: Expense, occurrenceDateIso: string): Expense {
+  const fields = resolveRecurrenceGenerationFields(template, occurrenceDateIso);
+
   return {
     id: generateExpenseId(),
-    description: template.description,
-    amount: template.amount,
-    category: template.category,
+    description: fields.description,
+    amount: fields.amount,
+    category: fields.category,
     date: occurrenceDateIso,
-    paymentMethod: template.paymentMethod,
+    paymentMethod: fields.paymentMethod,
     recurrenceSeriesId: template.id,
     ...(template.attachmentUrl ? { attachmentUrl: template.attachmentUrl } : {}),
   };

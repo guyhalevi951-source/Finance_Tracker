@@ -32,7 +32,8 @@ function hasGeneratableFutureDueDate(
   const dueDates = computeDueDates(template.date, rule, horizonIso);
 
   return dueDates.some((dueDate) => {
-    if (dueDate < todayIso) return false;
+    // Active series must continue strictly after today (today is locked history).
+    if (dueDate <= todayIso) return false;
     if (template.recurrenceEndDate && dueDate > template.recurrenceEndDate) return false;
     if (isRecurrenceDateExcluded(template, dueDate)) return false;
     return true;
@@ -47,7 +48,8 @@ export function isActiveRecurrenceTemplate(
   const rule = template.recurrenceRule;
   if (!rule) return false;
 
-  if (template.recurrenceEndDate && todayIso > template.recurrenceEndDate) {
+  // Ending today means no further managed occurrences — keep today's instance, drop from Settings.
+  if (template.recurrenceEndDate && todayIso >= template.recurrenceEndDate) {
     return false;
   }
 
