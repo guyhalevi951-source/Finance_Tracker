@@ -9,6 +9,8 @@ import { ExpenseDetailPage } from './pages/ExpenseDetailPage';
 import { ProfilePage } from './pages/ProfilePage';
 import { CategoryManagementPage } from './pages/CategoryManagementPage';
 import { CategoryEditorPage } from './pages/CategoryEditorPage';
+import { SubCategoryManagementPage } from './pages/SubCategoryManagementPage';
+import { SubCategoryEditorPage } from './pages/SubCategoryEditorPage';
 
 function App() {
   return (
@@ -24,6 +26,9 @@ function App() {
             <Route path={ROUTES.categoryManagement} element={<CategoryManagementPage />} />
             <Route path={ROUTES.categoryCreate} element={<CategoryEditorPage />} />
             <Route path={ROUTES.categoryEdit} element={<CategoryEditorPage />} />
+            <Route path={ROUTES.categorySubManagement} element={<SubCategoryManagementPage />} />
+            <Route path={ROUTES.categorySubCreate} element={<SubCategoryEditorPage />} />
+            <Route path={ROUTES.categorySubEdit} element={<SubCategoryEditorPage />} />
           </Route>
         </Routes>
         </CategoriesProvider>

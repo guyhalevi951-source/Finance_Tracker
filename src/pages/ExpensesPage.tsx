@@ -1,8 +1,9 @@
 import { useMemo, useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { expenseDetailPath, ROUTES } from '../config/routes';
+import { expenseDetailPath, ROUTES, categorySubManagementPath } from '../config/routes';
 import {
+  CATEGORY_RETURN_SUB_PARENT_KEY,
   CATEGORY_RETURN_TO_ADD_EXPENSE_KEY,
   type ExpensesLocationState,
 } from '../config/categoryNavigation';
@@ -38,6 +39,7 @@ export function ExpensesPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const [viewMode, setViewMode] = useState<ExpensesViewMode>('date');
+  const [initialCategoryParentId, setInitialCategoryParentId] = useState<string | null>(null);
 
   const { userId } = useAuthSession();
   const { mainCategories, subCategories } = useCategories(userId);
@@ -47,7 +49,14 @@ export function ExpensesPage() {
 
   useEffect(() => {
     const state = location.state as ExpensesLocationState | null;
+    if (state?.openAddExpenseSubCategories) {
+      setInitialCategoryParentId(state.openAddExpenseSubCategories);
+      openFlow();
+      navigate(location.pathname, { replace: true, state: {} });
+      return;
+    }
     if (state?.openAddExpenseCategories) {
+      setInitialCategoryParentId(null);
       openFlow();
       navigate(location.pathname, { replace: true, state: {} });
     }
@@ -210,7 +219,10 @@ export function ExpensesPage() {
       />
 
       <AddExpenseFab
-        onClick={addFlow.openFlow}
+        onClick={() => {
+          setInitialCategoryParentId(null);
+          addFlow.openFlow();
+        }}
         hidden={addFlow.open || batch.mode !== 'view'}
       />
       <AddExpenseFlowModal
@@ -232,14 +244,25 @@ export function ExpensesPage() {
         onAttachmentChange={addFlow.setAttachmentFile}
         isSaving={addFlow.isSaving}
         errorKey={addFlow.errorKey}
-        onClose={addFlow.closeFlow}
+        onClose={() => {
+          setInitialCategoryParentId(null);
+          addFlow.closeFlow();
+        }}
         onSelectSubCategory={addFlow.selectSubCategory}
         onBackToCategories={addFlow.goBackToCategories}
         onManageCategories={() => {
           sessionStorage.setItem(CATEGORY_RETURN_TO_ADD_EXPENSE_KEY, '1');
+          sessionStorage.removeItem(CATEGORY_RETURN_SUB_PARENT_KEY);
           addFlow.closeFlow();
           navigate(ROUTES.categoryManagement);
         }}
+        onManageSubCategories={(parentId) => {
+          sessionStorage.setItem(CATEGORY_RETURN_TO_ADD_EXPENSE_KEY, '1');
+          sessionStorage.setItem(CATEGORY_RETURN_SUB_PARENT_KEY, parentId);
+          addFlow.closeFlow();
+          navigate(categorySubManagementPath(parentId));
+        }}
+        initialCategoryParentId={initialCategoryParentId}
         onSubmit={() => void addFlow.submit()}
         mainCategories={mainCategories}
         subCategories={subCategories}

@@ -19,47 +19,47 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { GripHorizontal, List, Minus, Pencil } from 'lucide-react';
-import { type MainCategoryRecord } from '../../../types/category';
+import { GripHorizontal, Minus, Pencil } from 'lucide-react';
+import { type MainCategoryRecord, type SubCategoryRecord } from '../../../types/category';
 import { type AppLocale } from '../../../config/app';
-import { categoryEditPath, categorySubManagementPath } from '../../../config/routes';
+import { categorySubEditPath } from '../../../config/routes';
 import { resolveBilingualText } from '../../../domain/i18n/resolveBilingualText';
-import { PROTECTED_MAIN_CATEGORY_ID } from '../../../domain/categories/reassignSubCategoriesOnDelete';
-import { getMainCategoryUI } from '../../expenses/categoryUi';
-import { DeleteMainCategoryConfirmModal } from './DeleteMainCategoryConfirmModal';
+import { getSubCategoryUI } from '../../expenses/categoryUi';
+import { DeleteSubCategoryConfirmModal } from './DeleteSubCategoryConfirmModal';
 
-interface CategoryManagementListProps {
+interface SubCategoryManagementListProps {
   locale: AppLocale;
+  parentMain: MainCategoryRecord;
   mainCategories: MainCategoryRecord[];
+  subCategories: SubCategoryRecord[];
   onReorder: (orderedIds: string[]) => void;
-  onDelete: (mainId: string) => Promise<boolean>;
+  onDelete: (subId: string) => Promise<boolean>;
   isDeleting: boolean;
 }
 
 interface SortableRowProps {
-  main: MainCategoryRecord;
+  sub: SubCategoryRecord;
   locale: AppLocale;
   mainCategories: MainCategoryRecord[];
+  subCategories: SubCategoryRecord[];
   onEdit: () => void;
-  onManageSubs: () => void;
   onDeleteRequest: () => void;
 }
 
-function SortableCategoryRow({
-  main,
+function SortableSubCategoryRow({
+  sub,
   locale,
   mainCategories,
+  subCategories,
   onEdit,
-  onManageSubs,
   onDeleteRequest,
 }: SortableRowProps) {
   const { t } = useTranslation();
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
-    id: main.id,
+    id: sub.id,
   });
-  const { icon: Icon, color } = getMainCategoryUI(main.id, mainCategories);
-  const label = resolveBilingualText(main.labels, locale);
-  const isProtected = main.id === PROTECTED_MAIN_CATEGORY_ID;
+  const { icon: Icon, color } = getSubCategoryUI(sub.id, mainCategories, subCategories);
+  const label = resolveBilingualText(sub.labels, locale);
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -74,18 +74,14 @@ function SortableCategoryRow({
         isDragging ? 'opacity-80 shadow-lg z-10 relative' : ''
       }`}
     >
-      {!isProtected ? (
-        <button
-          type="button"
-          onClick={onDeleteRequest}
-          aria-label={t('category.management.deleteConfirmConfirm')}
-          className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-full bg-rose-600 text-white flex-shrink-0"
-        >
-          <Minus className="w-4 h-4" />
-        </button>
-      ) : (
-        <span className="min-h-[44px] min-w-[44px] flex-shrink-0" aria-hidden />
-      )}
+      <button
+        type="button"
+        onClick={onDeleteRequest}
+        aria-label={t('category.subManagement.deleteConfirmConfirm')}
+        className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-full bg-rose-600 text-white flex-shrink-0"
+      >
+        <Minus className="w-4 h-4" />
+      </button>
 
       <span className={`inline-flex items-center justify-center w-10 h-10 rounded-full text-white flex-shrink-0 ${color}`}>
         <Icon className="w-5 h-5" />
@@ -98,7 +94,7 @@ function SortableCategoryRow({
       <button
         type="button"
         onClick={onEdit}
-        aria-label={t('category.editor.titleEdit')}
+        aria-label={t('category.subEditor.titleEdit')}
         className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20"
       >
         <Pencil className="w-5 h-5" />
@@ -106,16 +102,7 @@ function SortableCategoryRow({
 
       <button
         type="button"
-        onClick={onManageSubs}
-        aria-label={t('category.subManagement.manageSubs')}
-        className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl text-slate-500 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20"
-      >
-        <List className="w-5 h-5" />
-      </button>
-
-      <button
-        type="button"
-        aria-label={t('category.management.dragHandle')}
+        aria-label={t('category.subManagement.dragHandle')}
         className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl text-slate-400 touch-none cursor-grab active:cursor-grabbing"
         {...attributes}
         {...listeners}
@@ -126,21 +113,26 @@ function SortableCategoryRow({
   );
 }
 
-export function CategoryManagementList({
+export function SubCategoryManagementList({
   locale,
+  parentMain,
   mainCategories,
+  subCategories,
   onReorder,
   onDelete,
   isDeleting,
-}: CategoryManagementListProps) {
+}: SubCategoryManagementListProps) {
   const navigate = useNavigate();
-  const [deleteTarget, setDeleteTarget] = useState<MainCategoryRecord | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<SubCategoryRecord | null>(null);
 
   const sorted = useMemo(
-    () => [...mainCategories].sort((a, b) => a.sortOrder - b.sortOrder || a.id.localeCompare(b.id)),
-    [mainCategories],
+    () =>
+      [...subCategories]
+        .filter((sub) => sub.parentId === parentMain.id)
+        .sort((a, b) => a.sortOrder - b.sortOrder || a.id.localeCompare(b.id)),
+    [subCategories, parentMain.id],
   );
-  const ids = sorted.map((main) => main.id);
+  const ids = sorted.map((sub) => sub.id);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -168,22 +160,22 @@ export function CategoryManagementList({
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
         <SortableContext items={ids} strategy={verticalListSortingStrategy}>
           <ul className="divide-y divide-slate-200 dark:divide-slate-700 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden">
-            {sorted.map((main) => (
-              <SortableCategoryRow
-                key={main.id}
-                main={main}
+            {sorted.map((sub) => (
+              <SortableSubCategoryRow
+                key={sub.id}
+                sub={sub}
                 locale={locale}
                 mainCategories={mainCategories}
-                onEdit={() => navigate(categoryEditPath(main.id))}
-                onManageSubs={() => navigate(categorySubManagementPath(main.id))}
-                onDeleteRequest={() => setDeleteTarget(main)}
+                subCategories={subCategories}
+                onEdit={() => navigate(categorySubEditPath(parentMain.id, sub.id))}
+                onDeleteRequest={() => setDeleteTarget(sub)}
               />
             ))}
           </ul>
         </SortableContext>
       </DndContext>
 
-      <DeleteMainCategoryConfirmModal
+      <DeleteSubCategoryConfirmModal
         open={deleteTarget !== null}
         categoryName={deleteTarget ? resolveBilingualText(deleteTarget.labels, locale) : ''}
         isSaving={isDeleting}

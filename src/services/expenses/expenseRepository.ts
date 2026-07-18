@@ -234,6 +234,21 @@ export async function applyExpenseBatch(
   saveGuestExpenses(nextExpenses);
 }
 
+export async function reassignExpensesCategory(
+  userId: string | null,
+  fromCategoryId: string,
+  toCategoryId: string,
+): Promise<void> {
+  const expenses = await loadExpenses(userId);
+  const hasMatches = expenses.some((expense) => expense.category === fromCategoryId);
+  if (!hasMatches) return;
+
+  const updated = expenses.map((expense) =>
+    expense.category === fromCategoryId ? { ...expense, category: toCategoryId } : expense,
+  );
+  await applyExpenseBatch(userId, updated);
+}
+
 export async function deleteExpense(userId: string | null, expenseId: string): Promise<void> {
   if (userId) {
     const ref = doc(userExpensesRef(db, userId), expenseId);

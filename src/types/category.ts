@@ -26,3 +26,8 @@ export interface MainCategoryInput {
   icon: string;
   color: string;
 }
+
+export interface SubCategoryInput {
+  labels: BilingualText;
+  icon: string;
+}

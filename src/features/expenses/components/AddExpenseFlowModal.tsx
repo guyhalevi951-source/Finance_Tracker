@@ -31,7 +31,9 @@ interface AddExpenseFlowModalProps {
   onSelectSubCategory: (subId: string) => void;
   onBackToCategories: () => void;
   onManageCategories: () => void;
+  onManageSubCategories: (parentId: string) => void;
   onSubmit: () => void;
+  initialCategoryParentId?: string | null;
 }
 
 export function AddExpenseFlowModal({
@@ -59,7 +61,9 @@ export function AddExpenseFlowModal({
   onSelectSubCategory,
   onBackToCategories,
   onManageCategories,
+  onManageSubCategories,
   onSubmit,
+  initialCategoryParentId = null,
 }: AddExpenseFlowModalProps) {
   if (!open) return null;
 
@@ -70,9 +74,11 @@ export function AddExpenseFlowModal({
           locale={locale}
           mainCategories={mainCategories}
           subCategories={subCategories}
+          initialParentId={initialCategoryParentId}
           onCancel={onClose}
           onSelectSubCategory={onSelectSubCategory}
           onManageCategories={onManageCategories}
+          onManageSubCategories={onManageSubCategories}
         />
       )}
       {step === 'entry' && selectedSubCategoryId && (

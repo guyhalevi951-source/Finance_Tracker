@@ -354,6 +354,36 @@
       "saveButton": "Save",
       "notFound": "Category not found."
     },
+    "subManagement": {
+      "title": "Subcategory management",
+      "titleWithParent": "{{name}} — subcategories",
+      "back": "Back",
+      "addButton": "Add subcategory",
+      "loading": "Loading subcategories…",
+      "notFound": "Category not found.",
+      "manageSubs": "Manage subcategories",
+      "dragHandle": "Drag to reorder",
+      "deleteConfirmTitle": "Delete subcategory?",
+      "deleteConfirmMessage": "\"{{name}}\" will be deleted. Expenses using it will move to Other / Miscellaneous.",
+      "deleteConfirmConfirm": "Delete",
+      "deleteConfirmCancel": "Cancel",
+      "errors": {
+        "cannotDeleteLastSub": "Each category must have at least one subcategory.",
+        "saveFailed": "Could not save subcategory. Please try again.",
+        "deleteFailed": "Could not delete subcategory. Please try again.",
+        "reorderFailed": "Could not save subcategory order. Please try again.",
+        "moveFailed": "Could not move subcategory. Please try again."
+      }
+    },
+    "subEditor": {
+      "titleCreate": "Add subcategory",
+      "titleEdit": "Edit subcategory",
+      "nameLabel": "Subcategory name",
+      "moveLabel": "Move to category",
+      "moveHint": "Select a main category to move this subcategory. It will inherit the new category color.",
+      "saveButton": "Save",
+      "notFound": "Subcategory not found."
+    },
     "iconGroup": {
       "life": "Life",
       "food": "Food & Drink",

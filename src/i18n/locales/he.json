@@ -354,6 +354,36 @@
       "saveButton": "שמור",
       "notFound": "הקטגוריה לא נמצאה."
     },
+    "subManagement": {
+      "title": "ניהול תת-קטגוריות",
+      "titleWithParent": "{{name}} — תת-קטגוריות",
+      "back": "חזרה",
+      "addButton": "הוסף תת-קטגוריה",
+      "loading": "טוען תת-קטגוריות…",
+      "notFound": "הקטגוריה לא נמצאה.",
+      "manageSubs": "ניהול תת-קטגוריות",
+      "dragHandle": "גרור לסידור מחדש",
+      "deleteConfirmTitle": "למחוק תת-קטגוריה?",
+      "deleteConfirmMessage": "\"{{name}}\" תימחק. הוצאות שמשויכות אליה יועברו ל\"אחר / שונות\".",
+      "deleteConfirmConfirm": "מחק",
+      "deleteConfirmCancel": "ביטול",
+      "errors": {
+        "cannotDeleteLastSub": "לכל קטגוריה חייבת להיות לפחות תת-קטגוריה אחת.",
+        "saveFailed": "לא ניתן לשמור תת-קטגוריה. נסה שוב.",
+        "deleteFailed": "לא ניתן למחוק תת-קטגוריה. נסה שוב.",
+        "reorderFailed": "לא ניתן לשמור את סדר תת-הקטגוריות. נסה שוב.",
+        "moveFailed": "לא ניתן להעביר תת-קטגוריה. נסה שוב."
+      }
+    },
+    "subEditor": {
+      "titleCreate": "הוסף תת-קטגוריה",
+      "titleEdit": "ערוך תת-קטגוריה",
+      "nameLabel": "שם תת-קטגוריה",
+      "moveLabel": "העבר לקטגוריה",
+      "moveHint": "בחר קטגוריה ראשית להעברת תת-קטגוריה זו. הצבע יירש מהקטגוריה החדשה.",
+      "saveButton": "שמור",
+      "notFound": "תת-הקטגוריה לא נמצאה."
+    },
     "iconGroup": {
       "life": "חיים",
       "food": "אוכל ושתייה",

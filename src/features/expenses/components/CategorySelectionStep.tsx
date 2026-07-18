@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ArrowLeft, Settings, type LucideIcon } from 'lucide-react';
 import {
@@ -15,9 +15,11 @@ interface CategorySelectionStepProps {
   locale: AppLocale;
   mainCategories: MainCategoryRecord[];
   subCategories: SubCategoryRecord[];
+  initialParentId?: string | null;
   onCancel: () => void;
   onSelectSubCategory: (subId: string) => void;
   onManageCategories: () => void;
+  onManageSubCategories: (parentId: string) => void;
 }
 
 interface CategoryGridItemProps {
@@ -50,12 +52,20 @@ export function CategorySelectionStep({
   locale,
   mainCategories,
   subCategories,
+  initialParentId = null,
   onCancel,
   onSelectSubCategory,
   onManageCategories,
+  onManageSubCategories,
 }: CategorySelectionStepProps) {
   const { t } = useTranslation();
-  const [selectedParentId, setSelectedParentId] = useState<string | null>(null);
+  const [selectedParentId, setSelectedParentId] = useState<string | null>(initialParentId);
+
+  useEffect(() => {
+    if (initialParentId) {
+      setSelectedParentId(initialParentId);
+    }
+  }, [initialParentId]);
 
   const isSubView = selectedParentId !== null;
   const sortedMains = [...mainCategories].sort(
@@ -97,10 +107,11 @@ export function CategorySelectionStep({
         {isSubView ? (
           <button
             type="button"
-            onClick={onCancel}
-            className="text-rose-600 dark:text-rose-400 font-medium min-h-[44px] px-2"
+            onClick={() => onManageSubCategories(selectedParentId!)}
+            className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700"
+            aria-label={t('category.subManagement.manageSubs')}
           >
-            {t('addExpense.cancel')}
+            <Settings className="w-5 h-5" />
           </button>
         ) : (
           <span className="w-16" aria-hidden />
