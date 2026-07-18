@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { X } from 'lucide-react';
+import { type AppLocale } from '../../../config/app';
 import { type EditExpenseInput } from '../../../domain/expenses/validateExpense';
 import { PAYMENT_METHOD_IDS } from '../../../domain/expenses/paymentMethods';
 import {
@@ -9,6 +10,8 @@ import {
 } from '../../../domain/recurrence/resolveRecurrenceLabelKey';
 import { type RecurrenceSelection } from '../../../types/recurrenceRule';
 import { preventNumberInputScroll } from '../../../lib/input/preventNumberInputScroll';
+import { formatExpenseDateNumeric } from '../../../lib/format/formatDate';
+import { CustomDatePicker } from '../../../components/calendar';
 import { ExpenseAttachmentField } from './ExpenseAttachmentField';
 import { ExpenseRecurrencePickerModal } from './ExpenseRecurrencePickerModal';
 import {
@@ -65,8 +68,10 @@ export function ExpenseEditModal({
   occurrencesCustomLabelKey,
   minCustomOccurrences,
 }: ExpenseEditModalProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const locale = i18n.language as AppLocale;
   const [recurrenceModalOpen, setRecurrenceModalOpen] = useState(false);
+  const [dateModalOpen, setDateModalOpen] = useState(false);
   const recurrenceDescriptor = resolveRecurrenceLabelDescriptor(recurrenceSelection);
   const recurrenceLabel = t(recurrenceDescriptor.key, recurrenceDescriptor.params);
   const recurrenceActive = isRecurrenceActive(recurrenceSelection);
@@ -165,12 +170,13 @@ export function ExpenseEditModal({
               <label className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-2">
                 {t(dateLabelKey)}
               </label>
-              <input
-                type="date"
-                value={input.date}
-                onChange={(e) => onChange({ ...input, date: e.target.value })}
-                className="w-full px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100"
-              />
+              <button
+                type="button"
+                onClick={() => setDateModalOpen(true)}
+                className="w-full px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 text-start min-h-[48px]"
+              >
+                {formatExpenseDateNumeric(input.date, locale)}
+              </button>
             </div>
             )}
             {!hideRecurrenceField && (
@@ -255,6 +261,18 @@ export function ExpenseEditModal({
         onClose={() => setRecurrenceModalOpen(false)}
         hideOccurrencesField
       />
+      )}
+
+      {!hideDateField && (
+        <CustomDatePicker
+          open={dateModalOpen}
+          value={input.date}
+          onConfirm={(isoDate) => {
+            onChange({ ...input, date: isoDate });
+            setDateModalOpen(false);
+          }}
+          onCancel={() => setDateModalOpen(false)}
+        />
       )}
     </>
   );

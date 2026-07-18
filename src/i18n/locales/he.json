@@ -18,6 +18,8 @@
   },
   "calendar": {
     "dialogLabel": "בחר תאריך",
+    "cancel": "ביטול",
+    "confirm": "אישור",
     "prevMonth": "חודש קודם",
     "nextMonth": "חודש הבא"
   },

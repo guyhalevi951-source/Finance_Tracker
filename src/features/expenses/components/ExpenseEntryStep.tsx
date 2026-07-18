@@ -15,7 +15,7 @@ import {
 } from '../../../domain/recurrence/resolveRecurrenceLabelKey';
 import { resolveOccurrencesLimitLabelDescriptor } from '../../../domain/recurrence/resolveOccurrencesLimitLabelKey';
 import { ExpenseNumpad, formatNumpadDisplay } from './ExpenseNumpad';
-import { ExpenseDatePickerModal } from './ExpenseDatePickerModal';
+import { CustomDatePicker } from '../../../components/calendar';
 import { ExpensePaymentMethodPickerModal } from './ExpensePaymentMethodPickerModal';
 import { ExpenseRecurrencePickerModal } from './ExpenseRecurrencePickerModal';
 
@@ -156,7 +156,7 @@ export function ExpenseEntryStep({
         </div>
       </div>
 
-      <ExpenseDatePickerModal
+      <CustomDatePicker
         open={dateModalOpen}
         value={date}
         onConfirm={(isoDate) => {

@@ -18,6 +18,8 @@
   },
   "calendar": {
     "dialogLabel": "Choose a date",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
     "prevMonth": "Previous month",
     "nextMonth": "Next month"
   },

@@ -6,23 +6,19 @@ import { isoDateToDate } from '../../domain/expenses/parseExpenseDate';
 import { formatDate, getWeekdayInitials } from '../../lib/format/formatDate';
 import { buildCalendarGrid } from './buildCalendarGrid';
 
-export interface DateCalendarModalProps {
+export interface CustomDatePickerProps {
   open: boolean;
   value: string;
-  cancelLabel: string;
-  confirmLabel: string;
   onConfirm: (isoDate: string) => void;
   onCancel: () => void;
 }
 
-export function DateCalendarModal({
+export function CustomDatePicker({
   open,
   value,
-  cancelLabel,
-  confirmLabel,
   onConfirm,
   onCancel,
-}: DateCalendarModalProps) {
+}: CustomDatePickerProps) {
   const { t, i18n } = useTranslation();
   const locale = i18n.language as AppLocale;
   const [draftDate, setDraftDate] = useState(value);
@@ -140,14 +136,14 @@ export function DateCalendarModal({
             onClick={onCancel}
             className="min-h-[44px] px-2 text-sm font-medium text-amber-600 dark:text-amber-400"
           >
-            {cancelLabel}
+            {t('calendar.cancel')}
           </button>
           <button
             type="button"
             onClick={() => onConfirm(draftDate)}
             className="min-h-[44px] px-2 text-sm font-medium text-amber-600 dark:text-amber-400"
           >
-            {confirmLabel}
+            {t('calendar.confirm')}
           </button>
         </div>
       </div>
