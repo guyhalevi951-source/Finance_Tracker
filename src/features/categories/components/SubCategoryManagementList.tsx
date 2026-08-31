@@ -24,6 +24,7 @@ import { type MainCategoryRecord, type SubCategoryRecord } from '../../../types/
 import { type AppLocale } from '../../../config/app';
 import { categorySubEditPath } from '../../../config/routes';
 import { resolveBilingualText } from '../../../domain/i18n/resolveBilingualText';
+import { isProtectedFallbackSubCategoryId } from '../../../domain/categories/deleteSubCategory';
 import { getSubCategoryUI } from '../../expenses/categoryUi';
 import { DeleteSubCategoryConfirmModal } from './DeleteSubCategoryConfirmModal';
 
@@ -60,6 +61,7 @@ function SortableSubCategoryRow({
   });
   const { icon: Icon, color } = getSubCategoryUI(sub.id, mainCategories, subCategories);
   const label = resolveBilingualText(sub.labels, locale);
+  const isProtectedFallback = isProtectedFallbackSubCategoryId(sub.id);
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -74,14 +76,18 @@ function SortableSubCategoryRow({
         isDragging ? 'opacity-80 shadow-lg z-10 relative' : ''
       }`}
     >
-      <button
-        type="button"
-        onClick={onDeleteRequest}
-        aria-label={t('category.subManagement.deleteConfirmConfirm')}
-        className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-full bg-rose-600 text-white flex-shrink-0"
-      >
-        <Minus className="w-4 h-4" />
-      </button>
+      {!isProtectedFallback ? (
+        <button
+          type="button"
+          onClick={onDeleteRequest}
+          aria-label={t('category.subManagement.deleteConfirmConfirm')}
+          className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-full bg-rose-600 text-white flex-shrink-0"
+        >
+          <Minus className="w-4 h-4" />
+        </button>
+      ) : (
+        <span className="min-h-[44px] min-w-[44px] flex-shrink-0" aria-hidden />
+      )}
 
       <span className={`inline-flex items-center justify-center w-10 h-10 rounded-full text-white flex-shrink-0 ${color}`}>
         <Icon className="w-5 h-5" />
@@ -91,14 +97,18 @@ function SortableSubCategoryRow({
         {label}
       </span>
 
-      <button
-        type="button"
-        onClick={onEdit}
-        aria-label={t('category.subEditor.titleEdit')}
-        className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20"
-      >
-        <Pencil className="w-5 h-5" />
-      </button>
+      {!isProtectedFallback ? (
+        <button
+          type="button"
+          onClick={onEdit}
+          aria-label={t('category.subEditor.titleEdit')}
+          className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20"
+        >
+          <Pencil className="w-5 h-5" />
+        </button>
+      ) : (
+        <span className="min-h-[44px] min-w-[44px] flex-shrink-0" aria-hidden />
+      )}
 
       <button
         type="button"

@@ -11,6 +11,7 @@ import { categorySubManagementPath } from '../config/routes';
 import { type AppLocale } from '../config/app';
 import { resolveBilingualText } from '../domain/i18n/resolveBilingualText';
 import { DEFAULT_CATEGORY_ICON_KEY } from '../domain/categories/categoryIconLibrary';
+import { isProtectedFallbackSubCategoryId } from '../domain/categories/deleteSubCategory';
 
 export function SubCategoryEditorPage() {
   const { t, i18n } = useTranslation();
@@ -67,6 +68,7 @@ export function SubCategoryEditorPage() {
     };
 
     if (isEditMode && subId && existing) {
+      if (isProtectedFallbackSubCategoryId(subId)) return;
       const updated = await updateSubCategory(subId, input, locale);
       if (!updated) return;
 
@@ -85,6 +87,14 @@ export function SubCategoryEditorPage() {
     const created = await addSubCategory(mainId, input, locale);
     if (created) navigate(categorySubManagementPath(mainId));
   };
+
+  if (isEditMode && existing && isProtectedFallbackSubCategoryId(existing.id)) {
+    return (
+      <p className="text-center py-12 text-slate-500 dark:text-slate-400">
+        {t('category.subEditor.protected')}
+      </p>
+    );
+  }
 
   if (!parentMain && mainCategories.length > 0) {
     return (

@@ -339,6 +339,7 @@
       "resetConfirmCancel": "Cancel",
       "errors": {
         "cannotDeleteOther": "The Other category cannot be deleted.",
+        "cannotEditOther": "The Other category cannot be edited.",
         "saveFailed": "Could not save category. Please try again.",
         "deleteFailed": "Could not delete category. Please try again.",
         "reorderFailed": "Could not save category order. Please try again.",
@@ -352,7 +353,8 @@
       "colorLabel": "Color",
       "iconLabel": "Icon",
       "saveButton": "Save",
-      "notFound": "Category not found."
+      "notFound": "Category not found.",
+      "protected": "This category is protected and cannot be edited."
     },
     "subManagement": {
       "title": "Subcategory management",
@@ -369,6 +371,8 @@
       "deleteConfirmCancel": "Cancel",
       "errors": {
         "cannotDeleteLastSub": "Each category must have at least one subcategory.",
+        "cannotDeleteFallback": "The Miscellaneous subcategory cannot be deleted.",
+        "cannotEditFallback": "The Miscellaneous subcategory cannot be edited.",
         "saveFailed": "Could not save subcategory. Please try again.",
         "deleteFailed": "Could not delete subcategory. Please try again.",
         "reorderFailed": "Could not save subcategory order. Please try again.",
@@ -382,7 +386,8 @@
       "moveLabel": "Move to category",
       "moveHint": "Select a main category to move this subcategory. It will inherit the new category color.",
       "saveButton": "Save",
-      "notFound": "Subcategory not found."
+      "notFound": "Subcategory not found.",
+      "protected": "This subcategory is protected and cannot be edited."
     },
     "iconGroup": {
       "life": "Life",

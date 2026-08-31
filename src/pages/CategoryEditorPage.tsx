@@ -14,6 +14,7 @@ import {
   DEFAULT_CATEGORY_ICON_KEY,
 } from '../domain/categories/categoryIconLibrary';
 import { DEFAULT_CATEGORY_COLOR } from '../domain/categories/categoryColorPalette';
+import { isProtectedMainCategoryId } from '../domain/categories/reassignSubCategoriesOnDelete';
 
 export function CategoryEditorPage() {
   const { t, i18n } = useTranslation();
@@ -63,6 +64,7 @@ export function CategoryEditorPage() {
     };
 
     if (isEditMode && id) {
+      if (isProtectedMainCategoryId(id)) return;
       const updated = await updateMainCategory(id, input, locale);
       if (updated) navigate(ROUTES.categoryManagement);
       return;
@@ -71,6 +73,14 @@ export function CategoryEditorPage() {
     const created = await addMainCategory(input, locale);
     if (created) navigate(ROUTES.categoryManagement);
   };
+
+  if (isEditMode && existing && isProtectedMainCategoryId(existing.id)) {
+    return (
+      <p className="text-center py-12 text-slate-500 dark:text-slate-400">
+        {t('category.editor.protected')}
+      </p>
+    );
+  }
 
   if (isEditMode && !existing && mainCategories.length > 0) {
     return (

@@ -40,4 +40,14 @@ describe('getFactoryDefaultCategoryCatalog', () => {
     expect(mainCategories.some((m) => m.id === customMainId)).toBe(false);
     expect(subCategories.some((s) => s.id === customSubId)).toBe(false);
   });
+
+  it('returns a deep clone so later mutations cannot poison factory defaults', () => {
+    const first = getFactoryDefaultCategoryCatalog();
+    first.mainCategories[0].labels.en = 'MUTATED';
+    first.subCategories[0].id = 'mutated-sub';
+
+    const second = getFactoryDefaultCategoryCatalog();
+    expect(second.mainCategories[0].labels.en).not.toBe('MUTATED');
+    expect(second.subCategories[0].id).not.toBe('mutated-sub');
+  });
 });

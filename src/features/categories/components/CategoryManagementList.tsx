@@ -24,7 +24,7 @@ import { type MainCategoryRecord } from '../../../types/category';
 import { type AppLocale } from '../../../config/app';
 import { categoryEditPath, categorySubManagementPath } from '../../../config/routes';
 import { resolveBilingualText } from '../../../domain/i18n/resolveBilingualText';
-import { PROTECTED_MAIN_CATEGORY_ID } from '../../../domain/categories/reassignSubCategoriesOnDelete';
+import { isProtectedMainCategoryId } from '../../../domain/categories/reassignSubCategoriesOnDelete';
 import { getMainCategoryUI } from '../../expenses/categoryUi';
 import { DeleteMainCategoryConfirmModal } from './DeleteMainCategoryConfirmModal';
 
@@ -59,7 +59,7 @@ function SortableCategoryRow({
   });
   const { icon: Icon, color } = getMainCategoryUI(main.id, mainCategories);
   const label = resolveBilingualText(main.labels, locale);
-  const isProtected = main.id === PROTECTED_MAIN_CATEGORY_ID;
+  const isProtected = isProtectedMainCategoryId(main.id);
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -95,14 +95,18 @@ function SortableCategoryRow({
         {label}
       </span>
 
-      <button
-        type="button"
-        onClick={onEdit}
-        aria-label={t('category.editor.titleEdit')}
-        className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20"
-      >
-        <Pencil className="w-5 h-5" />
-      </button>
+      {!isProtected ? (
+        <button
+          type="button"
+          onClick={onEdit}
+          aria-label={t('category.editor.titleEdit')}
+          className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20"
+        >
+          <Pencil className="w-5 h-5" />
+        </button>
+      ) : (
+        <span className="min-h-[44px] min-w-[44px] flex-shrink-0" aria-hidden />
+      )}
 
       <button
         type="button"

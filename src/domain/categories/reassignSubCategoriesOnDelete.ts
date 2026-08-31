@@ -2,6 +2,10 @@ import { type MainCategoryRecord, type SubCategoryRecord } from '../../types/cat
 
 export const PROTECTED_MAIN_CATEGORY_ID = 'other';
 
+export function isProtectedMainCategoryId(mainId: string): boolean {
+  return mainId === PROTECTED_MAIN_CATEGORY_ID;
+}
+
 export function reassignSubCategoriesToOther(
   subs: SubCategoryRecord[],
   deletedMainId: string,

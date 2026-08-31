@@ -12,6 +12,7 @@ export const FIRESTORE_COLLECTIONS = {
   accounts: 'accounts',
   budgets: 'budgets',
   exchangeRates: 'exchangeRates',
+  deletedSubCategories: 'deletedSubCategories',
 } as const;
 
 export type FirestoreCollectionName =

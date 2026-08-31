@@ -2,11 +2,27 @@ import { describe, expect, it } from 'vitest';
 import {
   buildNewSubCategory,
   deleteSubCategoryPolicy,
+  missingBuiltinSubsToRestore,
   moveSubCategoryToParent,
+  reassignExpensesOnSubCategoryDelete,
   reorderSubCategories,
+  resolveOtherMiscellaneousSubCategoryId,
   SUB_CATEGORY_DELETE_FALLBACK_ID,
 } from './deleteSubCategory';
 import { buildDefaultCategorySeed } from './seedDefaultCategories';
+import { type Expense } from '../../types/expense';
+
+function makeExpense(overrides: Partial<Expense>): Expense {
+  return {
+    id: 'e1',
+    description: { en: 'Test', he: 'Test' },
+    amount: 10,
+    category: 'food.groceries',
+    date: '2026-08-31',
+    paymentMethod: 'cash',
+    ...overrides,
+  };
+}
 
 describe('buildNewSubCategory', () => {
   it('inherits parent main color and parentId', () => {
@@ -73,10 +89,77 @@ describe('deleteSubCategoryPolicy', () => {
     const { subs } = buildDefaultCategorySeed();
     const result = deleteSubCategoryPolicy(subs, 'food.groceries');
     expect(result).not.toBe('cannotDeleteLastSub');
-    if (result === 'cannotDeleteLastSub') return;
+    expect(result).not.toBe('cannotDeleteFallback');
+    if (typeof result === 'string') return;
 
     expect(result.fallbackCategoryId).toBe(SUB_CATEGORY_DELETE_FALLBACK_ID);
     expect(result.subs.some((s) => s.id === 'food.groceries')).toBe(false);
     expect(result.subs.filter((s) => s.parentId === 'food').length).toBeGreaterThan(0);
+  });
+
+  it('blocks deleting the protected Miscellaneous fallback', () => {
+    const { subs } = buildDefaultCategorySeed();
+    expect(deleteSubCategoryPolicy(subs, SUB_CATEGORY_DELETE_FALLBACK_ID)).toBe(
+      'cannotDeleteFallback',
+    );
+  });
+});
+
+describe('resolveOtherMiscellaneousSubCategoryId', () => {
+  it('returns other.miscellaneous when present under protected other main', () => {
+    const { subs } = buildDefaultCategorySeed();
+    expect(resolveOtherMiscellaneousSubCategoryId(subs)).toBe('other.miscellaneous');
+  });
+
+  it('falls back to first sub under other when built-in id is missing', () => {
+    const { subs } = buildDefaultCategorySeed();
+    const withoutBuiltIn = subs.filter((s) => s.id !== 'other.miscellaneous');
+    const customOtherSub = subs.find((s) => s.parentId === 'other' && s.id !== 'other.miscellaneous')!;
+
+    expect(resolveOtherMiscellaneousSubCategoryId(withoutBuiltIn)).toBe(customOtherSub.id);
+  });
+});
+
+describe('reassignExpensesOnSubCategoryDelete', () => {
+  it('moves matching expenses and pending categories to other.miscellaneous', () => {
+    const expenses: Expense[] = [
+      makeExpense({ id: 'keep', category: 'food.restaurants' }),
+      makeExpense({ id: 'move', category: 'food.groceries' }),
+      makeExpense({
+        id: 'pending',
+        category: 'food.restaurants',
+        recurrencePendingBasicFields: {
+          effectiveFromIso: '2026-09-01',
+          description: { en: 'Later', he: 'Later' },
+          amount: 20,
+          category: 'food.groceries',
+          paymentMethod: 'cash',
+        },
+      }),
+    ];
+
+    const result = reassignExpensesOnSubCategoryDelete(
+      expenses,
+      'food.groceries',
+      SUB_CATEGORY_DELETE_FALLBACK_ID,
+    );
+
+    expect(result.find((e) => e.id === 'keep')?.category).toBe('food.restaurants');
+    expect(result.find((e) => e.id === 'move')?.category).toBe('other.miscellaneous');
+    expect(result.find((e) => e.id === 'pending')?.category).toBe('food.restaurants');
+    expect(result.find((e) => e.id === 'pending')?.recurrencePendingBasicFields?.category).toBe(
+      'other.miscellaneous',
+    );
+  });
+});
+
+describe('missingBuiltinSubsToRestore', () => {
+  it('does not restore a builtin sub the user deleted', () => {
+    const { subs } = buildDefaultCategorySeed();
+    const existingIds = new Set(subs.filter((s) => s.id !== 'entertainment.movies').map((s) => s.id));
+    const deletedIds = new Set(['entertainment.movies']);
+
+    const missing = missingBuiltinSubsToRestore(subs, existingIds, deletedIds);
+    expect(missing.map((s) => s.id)).not.toContain('entertainment.movies');
   });
 });

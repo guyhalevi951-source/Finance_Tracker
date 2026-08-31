@@ -5,6 +5,7 @@ import { ArrowLeft, Plus } from 'lucide-react';
 import { useAppHeader } from '../app/hooks/useAppHeader';
 import { useAuthSession } from '../features/auth/hooks/useAuthSession';
 import { useCategories } from '../features/categories/hooks/useCategories';
+import { useSubCategoryDelete } from '../features/categories/hooks/useSubCategoryDelete';
 import { SubCategoryManagementList } from '../features/categories/components/SubCategoryManagementList';
 import {
   ROUTES,
@@ -30,10 +31,11 @@ export function SubCategoryManagementPage() {
     isLoading,
     loadCategoryError,
     subCategoryActionError,
-    deleteSubCategoryAction,
     reorderSubCategoriesAction,
     isSavingSubCategory,
   } = useCategories(userId);
+
+  const { deleteSubCategory } = useSubCategoryDelete();
 
   const parentMain = useMemo(
     () => mainCategories.find((main) => main.id === mainId),
@@ -117,7 +119,7 @@ export function SubCategoryManagementPage() {
           mainCategories={mainCategories}
           subCategories={subCategories}
           onReorder={(orderedIds) => void reorderSubCategoriesAction(mainId, orderedIds)}
-          onDelete={deleteSubCategoryAction}
+          onDelete={deleteSubCategory}
           isDeleting={isBusy}
         />
       )}

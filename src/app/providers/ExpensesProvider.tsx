@@ -17,6 +17,7 @@ export interface ExpensesContextValue {
   loadError: boolean;
   createExpense: (expense: Expense) => Promise<void>;
   reload: () => Promise<void>;
+  replaceExpenses: (next: Expense[]) => void;
 }
 
 export const ExpensesContext = createContext<ExpensesContextValue | null>(null);
@@ -47,6 +48,10 @@ export function ExpensesProvider({ children }: ExpensesProviderProps) {
     void reload();
   }, [reload]);
 
+  const replaceExpenses = useCallback((next: Expense[]) => {
+    setExpenses(next);
+  }, []);
+
   const createExpense = useCallback(
     async (expense: Expense) => {
       await saveExpense(userId, expense);
@@ -61,8 +66,9 @@ export function ExpensesProvider({ children }: ExpensesProviderProps) {
       loadError,
       createExpense,
       reload,
+      replaceExpenses,
     }),
-    [expenses, loadError, createExpense, reload],
+    [expenses, loadError, createExpense, reload, replaceExpenses],
   );
 
   return <ExpensesContext.Provider value={value}>{children}</ExpensesContext.Provider>;

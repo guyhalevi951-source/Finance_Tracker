@@ -22,10 +22,12 @@ import {
 import { DEFAULT_CATEGORY_COLOR } from '../../domain/categories/categoryColorPalette';
 import { PROTECTED_MAIN_CATEGORY_ID } from '../../domain/categories/reassignSubCategoriesOnDelete';
 import { mergeSubCategoryRecords } from '../../domain/categories/mergeSubCategoryRecords';
+import { missingBuiltinSubsToRestore } from '../../domain/categories/deleteSubCategory';
 import { getFactoryDefaultCategoryCatalog } from '../../domain/categories/factoryCategoryCatalog';
 
 const GUEST_SUB_STORAGE_KEY = 'customCategories';
 const GUEST_MAIN_STORAGE_KEY = 'mainCategories';
+const GUEST_DELETED_SUBS_KEY = 'deletedSubCategoryIds';
 
 function isRecord(v: unknown): v is Record<string, unknown> {
   return typeof v === 'object' && v !== null;
@@ -176,7 +178,67 @@ function saveGuestSubCategories(categories: SubCategoryRecord[]): void {
   saveGuestJson(GUEST_SUB_STORAGE_KEY, categories);
 }
 
-async function persistSeed(userId: string | null, seed: CategoryCatalog): Promise<void> {
+function userDeletedSubsRef(firestoreDb: Firestore, userId: string) {
+  return collection(
+    firestoreDb,
+    FIRESTORE_COLLECTIONS.users,
+    userId,
+    FIRESTORE_COLLECTIONS.deletedSubCategories,
+  );
+}
+
+function loadGuestDeletedSubIds(): string[] {
+  const raw = localStorage.getItem(GUEST_DELETED_SUBS_KEY);
+  if (!raw) return [];
+  try {
+    const parsed = JSON.parse(raw) as unknown;
+    return Array.isArray(parsed) ? parsed.filter((id): id is string => typeof id === 'string') : [];
+  } catch {
+    return [];
+  }
+}
+
+export async function loadDeletedSubCategoryIds(userId: string | null): Promise<string[]> {
+  if (userId) {
+    const snap = await getDocs(userDeletedSubsRef(db, userId));
+    return snap.docs.map((d) => d.id);
+  }
+  return loadGuestDeletedSubIds();
+}
+
+export async function rememberDeletedSubCategory(
+  userId: string | null,
+  subId: string,
+): Promise<void> {
+  if (userId) {
+    await setDoc(doc(userDeletedSubsRef(db, userId), subId), { id: subId });
+    return;
+  }
+  const existing = loadGuestDeletedSubIds();
+  if (existing.includes(subId)) return;
+  saveGuestJson(GUEST_DELETED_SUBS_KEY, [...existing, subId]);
+}
+
+export async function clearDeletedSubCategoryIds(userId: string | null): Promise<void> {
+  if (userId) {
+    const snap = await getDocs(userDeletedSubsRef(db, userId));
+    if (snap.empty) return;
+    const batch = writeBatch(db);
+    for (const deleted of snap.docs) {
+      batch.delete(deleted.ref);
+    }
+    await batch.commit();
+    return;
+  }
+  localStorage.removeItem(GUEST_DELETED_SUBS_KEY);
+}
+
+interface CategorySeedBundle {
+  mains: MainCategoryRecord[];
+  subs: SubCategoryRecord[];
+}
+
+async function persistSeed(userId: string | null, seed: CategorySeedBundle): Promise<void> {
   if (userId) {
     const batch = writeBatch(db);
     for (const main of seed.mains) {
@@ -211,7 +273,8 @@ export async function ensureDefaultCategoriesSeeded(
   if (mains.length > 0) {
     const seed = buildDefaultCategorySeed();
     const existingIds = new Set(existingSubs.map((sub) => sub.id));
-    const missingBuiltinSubs = seed.subs.filter((sub) => !existingIds.has(sub.id));
+    const deletedIds = new Set(await loadDeletedSubCategoryIds(userId));
+    const missingBuiltinSubs = missingBuiltinSubsToRestore(seed.subs, existingIds, deletedIds);
 
     if (missingBuiltinSubs.length > 0) {
       const repairedSubs = mergeSubCategoryRecords(existingSubs, missingBuiltinSubs);
@@ -346,6 +409,8 @@ export async function resetCategoriesToDefaults(
     saveGuestMainCategories(catalog.mainCategories);
     saveGuestSubCategories(catalog.subCategories);
   }
+
+  await clearDeletedSubCategoryIds(userId);
 
   return catalog;
 }

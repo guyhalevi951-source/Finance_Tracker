@@ -12,6 +12,7 @@ import {
   type MainCategoryInput,
   type SubCategoryInput,
 } from '../../types/category';
+import { type Expense } from '../../types/expense';
 import {
   ensureDefaultCategoriesSeeded,
   saveMainCategory,
@@ -19,10 +20,9 @@ import {
   deleteMainCategoryRecord,
   saveSubCategory,
   saveSubCategories,
-  deleteSubCategory,
   resetCategoriesToDefaults,
 } from '../../services/categories/categoryRepository';
-import { reassignExpensesCategory } from '../../services/expenses/expenseRepository';
+import { deleteSubCategoryWithExpenseReassignment } from '../../services/categories/subCategoryDeleteService';
 import { createBilingualText } from '../../services/translation/createBilingualText';
 import { generateExpenseId } from '../../domain/expenses/generateId';
 import { type AppLocale } from '../../config/app';
@@ -33,7 +33,7 @@ import {
 } from '../../domain/categories/deleteMainCategory';
 import {
   buildNewSubCategory,
-  deleteSubCategoryPolicy,
+  isProtectedFallbackSubCategoryId,
   moveSubCategoryToParent,
   reorderSubCategories,
 } from '../../domain/categories/deleteSubCategory';
@@ -43,7 +43,10 @@ import {
   isValidCategoryIconKey,
 } from '../../domain/categories/categoryIconLibrary';
 import { DEFAULT_CATEGORY_COLOR, isValidCategoryColor } from '../../domain/categories/categoryColorPalette';
-import { PROTECTED_MAIN_CATEGORY_ID } from '../../domain/categories/reassignSubCategoriesOnDelete';
+import {
+  isProtectedMainCategoryId,
+  PROTECTED_MAIN_CATEGORY_ID,
+} from '../../domain/categories/reassignSubCategoriesOnDelete';
 import { useAuthSession } from '../../features/auth/hooks/useAuthSession';
 
 export interface CategoriesContextValue {
@@ -80,7 +83,7 @@ export interface CategoriesContextValue {
     input: SubCategoryInput,
     locale: AppLocale,
   ) => Promise<SubCategoryRecord | null>;
-  deleteSubCategoryAction: (subId: string) => Promise<boolean>;
+  deleteSubCategoryAction: (subId: string, liveExpenses: Expense[]) => Promise<Expense[] | null>;
   reorderSubCategoriesAction: (parentId: string, orderedIds: string[]) => Promise<void>;
   moveSubCategoryAction: (subId: string, newParentId: string) => Promise<SubCategoryRecord | null>;
   clearAddCategoryError: () => void;
@@ -216,6 +219,10 @@ export function CategoriesProvider({ children }: CategoriesProviderProps) {
     ): Promise<MainCategoryRecord | null> => {
       const existing = mainCategories.find((m) => m.id === mainId);
       if (!existing) return null;
+      if (isProtectedMainCategoryId(mainId)) {
+        setMainCategoryActionError('cannotEditOther');
+        return null;
+      }
 
       setIsSavingMainCategory(true);
       setMainCategoryActionError(null);
@@ -376,6 +383,10 @@ export function CategoriesProvider({ children }: CategoriesProviderProps) {
     ): Promise<SubCategoryRecord | null> => {
       const existing = subCategories.find((sub) => sub.id === subId);
       if (!existing) return null;
+      if (isProtectedFallbackSubCategoryId(subId)) {
+        setSubCategoryActionError('cannotEditFallback');
+        return null;
+      }
       const parentMain = mainCategories.find((main) => main.id === existing.parentId);
       if (!parentMain) return null;
 
@@ -412,27 +423,28 @@ export function CategoriesProvider({ children }: CategoriesProviderProps) {
   );
 
   const deleteSubCategoryAction = useCallback(
-    async (subId: string): Promise<boolean> => {
+    async (subId: string, liveExpenses: Expense[]): Promise<Expense[] | null> => {
       setSubCategoryActionError(null);
-      const result = deleteSubCategoryPolicy(subCategories, subId);
-      if (result === 'cannotDeleteLastSub') {
-        setSubCategoryActionError('cannotDeleteLastSub');
-        return false;
-      }
+      setIsSavingSubCategory(true);
 
       try {
-        await reassignExpensesCategory(userId, subId, result.fallbackCategoryId);
-        await deleteSubCategory(userId, subId);
-        const parentId = subCategories.find((sub) => sub.id === subId)?.parentId;
-        if (parentId) {
-          const remaining = result.subs.filter((sub) => sub.parentId === parentId);
-          await saveSubCategories(userId, remaining);
+        const result = await deleteSubCategoryWithExpenseReassignment(
+          userId,
+          subCategories,
+          subId,
+          liveExpenses,
+        );
+
+        if (!result.ok) {
+          setSubCategoryActionError(result.error);
+          return null;
         }
+
+        setSubCategories(result.updatedSubs);
         await reload();
-        return true;
-      } catch {
-        setSubCategoryActionError('deleteFailed');
-        return false;
+        return result.updatedExpenses;
+      } finally {
+        setIsSavingSubCategory(false);
       }
     },
     [userId, subCategories, reload],
@@ -459,6 +471,10 @@ export function CategoriesProvider({ children }: CategoriesProviderProps) {
       const existing = subCategories.find((sub) => sub.id === subId);
       const newParent = mainCategories.find((main) => main.id === newParentId);
       if (!existing || !newParent) return null;
+      if (isProtectedFallbackSubCategoryId(subId)) {
+        setSubCategoryActionError('cannotEditFallback');
+        return null;
+      }
       if (existing.parentId === newParentId) return existing;
 
       setIsSavingSubCategory(true);
