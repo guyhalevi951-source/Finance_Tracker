@@ -5,6 +5,8 @@ import { type Expense } from '../../../types/expense';
 import { type SubCategoryRecord } from '../../../types/category';
 import { resolveSubCategoryLabel } from '../../../domain/categories/resolveCategoryLabel';
 import { resolveExpenseDisplayLabel } from '../../../domain/expenses/resolveExpenseDisplayLabel';
+import { type RecurrenceDeleteScope } from '../../../domain/recurrence/applyRecurrenceDelete';
+import { countThisAndFutureDeleteOccurrences } from '../../../domain/recurrence/countThisAndFutureDeleteOccurrences';
 import { formatCurrencyAmount, formatExpenseDateLong } from '../../../lib/format/formatDate';
 import { type AppLocale } from '../../../config/app';
 

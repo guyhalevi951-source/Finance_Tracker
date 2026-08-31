@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Wallet,
@@ -10,6 +11,7 @@ import { useBudgetTracker } from '../features/budget/hooks/useBudgetTracker';
 import { useExpenses } from '../features/expenses/hooks/useExpenses';
 import { useCategories } from '../features/categories/hooks/useCategories';
 import { useAuthSession } from '../features/auth/hooks/useAuthSession';
+import { filterTimelineVisibleExpenses } from '../domain/recurrence/filterTimelineVisibleExpenses';
 import { formatNumber } from '../lib/format/formatDate';
 import { preventNumberInputScroll } from '../lib/input/preventNumberInputScroll';
 import { type AppLocale } from '../config/app';
@@ -20,7 +22,11 @@ export function DashboardPage() {
 
   const { userId } = useAuthSession();
   const { expenses, loadError: expensesLoadError } = useExpenses();
-  const { budget, budgetInput, summary, showBudgetSaved, loadError: budgetLoadError, setBudgetInput, handleSetBudget } = useBudgetTracker(expenses);
+  const visibleExpenses = useMemo(
+    () => filterTimelineVisibleExpenses(expenses),
+    [expenses],
+  );
+  const { budget, budgetInput, summary, showBudgetSaved, loadError: budgetLoadError, setBudgetInput, handleSetBudget } = useBudgetTracker(visibleExpenses);
   const { loadCategoryError, clearLoadCategoryError } = useCategories(userId);
 
   const { totalExpenses, budgetPercentage, isOverBudget, remaining } = summary;
@@ -109,7 +115,7 @@ export function DashboardPage() {
             ₪{formatNumber(totalExpenses, locale)}
           </p>
           <p className="text-sm text-slate-400 dark:text-slate-500 mt-2">
-            {t('budget.card.expensesThisMonth', { count: expenses.length })}
+            {t('budget.card.expensesThisMonth', { count: visibleExpenses.length })}
           </p>
         </div>
 

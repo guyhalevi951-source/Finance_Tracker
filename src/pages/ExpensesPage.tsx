@@ -21,10 +21,9 @@ import { ExpensesByDateView } from '../features/expenses/components/ExpensesByDa
 import { ExpensesByCategoryView } from '../features/expenses/components/ExpensesByCategoryView';
 import { useExpenseTimeFilter } from '../features/expenses/hooks/useExpenseTimeFilter';
 import { filterExpensesByPeriod } from '../domain/expenses/periods';
+import { filterTimelineVisibleExpenses } from '../domain/recurrence/filterTimelineVisibleExpenses';
 import { ExpenseEditModal } from '../features/expenses/components/ExpenseEditModal';
 import { DiscardChangesModal } from '../features/expenses/components/DiscardChangesModal';
-import { RecurringDeleteConfirmModal } from '../features/expenses/components/RecurringDeleteConfirmModal';
-import { UnifiedRecurringBulkDeleteModal } from '../features/expenses/components/UnifiedRecurringBulkDeleteModal';
 import { RecurringEditConfirmModal } from '../features/expenses/components/RecurringEditConfirmModal';
 import { RecurringInstanceLinkConfirmModal } from '../features/expenses/components/RecurringInstanceLinkConfirmModal';
 import { DEFAULT_RECURRENCE_SELECTION } from '../types/recurrenceRule';
@@ -66,7 +65,11 @@ export function ExpensesPage() {
   const batch = useExpenseBatchMode(expenses, userId, reload, timeFilter.todayIso);
 
   const filteredExpenses = useMemo(
-    () => filterExpensesByPeriod(batch.displayExpenses, timeFilter.range),
+    () =>
+      filterExpensesByPeriod(
+        filterTimelineVisibleExpenses(batch.displayExpenses),
+        timeFilter.range,
+      ),
     [batch.displayExpenses, timeFilter.range],
   );
 
@@ -170,7 +173,7 @@ export function ExpensesPage() {
           onSave={() => void batch.saveLocalEdit()}
           onClose={batch.closeEditModal}
           hideDateField={batch.isEditingRecurringExpense}
-          hideRecurrenceField={batch.isEditingRecurringExpense}
+          hideRecurrenceField
         />
       )}
 
@@ -192,30 +195,6 @@ export function ExpensesPage() {
         open={batch.showDiscardModal}
         onConfirm={batch.confirmDiscard}
         onDismiss={batch.dismissDiscard}
-      />
-
-      <UnifiedRecurringBulkDeleteModal
-        open={batch.showUnifiedBulkDeleteModal}
-        group={batch.bulkDeleteGroup}
-        subCategories={subCategories}
-        locale={locale}
-        isSaving={batch.isSaving}
-        onConfirm={(scope) => void batch.confirmUnifiedBulkDelete(scope)}
-        onDismiss={batch.dismissRecurringDelete}
-      />
-
-      <RecurringDeleteConfirmModal
-        open={batch.showRecurringDeleteModal}
-        target={batch.recurringDeleteTarget}
-        expenses={batch.pendingDeleteDraft}
-        todayIso={timeFilter.todayIso}
-        subCategories={subCategories}
-        locale={locale}
-        queueIndex={batch.recurringDeleteQueueIndex}
-        queueTotal={batch.recurringDeleteQueueTotal}
-        isSaving={batch.isSaving}
-        onConfirm={(scope) => void batch.confirmRecurringDelete(scope)}
-        onDismiss={batch.dismissRecurringDelete}
       />
 
       <AddExpenseFab
