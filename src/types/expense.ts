@@ -9,6 +9,10 @@ export interface RecurrencePendingBasicFields {
   amount: number;
   category: string;
   paymentMethod: PaymentMethodId;
+  /** Parent main-category ID from before fallback migration. */
+  originalCategoryId?: string;
+  /** Subcategory ID from before fallback migration. */
+  originalSubCategoryId?: string;
 }
 
 export interface Expense {
@@ -17,6 +21,16 @@ export interface Expense {
   amount: number;
   /** Builtin sub-category ID (e.g. 'food.groceries') or custom category UUID */
   category: string;
+  /**
+   * Parent main-category ID captured when this expense was migrated to
+   * Other / Miscellaneous after its subcategory was deleted.
+   */
+  originalCategoryId?: string;
+  /**
+   * Subcategory ID captured when this expense was migrated to
+   * Other / Miscellaneous after its subcategory was deleted.
+   */
+  originalSubCategoryId?: string;
   /** ISO date YYYY-MM-DD */
   date: string;
   paymentMethod: PaymentMethodId;

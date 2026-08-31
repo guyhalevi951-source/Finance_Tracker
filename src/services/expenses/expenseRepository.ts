@@ -72,6 +72,10 @@ function parseRecurrenceRule(raw: unknown): RecurrenceRule | undefined {
   return rule;
 }
 
+function parseOptionalId(raw: unknown): string | undefined {
+  return typeof raw === 'string' && raw.trim().length > 0 ? raw : undefined;
+}
+
 function parseRecurrencePendingBasicFields(raw: unknown): RecurrencePendingBasicFields | undefined {
   if (typeof raw !== 'object' || raw === null) return undefined;
   const obj = raw as Record<string, unknown>;
@@ -95,12 +99,17 @@ function parseRecurrencePendingBasicFields(raw: unknown): RecurrencePendingBasic
     return undefined;
   }
 
+  const originalCategoryId = parseOptionalId(obj.originalCategoryId);
+  const originalSubCategoryId = parseOptionalId(obj.originalSubCategoryId);
+
   return {
     effectiveFromIso: obj.effectiveFromIso,
     description: descriptionRaw as RecurrencePendingBasicFields['description'],
     amount: obj.amount,
     category: migrateCategoryId(obj.category),
     paymentMethod: obj.paymentMethod,
+    ...(originalCategoryId ? { originalCategoryId } : {}),
+    ...(originalSubCategoryId ? { originalSubCategoryId } : {}),
   };
 }
 
@@ -127,6 +136,9 @@ export function migrateExpense(raw: Record<string, unknown>): Expense {
     raw.recurrencePendingBasicFields,
   );
 
+  const originalCategoryId = parseOptionalId(raw.originalCategoryId);
+  const originalSubCategoryId = parseOptionalId(raw.originalSubCategoryId);
+
   return {
     id: raw.id as string,
     description,
@@ -142,6 +154,8 @@ export function migrateExpense(raw: Record<string, unknown>): Expense {
       ? { recurrenceExcludedDates }
       : {}),
     ...(recurrencePendingBasicFields ? { recurrencePendingBasicFields } : {}),
+    ...(originalCategoryId ? { originalCategoryId } : {}),
+    ...(originalSubCategoryId ? { originalSubCategoryId } : {}),
   };
 }
 

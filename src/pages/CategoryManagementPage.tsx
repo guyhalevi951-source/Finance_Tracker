@@ -5,6 +5,7 @@ import { ArrowLeft, Plus } from 'lucide-react';
 import { useAppHeader } from '../app/hooks/useAppHeader';
 import { useAuthSession } from '../features/auth/hooks/useAuthSession';
 import { useCategories } from '../features/categories/hooks/useCategories';
+import { useResetCategories } from '../features/categories/hooks/useResetCategories';
 import { CategoryManagementList } from '../features/categories/components/CategoryManagementList';
 import { ResetCategoriesConfirmModal } from '../features/categories/components/ResetCategoriesConfirmModal';
 import { ROUTES } from '../config/routes';
@@ -24,10 +25,10 @@ export function CategoryManagementPage() {
     mainCategoryActionError,
     deleteMainCategoryAction,
     reorderMainCategoriesAction,
-    resetCategoriesToDefaultsAction,
     isSavingMainCategory,
     isResettingCategories,
   } = useCategories(userId);
+  const { resetCategories } = useResetCategories();
 
   useAppHeader({ title: t('category.management.title') });
 
@@ -41,9 +42,9 @@ export function CategoryManagementPage() {
   }, [navigate]);
 
   const handleResetConfirm = useCallback(async () => {
-    const ok = await resetCategoriesToDefaultsAction();
+    const ok = await resetCategories();
     if (ok) setShowResetConfirm(false);
-  }, [resetCategoriesToDefaultsAction]);
+  }, [resetCategories]);
 
   const isBusy = isSavingMainCategory || isResettingCategories;
 

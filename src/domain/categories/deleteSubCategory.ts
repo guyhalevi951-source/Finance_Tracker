@@ -128,6 +128,7 @@ export function expenseLinksToSubCategory(expense: Expense, subId: string): bool
 export function reassignExpensesOnSubCategoryDelete(
   expenses: Expense[],
   deletedSubId: string,
+  deletedParentId: string,
   fallbackCategoryId: string,
 ): Expense[] {
   if (deletedSubId === fallbackCategoryId) return expenses;
@@ -137,15 +138,30 @@ export function reassignExpensesOnSubCategoryDelete(
 
     const pending = expense.recurrencePendingBasicFields;
     const nextPending = pending
-      ? {
-          ...pending,
-          category: pending.category === deletedSubId ? fallbackCategoryId : pending.category,
-        }
+      ? pending.category === deletedSubId
+        ? {
+            ...pending,
+            category: fallbackCategoryId,
+            originalSubCategoryId: pending.originalSubCategoryId ?? deletedSubId,
+            ...(pending.originalCategoryId || deletedParentId
+              ? { originalCategoryId: pending.originalCategoryId ?? deletedParentId }
+              : {}),
+          }
+        : pending
       : undefined;
 
+    const liveMigrated = expense.category === deletedSubId;
     return {
       ...expense,
-      category: expense.category === deletedSubId ? fallbackCategoryId : expense.category,
+      ...(liveMigrated
+        ? {
+            category: fallbackCategoryId,
+            originalSubCategoryId: expense.originalSubCategoryId ?? deletedSubId,
+            ...(expense.originalCategoryId || deletedParentId
+              ? { originalCategoryId: expense.originalCategoryId ?? deletedParentId }
+              : {}),
+          }
+        : {}),
       ...(nextPending ? { recurrencePendingBasicFields: nextPending } : {}),
     };
   });

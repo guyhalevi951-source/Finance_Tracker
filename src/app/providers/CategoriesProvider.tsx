@@ -20,8 +20,8 @@ import {
   deleteMainCategoryRecord,
   saveSubCategory,
   saveSubCategories,
-  resetCategoriesToDefaults,
 } from '../../services/categories/categoryRepository';
+import { resetCategoriesToDefaultsWithExpenseRestore } from '../../services/categories/resetCategoriesService';
 import { deleteSubCategoryWithExpenseReassignment } from '../../services/categories/subCategoryDeleteService';
 import { createBilingualText } from '../../services/translation/createBilingualText';
 import { generateExpenseId } from '../../domain/expenses/generateId';
@@ -69,7 +69,7 @@ export interface CategoriesContextValue {
   ) => Promise<MainCategoryRecord | null>;
   deleteMainCategoryAction: (mainId: string) => Promise<boolean>;
   reorderMainCategoriesAction: (orderedIds: string[]) => Promise<void>;
-  resetCategoriesToDefaultsAction: () => Promise<boolean>;
+  resetCategoriesToDefaultsAction: (liveExpenses: Expense[]) => Promise<Expense[] | null>;
   isResettingCategories: boolean;
   isSavingSubCategory: boolean;
   subCategoryActionError: string | null;
@@ -311,20 +311,24 @@ export function CategoriesProvider({ children }: CategoriesProviderProps) {
     [userId, mainCategories],
   );
 
-  const resetCategoriesToDefaultsAction = useCallback(async (): Promise<boolean> => {
-    setIsResettingCategories(true);
-    setMainCategoryActionError(null);
-    try {
-      const catalog = await resetCategoriesToDefaults(userId);
-      applyCatalog(catalog);
-      return true;
-    } catch {
-      setMainCategoryActionError('resetFailed');
-      return false;
-    } finally {
-      setIsResettingCategories(false);
-    }
-  }, [userId, applyCatalog]);
+  const resetCategoriesToDefaultsAction = useCallback(
+    async (liveExpenses: Expense[]): Promise<Expense[] | null> => {
+      setIsResettingCategories(true);
+      setMainCategoryActionError(null);
+      try {
+        const { catalog, expenses: restoredExpenses } =
+          await resetCategoriesToDefaultsWithExpenseRestore(userId, liveExpenses);
+        applyCatalog(catalog);
+        return restoredExpenses;
+      } catch {
+        setMainCategoryActionError('resetFailed');
+        return null;
+      } finally {
+        setIsResettingCategories(false);
+      }
+    },
+    [userId, applyCatalog],
+  );
 
   const addSubCategory = useCallback(
     async (

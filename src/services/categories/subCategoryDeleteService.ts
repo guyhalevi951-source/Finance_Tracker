@@ -40,17 +40,19 @@ export async function deleteSubCategoryWithExpenseReassignment(
     return { ok: false, error: policyResult };
   }
 
-  const parentId = subCategories.find((sub) => sub.id === subId)?.parentId;
-  const fallbackCategoryId = policyResult.fallbackCategoryId;
+    const deletedSub = subCategories.find((sub) => sub.id === subId);
+    const parentId = deletedSub?.parentId;
+    const fallbackCategoryId = policyResult.fallbackCategoryId;
 
-  try {
-    const storedExpenses = await loadExpenses(userId);
-    const merged = mergeExpenseLists(storedExpenses, liveExpenses);
-    const updatedExpenses = reassignExpensesOnSubCategoryDelete(
-      merged,
-      subId,
-      fallbackCategoryId,
-    );
+    try {
+      const storedExpenses = await loadExpenses(userId);
+      const merged = mergeExpenseLists(storedExpenses, liveExpenses);
+      const updatedExpenses = reassignExpensesOnSubCategoryDelete(
+        merged,
+        subId,
+        deletedSub?.parentId ?? '',
+        fallbackCategoryId,
+      );
     const reassignedCount = merged.filter((expense) =>
       expenseLinksToSubCategory(expense, subId),
     ).length;

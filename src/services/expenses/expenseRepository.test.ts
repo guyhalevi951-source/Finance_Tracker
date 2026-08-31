@@ -123,4 +123,19 @@ describe('migrateExpense', () => {
     });
     expect(migrated.recurrenceExcludedDates).toEqual(['2026-03-02']);
   });
+
+  it('preserves original category origin fields from subcategory-delete migration', () => {
+    const migrated = migrateExpense({
+      id: 'x',
+      description: { en: 'A', he: 'A' },
+      amount: 5,
+      category: 'other.miscellaneous',
+      date: '2026-01-01',
+      paymentMethod: 'cash',
+      originalCategoryId: 'food',
+      originalSubCategoryId: 'food.groceries',
+    });
+    expect(migrated.originalCategoryId).toBe('food');
+    expect(migrated.originalSubCategoryId).toBe('food.groceries');
+  });
 });

@@ -141,15 +141,48 @@ describe('reassignExpensesOnSubCategoryDelete', () => {
     const result = reassignExpensesOnSubCategoryDelete(
       expenses,
       'food.groceries',
+      'food',
       SUB_CATEGORY_DELETE_FALLBACK_ID,
     );
 
     expect(result.find((e) => e.id === 'keep')?.category).toBe('food.restaurants');
+    expect(result.find((e) => e.id === 'keep')?.originalSubCategoryId).toBeUndefined();
     expect(result.find((e) => e.id === 'move')?.category).toBe('other.miscellaneous');
+    expect(result.find((e) => e.id === 'move')?.originalSubCategoryId).toBe('food.groceries');
+    expect(result.find((e) => e.id === 'move')?.originalCategoryId).toBe('food');
     expect(result.find((e) => e.id === 'pending')?.category).toBe('food.restaurants');
+    expect(result.find((e) => e.id === 'pending')?.originalSubCategoryId).toBeUndefined();
     expect(result.find((e) => e.id === 'pending')?.recurrencePendingBasicFields?.category).toBe(
       'other.miscellaneous',
     );
+    expect(
+      result.find((e) => e.id === 'pending')?.recurrencePendingBasicFields?.originalSubCategoryId,
+    ).toBe('food.groceries');
+    expect(
+      result.find((e) => e.id === 'pending')?.recurrencePendingBasicFields?.originalCategoryId,
+    ).toBe('food');
+  });
+
+  it('does not overwrite an existing migration origin', () => {
+    const expenses: Expense[] = [
+      makeExpense({
+        id: 'already',
+        category: 'food.restaurants',
+        originalCategoryId: 'food',
+        originalSubCategoryId: 'food.groceries',
+      }),
+    ];
+
+    const result = reassignExpensesOnSubCategoryDelete(
+      expenses,
+      'food.restaurants',
+      'food',
+      SUB_CATEGORY_DELETE_FALLBACK_ID,
+    );
+
+    expect(result[0].category).toBe('other.miscellaneous');
+    expect(result[0].originalSubCategoryId).toBe('food.groceries');
+    expect(result[0].originalCategoryId).toBe('food');
   });
 });
 
