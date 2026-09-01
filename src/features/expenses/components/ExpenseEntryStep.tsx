@@ -1,10 +1,11 @@
 import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ArrowLeft, Camera } from 'lucide-react';
-import { getSubCategoryI18nKey } from '../../../domain/categories/hierarchy';
+import { resolveSubCategoryLabel } from '../../../domain/categories/resolveCategoryLabel';
 import { useTodayIso } from '../../../lib/hooks/useTodayIso';
 import { formatExpenseDateNumeric } from '../../../lib/format/formatDate';
 import { type AppLocale } from '../../../config/app';
+import { type SubCategoryRecord } from '../../../types/category';
 import { type PaymentMethodId } from '../../../types/paymentMethod';
 import {
   type RecurrenceSelection,
@@ -21,6 +22,7 @@ import { ExpenseRecurrencePickerModal } from './ExpenseRecurrencePickerModal';
 
 interface ExpenseEntryStepProps {
   locale: AppLocale;
+  subCategories: SubCategoryRecord[];
   selectedSubCategoryId: string;
   amountDigits: string;
   onAmountChange: (value: string) => void;
@@ -42,6 +44,7 @@ interface ExpenseEntryStepProps {
 
 export function ExpenseEntryStep({
   locale,
+  subCategories,
   selectedSubCategoryId,
   amountDigits,
   onAmountChange,
@@ -90,7 +93,7 @@ export function ExpenseEntryStep({
           <ArrowLeft className="w-5 h-5" />
         </button>
         <p className="text-sm text-slate-500 dark:text-slate-400 truncate flex-1">
-          {t(getSubCategoryI18nKey(selectedSubCategoryId))}
+          {resolveSubCategoryLabel(selectedSubCategoryId, subCategories, locale, t)}
         </p>
         <p className="text-4xl font-bold text-rose-600 dark:text-rose-400 tabular-nums">
           {formatNumpadDisplay(amountDigits)}

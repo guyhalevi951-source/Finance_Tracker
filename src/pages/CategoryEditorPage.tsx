@@ -8,6 +8,7 @@ import { CategoryLivePreview } from '../features/categories/components/CategoryL
 import { CategoryColorPicker } from '../features/categories/components/CategoryColorPicker';
 import { CategoryIconPicker } from '../features/categories/components/CategoryIconPicker';
 import { ROUTES } from '../config/routes';
+import { resolvePostMainCategoryCreateNavigation } from '../config/categoryNavigation';
 import { type AppLocale } from '../config/app';
 import { resolveBilingualText } from '../domain/i18n/resolveBilingualText';
 import {
@@ -71,7 +72,14 @@ export function CategoryEditorPage() {
     }
 
     const created = await addMainCategory(input, locale);
-    if (created) navigate(ROUTES.categoryManagement);
+    if (!created) return;
+
+    const next = resolvePostMainCategoryCreateNavigation();
+    if (next.destination === 'addExpense') {
+      navigate(ROUTES.expenses, { state: { openAddExpenseCategories: true } });
+      return;
+    }
+    navigate(ROUTES.categoryManagement);
   };
 
   if (isEditMode && existing && isProtectedMainCategoryId(existing.id)) {

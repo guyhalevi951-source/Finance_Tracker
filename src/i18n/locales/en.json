@@ -322,6 +322,7 @@
     "customTranslationError": "Could not translate category. Please try again.",
     "loadError": "Could not load custom categories. Please refresh the page.",
     "manage": "Settings",
+    "addCard": "Add",
     "management": {
       "title": "Category management",
       "back": "Back",

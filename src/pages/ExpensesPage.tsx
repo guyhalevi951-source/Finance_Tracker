@@ -1,10 +1,10 @@
 import { useMemo, useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { expenseDetailPath, ROUTES, categorySubManagementPath } from '../config/routes';
+import { expenseDetailPath, ROUTES, categorySubCreatePath, categorySubManagementPath } from '../config/routes';
 import {
-  CATEGORY_RETURN_SUB_PARENT_KEY,
-  CATEGORY_RETURN_TO_ADD_EXPENSE_KEY,
+  beginAddExpenseCategoryCreate,
+  beginAddExpenseSubCategoryCreate,
   type ExpensesLocationState,
 } from '../config/categoryNavigation';
 import { type AppLocale } from '../config/app';
@@ -230,16 +230,20 @@ export function ExpensesPage() {
         onSelectSubCategory={addFlow.selectSubCategory}
         onBackToCategories={addFlow.goBackToCategories}
         onManageCategories={() => {
-          sessionStorage.setItem(CATEGORY_RETURN_TO_ADD_EXPENSE_KEY, '1');
-          sessionStorage.removeItem(CATEGORY_RETURN_SUB_PARENT_KEY);
-          addFlow.closeFlow();
+          beginAddExpenseCategoryCreate();
           navigate(ROUTES.categoryManagement);
         }}
         onManageSubCategories={(parentId) => {
-          sessionStorage.setItem(CATEGORY_RETURN_TO_ADD_EXPENSE_KEY, '1');
-          sessionStorage.setItem(CATEGORY_RETURN_SUB_PARENT_KEY, parentId);
-          addFlow.closeFlow();
+          beginAddExpenseSubCategoryCreate(parentId);
           navigate(categorySubManagementPath(parentId));
+        }}
+        onAddCategory={() => {
+          beginAddExpenseCategoryCreate();
+          navigate(ROUTES.categoryCreate);
+        }}
+        onAddSubCategory={(parentId) => {
+          beginAddExpenseSubCategoryCreate(parentId);
+          navigate(categorySubCreatePath(parentId));
         }}
         initialCategoryParentId={initialCategoryParentId}
         onSubmit={() => void addFlow.submit()}

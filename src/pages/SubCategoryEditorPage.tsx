@@ -7,7 +7,8 @@ import { useCategories } from '../features/categories/hooks/useCategories';
 import { CategoryLivePreview } from '../features/categories/components/CategoryLivePreview';
 import { CategoryIconPicker } from '../features/categories/components/CategoryIconPicker';
 import { MainCategoryMovePicker } from '../features/categories/components/MainCategoryMovePicker';
-import { categorySubManagementPath } from '../config/routes';
+import { categorySubManagementPath, ROUTES } from '../config/routes';
+import { resolvePostSubCategoryCreateNavigation } from '../config/categoryNavigation';
 import { type AppLocale } from '../config/app';
 import { resolveBilingualText } from '../domain/i18n/resolveBilingualText';
 import { DEFAULT_CATEGORY_ICON_KEY } from '../domain/categories/categoryIconLibrary';
@@ -85,7 +86,16 @@ export function SubCategoryEditorPage() {
     }
 
     const created = await addSubCategory(mainId, input, locale);
-    if (created) navigate(categorySubManagementPath(mainId));
+    if (!created) return;
+
+    const next = resolvePostSubCategoryCreateNavigation(mainId);
+    if (next.destination === 'addExpense') {
+      navigate(ROUTES.expenses, {
+        state: { openAddExpenseSubCategories: next.parentId },
+      });
+      return;
+    }
+    navigate(categorySubManagementPath(mainId));
   };
 
   if (isEditMode && existing && isProtectedFallbackSubCategoryId(existing.id)) {

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, Settings, type LucideIcon } from 'lucide-react';
+import { ArrowLeft, Plus, Settings, type LucideIcon } from 'lucide-react';
 import {
   type MainCategoryRecord,
   type SubCategoryRecord,
@@ -11,6 +11,10 @@ import { getSubCategoriesForParentFromCatalog } from '../../../domain/categories
 import { getMainCategoryUI, getSubCategoryUI } from '../categoryUi';
 import { expenseCompactLabelClass } from './expenseCompactButtonStyles';
 
+const ADD_CARD_MAIN_CIRCLE_CLASS = 'bg-slate-200 dark:bg-slate-700';
+const ADD_CARD_MAIN_ICON_CLASS = 'text-slate-600 dark:text-slate-300';
+const ADD_CARD_ICON_CLASS = 'text-white';
+
 interface CategorySelectionStepProps {
   locale: AppLocale;
   mainCategories: MainCategoryRecord[];
@@ -20,6 +24,8 @@ interface CategorySelectionStepProps {
   onSelectSubCategory: (subId: string) => void;
   onManageCategories: () => void;
   onManageSubCategories: (parentId: string) => void;
+  onAddCategory: () => void;
+  onAddSubCategory: (parentId: string) => void;
 }
 
 interface CategoryGridItemProps {
@@ -48,6 +54,32 @@ function CategoryGridItem({ icon: Icon, color, label, onClick }: CategoryGridIte
   );
 }
 
+interface CategoryAddGridItemProps {
+  label: string;
+  circleClass: string;
+  iconClass: string;
+  onClick: () => void;
+}
+
+function CategoryAddGridItem({ label, circleClass, iconClass, onClick }: CategoryAddGridItemProps) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="flex flex-col items-center gap-2 min-h-[88px] group"
+    >
+      <span
+        className={`w-14 h-14 rounded-full flex items-center justify-center text-white ${circleClass} group-hover:opacity-90 transition-opacity`}
+      >
+        <Plus className={`w-6 h-6 ${iconClass}`} />
+      </span>
+      <span className={`text-xs text-slate-700 dark:text-slate-300 w-full ${expenseCompactLabelClass}`}>
+        {label}
+      </span>
+    </button>
+  );
+}
+
 export function CategorySelectionStep({
   locale,
   mainCategories,
@@ -57,6 +89,8 @@ export function CategorySelectionStep({
   onSelectSubCategory,
   onManageCategories,
   onManageSubCategories,
+  onAddCategory,
+  onAddSubCategory,
 }: CategorySelectionStepProps) {
   const { t } = useTranslation();
   const [selectedParentId, setSelectedParentId] = useState<string | null>(initialParentId);
@@ -71,6 +105,18 @@ export function CategorySelectionStep({
   const sortedMains = [...mainCategories].sort(
     (a, b) => a.sortOrder - b.sortOrder || a.id.localeCompare(b.id),
   );
+  const rawAddCardLabel = t('category.addCard');
+  const addCardLabel =
+    rawAddCardLabel === 'category.addCard'
+      ? locale === 'he'
+        ? 'הוספה'
+        : 'Add'
+      : rawAddCardLabel;
+
+  const subAddCircleClass =
+    selectedParentId !== null
+      ? getMainCategoryUI(selectedParentId, mainCategories).color
+      : ADD_CARD_MAIN_CIRCLE_CLASS;
 
   return (
     <div className="flex flex-col h-full">
@@ -139,6 +185,12 @@ export function CategorySelectionStep({
               label={t('category.manage')}
               onClick={onManageCategories}
             />
+            <CategoryAddGridItem
+              label={addCardLabel}
+              circleClass={ADD_CARD_MAIN_CIRCLE_CLASS}
+              iconClass={ADD_CARD_MAIN_ICON_CLASS}
+              onClick={onAddCategory}
+            />
           </div>
         ) : (
           <div className="grid grid-cols-4 gap-x-2 gap-y-6">
@@ -158,6 +210,12 @@ export function CategorySelectionStep({
                 />
               );
             })}
+            <CategoryAddGridItem
+              label={addCardLabel}
+              circleClass={subAddCircleClass}
+              iconClass={ADD_CARD_ICON_CLASS}
+              onClick={() => onAddSubCategory(selectedParentId!)}
+            />
           </div>
         )}
       </div>
