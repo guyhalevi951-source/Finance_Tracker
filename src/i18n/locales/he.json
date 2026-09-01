@@ -24,7 +24,8 @@
     "nextMonth": "חודש הבא"
   },
   "nav": {
-    "dashboard": "לוח בקרה",
+    "overview": "סקירה חודשית",
+    "budget": "תקציב",
     "expenses": "הוצאות"
   },
   "header": {
@@ -61,6 +62,8 @@
     }
   },
   "budget": {
+    "pageTitle": "תקציב",
+    "monthlyUsageTitle": "החודש",
     "title": "הגדר תקציב חודשי",
     "amountLabel": "סכום התקציב (₪)",
     "amountPlaceholder": "הזן סכום",
@@ -72,12 +75,22 @@
       "allocated": "הסכום שהוקצב להוצאות",
       "totalExpenses": "סה\"כ הוצאות",
       "expensesThisMonth": "{{count}} הוצאות החודש",
+      "expensesInPeriod": "{{count}} הוצאות",
       "budgetStatus": "מצב התקציב",
       "remaining": "נותר בתקציב",
       "overBudget": "חריגה מהתקציב",
       "overBudgetBadge": "חרגת מהתקציב!",
       "usage": "ניצולת"
     }
+  },
+  "overview": {
+    "leftToSpend": "נותר לבזבוז",
+    "overspent": "חריגה",
+    "usedAndPlanned": "נוצל ומתוכנן",
+    "leftPerDay": "נותר ליום",
+    "averagePerDay": "ממוצע ליום",
+    "today": "היום",
+    "noBudget": "הגדר תקציב כדי לראות כמה נותר"
   },
   "expense": {
     "pageTitle": "הוצאות",

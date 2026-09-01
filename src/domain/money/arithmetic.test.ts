@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { toMinorUnits, fromMinorUnits, sumAmounts, subtractAmounts } from './arithmetic';
+import { toMinorUnits, fromMinorUnits, sumAmounts, subtractAmounts, divideAmount } from './arithmetic';
 
 describe('toMinorUnits', () => {
   it('converts 1.23 to 123', () => {
@@ -46,5 +46,16 @@ describe('subtractAmounts', () => {
 
   it('returns negative when b > a', () => {
     expect(subtractAmounts(100, 150)).toBe(-50);
+  });
+});
+
+describe('divideAmount', () => {
+  it('divides without float drift', () => {
+    expect(divideAmount(143, 30)).toBeCloseTo(4.77, 2);
+    expect(divideAmount(157, 30)).toBeCloseTo(5.23, 2);
+  });
+
+  it('returns 0 when divisor is 0', () => {
+    expect(divideAmount(100, 0)).toBe(0);
   });
 });

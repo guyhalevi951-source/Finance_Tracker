@@ -24,7 +24,8 @@
     "nextMonth": "Next month"
   },
   "nav": {
-    "dashboard": "Dashboard",
+    "overview": "Monthly Overview",
+    "budget": "Budget",
     "expenses": "Expenses"
   },
   "header": {
@@ -61,6 +62,8 @@
     }
   },
   "budget": {
+    "pageTitle": "Budget",
+    "monthlyUsageTitle": "This month",
     "title": "Set Monthly Budget",
     "amountLabel": "Budget amount (₪)",
     "amountPlaceholder": "Enter amount",
@@ -72,12 +75,22 @@
       "allocated": "Allocated for expenses",
       "totalExpenses": "Total Expenses",
       "expensesThisMonth": "{{count}} expenses this month",
+      "expensesInPeriod": "{{count}} expenses",
       "budgetStatus": "Budget Status",
       "remaining": "Remaining",
       "overBudget": "Over Budget!",
       "overBudgetBadge": "Over budget!",
       "usage": "Usage"
     }
+  },
+  "overview": {
+    "leftToSpend": "left to spend",
+    "overspent": "overspent",
+    "usedAndPlanned": "used & planned",
+    "leftPerDay": "left per day",
+    "averagePerDay": "Average per day",
+    "today": "Today",
+    "noBudget": "Set a budget to see how much is left"
   },
   "expense": {
     "pageTitle": "Expenses",

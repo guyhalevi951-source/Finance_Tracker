@@ -7,6 +7,7 @@ import { ExpenseWeekSelector } from './ExpenseWeekSelector';
 
 interface ExpenseTimeFilterBarProps extends UseExpenseTimeFilterReturn {
   locale: AppLocale;
+  showGranularityToggle?: boolean;
 }
 
 export function ExpenseTimeFilterBar({
@@ -23,6 +24,7 @@ export function ExpenseTimeFilterBar({
   setGranularity,
   selectWeek,
   selectDay,
+  showGranularityToggle = true,
 }: ExpenseTimeFilterBarProps) {
   return (
     <div className="space-y-4 mb-6">
@@ -31,22 +33,26 @@ export function ExpenseTimeFilterBar({
         onPrevious={goToPreviousMonth}
         onNext={goToNextMonth}
       />
-      <ExpenseGranularityToggle active={granularity} onChange={setGranularity} />
-      {granularity === 'weekly' && (
-        <ExpenseWeekSelector
-          weeks={weeks}
-          selectedWeekIndex={selectedWeekIndex}
-          locale={locale}
-          onSelectWeek={selectWeek}
-        />
-      )}
-      {granularity === 'daily' && (
-        <ExpenseDaySelector
-          days={days}
-          selectedDayIso={selectedDayIso}
-          todayIso={todayIso}
-          onSelectDay={selectDay}
-        />
+      {showGranularityToggle && (
+        <>
+          <ExpenseGranularityToggle active={granularity} onChange={setGranularity} />
+          {granularity === 'weekly' && (
+            <ExpenseWeekSelector
+              weeks={weeks}
+              selectedWeekIndex={selectedWeekIndex}
+              locale={locale}
+              onSelectWeek={selectWeek}
+            />
+          )}
+          {granularity === 'daily' && (
+            <ExpenseDaySelector
+              days={days}
+              selectedDayIso={selectedDayIso}
+              todayIso={todayIso}
+              onSelectDay={selectDay}
+            />
+          )}
+        </>
       )}
     </div>
   );

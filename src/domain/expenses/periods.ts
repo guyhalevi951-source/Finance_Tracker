@@ -63,6 +63,23 @@ export function filterExpensesByPeriod(expenses: Expense[], range: DateRange): E
   return expenses.filter((expense) => isDateInRange(expense.date, range));
 }
 
+/** Every ISO date in range, inclusive, ascending. */
+export function enumerateDaysInRange(range: DateRange): string[] {
+  const days: string[] = [];
+  const start = isoDateToDate(range.startIso);
+  const end = isoDateToDate(range.endIso);
+
+  for (let current = new Date(start); current.getTime() <= end.getTime(); current.setDate(current.getDate() + 1)) {
+    days.push(toIsoDate(current));
+  }
+
+  return days;
+}
+
+export function countDaysInRange(range: DateRange): number {
+  return enumerateDaysInRange(range).length;
+}
+
 export function getDefaultWeekIndex(
   year: number,
   month: number,

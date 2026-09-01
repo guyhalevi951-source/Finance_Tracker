@@ -3,7 +3,8 @@ import { AppShell } from './app/AppShell';
 import { ExpensesProvider } from './app/providers/ExpensesProvider';
 import { CategoriesProvider } from './app/providers/CategoriesProvider';
 import { ROUTES } from './config/routes';
-import { DashboardPage } from './pages/DashboardPage';
+import { PeriodicOverviewPage } from './pages/PeriodicOverviewPage';
+import { BudgetSettingsPage } from './pages/BudgetSettingsPage';
 import { ExpensesPage } from './pages/ExpensesPage';
 import { ExpenseDetailPage } from './pages/ExpenseDetailPage';
 import { ProfilePage } from './pages/ProfilePage';
@@ -19,7 +20,8 @@ function App() {
         <CategoriesProvider>
           <Routes>
           <Route element={<AppShell />}>
-            <Route path={ROUTES.dashboard} element={<DashboardPage />} />
+            <Route path={ROUTES.overview} element={<PeriodicOverviewPage />} />
+            <Route path={ROUTES.budget} element={<BudgetSettingsPage />} />
             <Route path={ROUTES.expenses} element={<ExpensesPage />} />
             <Route path={ROUTES.expenseDetail} element={<ExpenseDetailPage />} />
             <Route path={ROUTES.profile} element={<ProfilePage />} />

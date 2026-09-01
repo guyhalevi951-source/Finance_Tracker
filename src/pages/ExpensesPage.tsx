@@ -1,10 +1,8 @@
 import { useMemo, useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { expenseDetailPath, ROUTES, categorySubCreatePath, categorySubManagementPath } from '../config/routes';
+import { expenseDetailPath } from '../config/routes';
 import {
-  beginAddExpenseCategoryCreate,
-  beginAddExpenseSubCategoryCreate,
   type ExpensesLocationState,
 } from '../config/categoryNavigation';
 import { type AppLocale } from '../config/app';
@@ -12,23 +10,20 @@ import { useAppHeader } from '../app/hooks/useAppHeader';
 import { useAuthSession } from '../features/auth/hooks/useAuthSession';
 import { useCategories } from '../features/categories/hooks/useCategories';
 import { useExpenses } from '../features/expenses/hooks/useExpenses';
-import { useAddExpenseFlow } from '../features/expenses/hooks/useAddExpenseFlow';
 import { useExpenseBatchMode } from '../features/expenses/hooks/useExpenseBatchMode';
 import { ExpensesHeaderActions } from '../features/expenses/components/ExpensesHeaderActions';
-import { ExpensesViewTabs, type ExpensesViewMode } from '../features/expenses/components/ExpensesViewTabs';
-import { ExpenseTimeFilterBar } from '../features/expenses/components/ExpenseTimeFilterBar';
+import { ExpenseFilterToolbar } from '../features/expenses/components/ExpenseFilterToolbar';
 import { ExpensesByDateView } from '../features/expenses/components/ExpensesByDateView';
 import { ExpensesByCategoryView } from '../features/expenses/components/ExpensesByCategoryView';
 import { useExpenseTimeFilter } from '../features/expenses/hooks/useExpenseTimeFilter';
-import { filterExpensesByPeriod } from '../domain/expenses/periods';
-import { filterTimelineVisibleExpenses } from '../domain/recurrence/filterTimelineVisibleExpenses';
+import { usePeriodVisibleExpenses } from '../features/expenses/hooks/usePeriodVisibleExpenses';
+import { type ExpensesViewMode } from '../features/expenses/components/ExpensesViewTabs';
 import { ExpenseEditModal } from '../features/expenses/components/ExpenseEditModal';
 import { DiscardChangesModal } from '../features/expenses/components/DiscardChangesModal';
 import { RecurringEditConfirmModal } from '../features/expenses/components/RecurringEditConfirmModal';
 import { RecurringInstanceLinkConfirmModal } from '../features/expenses/components/RecurringInstanceLinkConfirmModal';
 import { DEFAULT_RECURRENCE_SELECTION } from '../types/recurrenceRule';
-import { AddExpenseFab } from '../features/expenses/components/AddExpenseFab';
-import { AddExpenseFlowModal } from '../features/expenses/components/AddExpenseFlowModal';
+import { AddExpenseLauncher } from '../features/expenses/components/AddExpenseLauncher';
 import { resolveBilingualText } from '../domain/i18n/resolveBilingualText';
 import { type Expense } from '../types/expense';
 
@@ -38,40 +33,29 @@ export function ExpensesPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const [viewMode, setViewMode] = useState<ExpensesViewMode>('date');
-  const [initialCategoryParentId, setInitialCategoryParentId] = useState<string | null>(null);
+  const [pendingAddOpen, setPendingAddOpen] = useState<{ parentId: string | null } | null>(null);
 
   const { userId } = useAuthSession();
   const { mainCategories, subCategories } = useCategories(userId);
-  const { expenses, loadError, reload, createExpense } = useExpenses();
-  const addFlow = useAddExpenseFlow({ userId, createExpense });
-  const { openFlow } = addFlow;
+  const { expenses, loadError, reload } = useExpenses();
 
   useEffect(() => {
     const state = location.state as ExpensesLocationState | null;
     if (state?.openAddExpenseSubCategories) {
-      setInitialCategoryParentId(state.openAddExpenseSubCategories);
-      openFlow();
+      setPendingAddOpen({ parentId: state.openAddExpenseSubCategories });
       navigate(location.pathname, { replace: true, state: {} });
       return;
     }
     if (state?.openAddExpenseCategories) {
-      setInitialCategoryParentId(null);
-      openFlow();
+      setPendingAddOpen({ parentId: null });
       navigate(location.pathname, { replace: true, state: {} });
     }
-  }, [location.state, location.pathname, openFlow, navigate]);
+  }, [location.state, location.pathname, navigate]);
 
   const timeFilter = useExpenseTimeFilter(locale);
   const batch = useExpenseBatchMode(expenses, userId, reload, timeFilter.todayIso);
 
-  const filteredExpenses = useMemo(
-    () =>
-      filterExpensesByPeriod(
-        filterTimelineVisibleExpenses(batch.displayExpenses),
-        timeFilter.range,
-      ),
-    [batch.displayExpenses, timeFilter.range],
-  );
+  const filteredExpenses = usePeriodVisibleExpenses(batch.displayExpenses, timeFilter.range);
 
   const categoryOptions = subCategories.map((c) => ({
     id: c.id,
@@ -137,9 +121,12 @@ export function ExpensesPage() {
         </div>
       )}
 
-      <ExpensesViewTabs active={viewMode} onChange={setViewMode} />
-
-      <ExpenseTimeFilterBar locale={locale} {...timeFilter} />
+      <ExpenseFilterToolbar
+        locale={locale}
+        viewMode={viewMode}
+        onViewModeChange={setViewMode}
+        {...timeFilter}
+      />
 
       {viewMode === 'date' ? (
         <ExpensesByDateView {...listProps} />
@@ -197,58 +184,11 @@ export function ExpensesPage() {
         onDismiss={batch.dismissDiscard}
       />
 
-      <AddExpenseFab
-        onClick={() => {
-          setInitialCategoryParentId(null);
-          addFlow.openFlow();
-        }}
-        hidden={addFlow.open || batch.mode !== 'view'}
-      />
-      <AddExpenseFlowModal
-        open={addFlow.open}
-        step={addFlow.step}
+      <AddExpenseLauncher
         locale={locale}
-        selectedSubCategoryId={addFlow.selectedSubCategoryId}
-        amountDigits={addFlow.amountDigits}
-        onAmountChange={addFlow.setAmountDigits}
-        note={addFlow.note}
-        onNoteChange={addFlow.setNote}
-        date={addFlow.date}
-        onDateChange={addFlow.setDate}
-        paymentMethod={addFlow.paymentMethod}
-        onPaymentMethodChange={addFlow.setPaymentMethod}
-        recurrenceSelection={addFlow.recurrenceSelection}
-        onRecurrenceSelectionChange={addFlow.setRecurrenceSelection}
-        attachmentFile={addFlow.attachmentFile}
-        onAttachmentChange={addFlow.setAttachmentFile}
-        isSaving={addFlow.isSaving}
-        errorKey={addFlow.errorKey}
-        onClose={() => {
-          setInitialCategoryParentId(null);
-          addFlow.closeFlow();
-        }}
-        onSelectSubCategory={addFlow.selectSubCategory}
-        onBackToCategories={addFlow.goBackToCategories}
-        onManageCategories={() => {
-          beginAddExpenseCategoryCreate();
-          navigate(ROUTES.categoryManagement);
-        }}
-        onManageSubCategories={(parentId) => {
-          beginAddExpenseSubCategoryCreate(parentId);
-          navigate(categorySubManagementPath(parentId));
-        }}
-        onAddCategory={() => {
-          beginAddExpenseCategoryCreate();
-          navigate(ROUTES.categoryCreate);
-        }}
-        onAddSubCategory={(parentId) => {
-          beginAddExpenseSubCategoryCreate(parentId);
-          navigate(categorySubCreatePath(parentId));
-        }}
-        initialCategoryParentId={initialCategoryParentId}
-        onSubmit={() => void addFlow.submit()}
-        mainCategories={mainCategories}
-        subCategories={subCategories}
+        hideFab={batch.mode !== 'view'}
+        pendingOpen={pendingAddOpen}
+        onPendingOpenHandled={() => setPendingAddOpen(null)}
       />
     </div>
   );

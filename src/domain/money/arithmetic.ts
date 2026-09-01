@@ -30,3 +30,12 @@ export function sumAmounts(amounts: number[], scale = DEFAULT_DECIMAL_SCALE): nu
 export function subtractAmounts(a: number, b: number, scale = DEFAULT_DECIMAL_SCALE): number {
   return fromMinorUnits(toMinorUnits(a, scale) - toMinorUnits(b, scale), scale);
 }
+
+/**
+ * Divide a decimal amount by an integer divisor without floating-point drift.
+ */
+export function divideAmount(amount: number, divisor: number, scale = DEFAULT_DECIMAL_SCALE): number {
+  if (divisor === 0) return 0;
+  const minor = Math.round(toMinorUnits(amount, scale) / divisor);
+  return fromMinorUnits(minor, scale);
+}

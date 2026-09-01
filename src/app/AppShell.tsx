@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { NavLink, Outlet } from 'react-router-dom';
-import { LayoutDashboard, Receipt } from 'lucide-react';
+import { LayoutDashboard, Receipt, Wallet } from 'lucide-react';
 import { AppHeader } from './components/AppHeader';
 import { AppLogo } from './components/AppLogo';
 import { AppHeaderProvider } from './providers/AppHeaderProvider';
@@ -28,9 +28,13 @@ export function AppShell() {
         </div>
 
         <nav className="flex md:flex-col flex-1 justify-around md:justify-start md:gap-1 p-2 md:p-4">
-          <NavLink to={ROUTES.dashboard} className={navLinkClass} end>
+          <NavLink to={ROUTES.overview} className={navLinkClass} end>
             <LayoutDashboard className="w-5 h-5" />
-            <span>{t('nav.dashboard')}</span>
+            <span>{t('nav.overview')}</span>
+          </NavLink>
+          <NavLink to={ROUTES.budget} className={navLinkClass}>
+            <Wallet className="w-5 h-5" />
+            <span>{t('nav.budget')}</span>
           </NavLink>
           <NavLink to={ROUTES.expenses} className={navLinkClass}>
             <Receipt className="w-5 h-5" />

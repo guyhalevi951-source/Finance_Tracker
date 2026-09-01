@@ -1,5 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
+  countDaysInRange,
+  enumerateDaysInRange,
   filterExpensesByPeriod,
   getDefaultDayIso,
   getDefaultWeekIndex,
@@ -130,6 +132,29 @@ describe('resolveExpenseTimeRange', () => {
       },
     );
     expect(range).toEqual({ startIso: '2026-07-17', endIso: '2026-07-17' });
+  });
+});
+
+describe('enumerateDaysInRange', () => {
+  it('returns every day inclusive in ascending order', () => {
+    expect(enumerateDaysInRange({ startIso: '2026-07-01', endIso: '2026-07-03' })).toEqual([
+      '2026-07-01',
+      '2026-07-02',
+      '2026-07-03',
+    ]);
+  });
+
+  it('returns a single day for same start and end', () => {
+    expect(enumerateDaysInRange({ startIso: '2026-07-17', endIso: '2026-07-17' })).toEqual([
+      '2026-07-17',
+    ]);
+  });
+});
+
+describe('countDaysInRange', () => {
+  it('counts days in a range', () => {
+    expect(countDaysInRange({ startIso: '2026-07-01', endIso: '2026-07-31' })).toBe(31);
+    expect(countDaysInRange({ startIso: '2026-07-17', endIso: '2026-07-17' })).toBe(1);
   });
 });
 
