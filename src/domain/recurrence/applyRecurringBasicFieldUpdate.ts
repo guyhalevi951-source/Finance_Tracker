@@ -1,4 +1,4 @@
-import { type Expense } from '../../types/expense';
+import { type Expense, type RecurrencePendingBasicFields } from '../../types/expense';
 import { isoDateToDate, toIsoDate } from '../expenses/parseExpenseDate';
 import { capTemplateEndDate } from './earliestEndDate';
 import {
@@ -33,6 +33,66 @@ function mergeBasicFields(expense: Expense, fields: RecurringBasicFields): Expen
     amount: fields.amount,
     category: fields.category,
     paymentMethod: fields.paymentMethod,
+  };
+}
+
+function resolveSeriesFieldsForOccurrenceDate(
+  template: Expense,
+  occurrenceDateIso: string,
+): RecurringBasicFields {
+  const pending = template.recurrencePendingBasicFields;
+  if (pending && occurrenceDateIso >= pending.effectiveFromIso) {
+    return {
+      description: pending.description,
+      amount: pending.amount,
+      category: pending.category,
+      paymentMethod: pending.paymentMethod,
+    };
+  }
+
+  return {
+    description: template.description,
+    amount: template.amount,
+    category: template.category,
+    paymentMethod: template.paymentMethod,
+  };
+}
+
+function applyInstanceOnlyTemplateEdit(
+  template: Expense,
+  updatedFields: RecurringBasicFields,
+): Expense {
+  const nextOccurrenceDate = dayAfter(template.date);
+  const baselineForFuture = resolveSeriesFieldsForOccurrenceDate(template, nextOccurrenceDate);
+  const edited = mergeBasicFields(template, updatedFields);
+
+  const pending: RecurrencePendingBasicFields = {
+    effectiveFromIso: nextOccurrenceDate,
+    description: baselineForFuture.description,
+    amount: baselineForFuture.amount,
+    category: baselineForFuture.category,
+    paymentMethod: baselineForFuture.paymentMethod,
+    ...(template.recurrencePendingBasicFields?.originalCategoryId ??
+    template.originalCategoryId
+      ? {
+          originalCategoryId:
+            template.recurrencePendingBasicFields?.originalCategoryId ??
+            template.originalCategoryId,
+        }
+      : {}),
+    ...(template.recurrencePendingBasicFields?.originalSubCategoryId ??
+    template.originalSubCategoryId
+      ? {
+          originalSubCategoryId:
+            template.recurrencePendingBasicFields?.originalSubCategoryId ??
+            template.originalSubCategoryId,
+        }
+      : {}),
+  };
+
+  return {
+    ...edited,
+    recurrencePendingBasicFields: pending,
   };
 }
 
@@ -313,9 +373,15 @@ export function applyRecurringBasicFieldUpdate(
   splitDateIso: string,
 ): Expense[] {
   if (scope === 'instanceOnly') {
-    return expenses.map((expense) =>
-      expense.id === target.id ? mergeBasicFields(expense, updatedFields) : expense,
-    );
+    return expenses.map((expense) => {
+      if (expense.id !== target.id) return expense;
+
+      if (expense.recurrenceRule !== undefined) {
+        return applyInstanceOnlyTemplateEdit(expense, updatedFields);
+      }
+
+      return mergeBasicFields(expense, updatedFields);
+    });
   }
 
   const rootId = resolveSeriesRootId(target);

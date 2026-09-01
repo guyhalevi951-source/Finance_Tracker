@@ -1,7 +1,37 @@
 import { type Expense } from '../../types/expense';
+import { computeDueDates } from './computeDueDates';
 import { mergeExcludedDates } from './isRecurrenceDateExcluded';
 import { resolveSeriesRootId, resolveSeriesTemplate } from './resolveSeriesTemplate';
 import { stripRecurrenceFields } from './stripRecurrenceFields';
+
+function spawnContinuationTemplate(target: Expense): Expense | null {
+  const rule = target.recurrenceRule;
+  if (!rule) return null;
+
+  const dueDates = computeDueDates(target.date, rule, '2099-12-31');
+  const nextDate = dueDates[0];
+  if (!nextDate) return null;
+
+  const carriedExcluded = (target.recurrenceExcludedDates ?? []).filter(
+    (date) => date >= nextDate,
+  );
+  const excludedDates = mergeExcludedDates(carriedExcluded, target.date);
+
+  const {
+    recurrenceSeriesId: _seriesId,
+    recurrencePendingBasicFields: _pending,
+    ...rest
+  } = target;
+
+  return {
+    ...rest,
+    id: crypto.randomUUID(),
+    date: nextDate,
+    recurrenceRule: rule,
+    ...(target.recurrenceEndDate ? { recurrenceEndDate: target.recurrenceEndDate } : {}),
+    recurrenceExcludedDates: excludedDates,
+  };
+}
 
 function detachMaterializedInstance(
   expenses: Expense[],
@@ -28,9 +58,11 @@ function detachTemplateRow(expenses: Expense[], target: Expense): Expense[] {
   );
 
   if (instances.length === 0) {
-    return expenses.map((expense) =>
+    const continuation = spawnContinuationTemplate(target);
+    const next = expenses.map((expense) =>
       expense.id === target.id ? stripRecurrenceFields(expense) : expense,
     );
+    return continuation ? next.concat(continuation) : next;
   }
 
   const successor = [...instances].sort((a, b) => a.date.localeCompare(b.date))[0];

@@ -51,6 +51,21 @@ describe('detachRecurringInstance', () => {
     expect(regeneratableDates).not.toContain('2026-07-05');
   });
 
+  it('detaches template anchor without instances by spawning continuation template', () => {
+    const template = makeExpense({ id: 't1', date: '2026-07-01', recurrenceRule: dailyRule });
+
+    const result = detachRecurringInstance([template], template);
+    const detached = result.find((e) => e.id === 't1');
+    const continuation = result.find((e) => e.id !== 't1' && e.recurrenceRule !== undefined);
+
+    expect(result).toHaveLength(2);
+    expect(detached?.recurrenceRule).toBeUndefined();
+    expect(isRecurringExpense(detached!)).toBe(false);
+    expect(continuation?.date).toBe('2026-07-02');
+    expect(continuation?.recurrenceRule).toEqual(dailyRule);
+    expect(continuation?.recurrenceExcludedDates).toEqual(['2026-07-01']);
+  });
+
   it('detaches template row by promoting successor and converting template to one-off', () => {
     const template = makeExpense({ id: 't1', date: '2026-07-01', recurrenceRule: dailyRule });
     const instance1 = makeExpense({ id: 'i1', date: '2026-07-02', recurrenceSeriesId: 't1' });

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { type Expense } from '../../types/expense';
 import { applyRecurringBasicFieldUpdate } from './applyRecurringBasicFieldUpdate';
+import { buildGeneratedExpense } from './buildGeneratedExpense';
 import { listActiveRecurrenceTemplates } from './listActiveRecurrenceTemplates';
 import { resolveRemainingOccurrencesLabelDescriptor } from './resolveRemainingOccurrencesLabel';
 
@@ -39,6 +40,62 @@ describe('applyRecurringBasicFieldUpdate', () => {
 
     expect(result.find((e) => e.id === 'i1')?.amount).toBe(250);
     expect(result.find((e) => e.id === 't1')?.amount).toBe(100);
+  });
+
+  it('instanceOnly on template row preserves original fields for future generation', () => {
+    const template = makeExpense({ id: 't1', date: '2026-07-01', recurrenceRule: dailyRule });
+    const updatedFields = {
+      description: { en: 'Updated', he: 'עודכן' },
+      amount: 250,
+      category: 'food.groceries' as const,
+      paymentMethod: 'credit' as const,
+    };
+
+    const result = applyRecurringBasicFieldUpdate(
+      [template],
+      template,
+      updatedFields,
+      'instanceOnly',
+      '2026-07-10',
+    );
+
+    const updatedTemplate = result.find((expense) => expense.id === 't1');
+    expect(updatedTemplate?.amount).toBe(250);
+    expect(updatedTemplate?.recurrencePendingBasicFields).toMatchObject({
+      effectiveFromIso: '2026-07-02',
+      amount: 100,
+    });
+
+    const generated = buildGeneratedExpense(updatedTemplate!, '2026-07-02');
+    expect(generated.amount).toBe(100);
+  });
+
+  it('instanceOnly on middle materialized instance does not update future materialized rows', () => {
+    const template = makeExpense({ id: 't1', date: '2026-07-01', recurrenceRule: dailyRule });
+    const past = makeExpense({ id: 'i1', date: '2026-07-02', recurrenceSeriesId: 't1' });
+    const target = makeExpense({ id: 'i2', date: '2026-07-03', recurrenceSeriesId: 't1' });
+    const future1 = makeExpense({ id: 'i3', date: '2026-07-04', recurrenceSeriesId: 't1' });
+    const future2 = makeExpense({ id: 'i4', date: '2026-07-05', recurrenceSeriesId: 't1' });
+    const updatedFields = {
+      description: { en: 'Updated', he: 'עודכן' },
+      amount: 250,
+      category: 'food.groceries' as const,
+      paymentMethod: 'credit' as const,
+    };
+
+    const result = applyRecurringBasicFieldUpdate(
+      [template, past, target, future1, future2],
+      target,
+      updatedFields,
+      'instanceOnly',
+      '2026-07-10',
+    );
+
+    expect(result.find((expense) => expense.id === 'i2')?.amount).toBe(250);
+    expect(result.find((expense) => expense.id === 'i3')?.amount).toBe(100);
+    expect(result.find((expense) => expense.id === 'i4')?.amount).toBe(100);
+    expect(result.find((expense) => expense.id === 't1')?.amount).toBe(100);
+    expect(listActiveRecurrenceTemplates(result, '2026-07-10')).toHaveLength(1);
   });
 
   it('thisAndFuture preserves historical template and instances before split date', () => {

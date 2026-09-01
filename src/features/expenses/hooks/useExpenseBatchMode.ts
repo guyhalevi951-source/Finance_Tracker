@@ -210,17 +210,34 @@ export function useExpenseBatchMode(
     ): Expense[] => {
       const { target, basicFields, attachmentChange } = edit;
       const splitDateIso = scope === 'thisAndFuture' ? target.date : todayIso;
-      let nextExpenses = applyRecurringBasicFieldUpdate(
-        draftExpenses,
-        target,
-        basicFields,
-        scope,
-        splitDateIso,
-      );
 
-      if (detach) {
+      let nextExpenses: Expense[];
+
+      // Detach before applying instance-only field edits so series continuation keeps
+      // pre-edit template fields while the detached row receives the user's edits.
+      if (scope === 'instanceOnly' && detach) {
+        nextExpenses = detachRecurringInstance(draftExpenses, target);
         const updatedTarget = nextExpenses.find((expense) => expense.id === target.id) ?? target;
-        nextExpenses = detachRecurringInstance(nextExpenses, updatedTarget);
+        nextExpenses = applyRecurringBasicFieldUpdate(
+          nextExpenses,
+          updatedTarget,
+          basicFields,
+          'instanceOnly',
+          splitDateIso,
+        );
+      } else {
+        nextExpenses = applyRecurringBasicFieldUpdate(
+          draftExpenses,
+          target,
+          basicFields,
+          scope,
+          splitDateIso,
+        );
+
+        if (detach) {
+          const updatedTarget = nextExpenses.find((expense) => expense.id === target.id) ?? target;
+          nextExpenses = detachRecurringInstance(nextExpenses, updatedTarget);
+        }
       }
 
       return applyEditToDraft(nextExpenses, target.id, attachmentChange);
