@@ -19,9 +19,9 @@ export function AppShell() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-950 transition-colors duration-200 flex flex-col md:flex-row">
       <aside className="md:w-56 md:min-h-screen bg-white dark:bg-slate-800 border-b md:border-b-0 md:border-e border-slate-200 dark:border-slate-700 flex md:flex-col">
-        <div className="hidden md:flex items-center gap-3 p-6 border-b border-slate-200 dark:border-slate-700">
-          <AppLogo className="w-10 h-10" />
-          <div>
+        <div className="hidden md:flex flex-col items-center gap-3 p-6 border-b border-slate-200 dark:border-slate-700">
+          <AppLogo className="w-32 h-32" />
+          <div className="text-center">
             <p className="font-bold text-slate-800 dark:text-slate-100">{t('app.name')}</p>
             <p className="text-xs text-slate-500 dark:text-slate-400">{t('app.tagline')}</p>
           </div>

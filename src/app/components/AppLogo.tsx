@@ -12,7 +12,7 @@ export function AppLogo({ className = 'w-10 h-10' }: AppLogoProps) {
     <img
       src={appLogoSrc}
       alt={t('app.name')}
-      className={`rounded-full object-contain shrink-0 ${className}`}
+      className={`object-contain shrink-0 ${className}`}
       draggable={false}
     />
   );
