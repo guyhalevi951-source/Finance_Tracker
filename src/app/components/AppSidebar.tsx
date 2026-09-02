@@ -10,6 +10,8 @@ import { LanguageToggle } from '../../features/i18n/components/LanguageToggle';
 import { ThemeToggle } from '../../features/theme/components/ThemeToggle';
 import { UserAvatar } from '../../features/profile/components/UserAvatar';
 
+const SIDEBAR_NAV_ICON_SLOT = 'flex items-center justify-center w-5 h-5 shrink-0';
+
 const NAV_ICONS = {
   overview: LayoutDashboard,
   budget: Wallet,
@@ -98,11 +100,13 @@ export function AppSidebar() {
                 onClick={closeSidebar}
                 aria-label={item.id === 'profile' ? t('profile.goToProfile') : undefined}
               >
-                {item.id === 'profile' ? (
-                  <UserAvatar size="sm" />
-                ) : (
-                  Icon && <Icon className="w-5 h-5 shrink-0" />
-                )}
+                <span className={SIDEBAR_NAV_ICON_SLOT}>
+                  {item.id === 'profile' ? (
+                    <UserAvatar variant="nav" />
+                  ) : (
+                    Icon && <Icon className="w-5 h-5" />
+                  )}
+                </span>
                 <span>{t(`nav.${item.id}`)}</span>
               </NavLink>
             );

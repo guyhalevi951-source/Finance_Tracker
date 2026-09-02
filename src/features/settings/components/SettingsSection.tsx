@@ -3,7 +3,11 @@ import { useTranslation } from 'react-i18next';
 import { type Expense } from '../../../types/expense';
 import { type SubCategoryRecord } from '../../../types/category';
 import { type AppLocale } from '../../../config/app';
-import { SettingsCategoryPanel } from './SettingsCategoryPanel';
+import {
+  SettingsCategoryPanel,
+  SETTINGS_DEPTH_CONTENT_PADDING,
+  SETTINGS_DEPTH_SHELL,
+} from './SettingsCategoryPanel';
 import { ActiveRecurringExpenseListItem } from './ActiveRecurringExpenseListItem';
 import { ActiveScheduledExpenseListItem } from './ActiveScheduledExpenseListItem';
 
@@ -42,22 +46,28 @@ export function SettingsSection({
         title={t('profile.settings.categories.expenses')}
         open={expensesOpen}
         onToggle={() => setExpensesOpen((prev) => !prev)}
+        depth={0}
       >
         <SettingsCategoryPanel
           title={t('profile.settings.subcategories.futureExpenses')}
           open={futureOpen}
           onToggle={() => setFutureOpen((prev) => !prev)}
-          nested
+          depth={1}
         >
-          <div className="divide-y divide-slate-200 dark:divide-slate-700">
+          <div
+            className={`${SETTINGS_DEPTH_SHELL[2]} divide-y divide-slate-200 dark:divide-slate-700`}
+          >
             <SettingsCategoryPanel
               title={t('profile.settings.subcategories.recurringExpenses')}
               open={recurringOpen}
               onToggle={() => setRecurringOpen((prev) => !prev)}
-              nested
+              depth={2}
+              grouped
             >
               {activeTemplates.length === 0 ? (
-                <p className="px-4 py-5 text-sm text-slate-500 dark:text-slate-400 text-center">
+                <p
+                  className={`py-5 text-sm text-slate-500 dark:text-slate-400 text-center ${SETTINGS_DEPTH_CONTENT_PADDING}`}
+                >
                   {t('profile.settings.recurring.empty')}
                 </p>
               ) : (
@@ -81,10 +91,13 @@ export function SettingsSection({
               title={t('profile.settings.subcategories.oneTimeExpenses')}
               open={oneTimeOpen}
               onToggle={() => setOneTimeOpen((prev) => !prev)}
-              nested
+              depth={2}
+              grouped
             >
               {scheduledExpenses.length === 0 ? (
-                <p className="px-4 py-5 text-sm text-slate-500 dark:text-slate-400 text-center">
+                <p
+                  className={`py-5 text-sm text-slate-500 dark:text-slate-400 text-center ${SETTINGS_DEPTH_CONTENT_PADDING}`}
+                >
                   {t('profile.settings.oneTime.empty')}
                 </p>
               ) : (
