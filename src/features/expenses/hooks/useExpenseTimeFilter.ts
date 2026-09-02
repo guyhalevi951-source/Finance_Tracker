@@ -27,6 +27,7 @@ export interface UseExpenseTimeFilterReturn {
   todayIso: string;
   goToPreviousMonth: () => void;
   goToNextMonth: () => void;
+  selectMonth: (year: number, month: number) => void;
   setGranularity: (granularity: TimeGranularity) => void;
   selectWeek: (index: number) => void;
   selectDay: (iso: string) => void;
@@ -91,6 +92,17 @@ export function useExpenseTimeFilter(locale: AppLocale): UseExpenseTimeFilterRet
   const goToPreviousMonth = useCallback(() => shiftMonth(-1), [shiftMonth]);
   const goToNextMonth = useCallback(() => shiftMonth(1), [shiftMonth]);
 
+  const selectMonth = useCallback(
+    (nextYear: number, nextMonth: number) => {
+      setYear(nextYear);
+      setMonth(nextMonth);
+      const defaults = applyMonthDefaults(nextYear, nextMonth, granularity);
+      setSelectedWeekIndex(defaults.selectedWeekIndex);
+      setSelectedDayIso(defaults.selectedDayIso);
+    },
+    [granularity],
+  );
+
   const setGranularity = useCallback(
     (next: TimeGranularity) => {
       setGranularityState(next);
@@ -122,6 +134,7 @@ export function useExpenseTimeFilter(locale: AppLocale): UseExpenseTimeFilterRet
     todayIso,
     goToPreviousMonth,
     goToNextMonth,
+    selectMonth,
     setGranularity,
     selectWeek,
     selectDay,

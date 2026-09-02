@@ -12,6 +12,8 @@ interface ExpenseTimeFilterBarProps extends UseExpenseTimeFilterReturn {
 
 export function ExpenseTimeFilterBar({
   locale,
+  year,
+  month,
   monthLabel,
   granularity,
   weeks,
@@ -21,6 +23,7 @@ export function ExpenseTimeFilterBar({
   todayIso,
   goToPreviousMonth,
   goToNextMonth,
+  selectMonth,
   setGranularity,
   selectWeek,
   selectDay,
@@ -29,9 +32,12 @@ export function ExpenseTimeFilterBar({
   return (
     <div className="space-y-4 mb-6">
       <ExpenseTimeNavigator
+        year={year}
+        month={month}
         monthLabel={monthLabel}
         onPrevious={goToPreviousMonth}
         onNext={goToNextMonth}
+        onSelectMonth={selectMonth}
       />
       {showGranularityToggle && (
         <>
