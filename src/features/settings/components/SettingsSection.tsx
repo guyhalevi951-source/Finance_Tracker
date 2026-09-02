@@ -37,23 +37,19 @@ export function SettingsSection({
   const [oneTimeOpen, setOneTimeOpen] = useState(true);
 
   return (
-    <section className="mt-6">
-      <h2 className="text-base font-semibold text-slate-800 dark:text-slate-100 mb-3 px-1">
-        {t('profile.settings.title')}
-      </h2>
-
-      <div className="space-y-3">
+    <section>
+      <SettingsCategoryPanel
+        title={t('profile.settings.categories.expenses')}
+        open={expensesOpen}
+        onToggle={() => setExpensesOpen((prev) => !prev)}
+      >
         <SettingsCategoryPanel
-          title={t('profile.settings.categories.expenses')}
-          open={expensesOpen}
-          onToggle={() => setExpensesOpen((prev) => !prev)}
+          title={t('profile.settings.subcategories.futureExpenses')}
+          open={futureOpen}
+          onToggle={() => setFutureOpen((prev) => !prev)}
+          nested
         >
-          <SettingsCategoryPanel
-            title={t('profile.settings.subcategories.futureExpenses')}
-            open={futureOpen}
-            onToggle={() => setFutureOpen((prev) => !prev)}
-            nested
-          >
+          <div className="divide-y divide-slate-200 dark:divide-slate-700">
             <SettingsCategoryPanel
               title={t('profile.settings.subcategories.recurringExpenses')}
               open={recurringOpen}
@@ -106,9 +102,9 @@ export function SettingsSection({
                 </ul>
               )}
             </SettingsCategoryPanel>
-          </SettingsCategoryPanel>
+          </div>
         </SettingsCategoryPanel>
-      </div>
+      </SettingsCategoryPanel>
     </section>
   );
 }

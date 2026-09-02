@@ -1,6 +1,3 @@
-import { LanguageToggle } from '../../features/i18n/components/LanguageToggle';
-import { ProfileHeaderButton } from '../../features/profile/components/ProfileHeaderButton';
-import { ThemeToggle } from '../../features/theme/components/ThemeToggle';
 import { useAppHeaderContext } from '../providers/AppHeaderProvider';
 import { SidebarToggle } from './SidebarToggle';
 
@@ -24,9 +21,6 @@ export function AppHeader() {
         </div>
 
         <div className="flex items-center gap-2 shrink-0 z-10">
-          <ProfileHeaderButton />
-          <LanguageToggle />
-          <ThemeToggle />
           <SidebarToggle />
         </div>
       </div>

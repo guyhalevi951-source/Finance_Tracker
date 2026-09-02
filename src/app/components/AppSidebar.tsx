@@ -1,10 +1,22 @@
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, Receipt, Wallet, X } from 'lucide-react';
-import { ROUTES } from '../../config/routes';
+import { LayoutDashboard, Receipt, Settings, Wallet, X } from 'lucide-react';
+import { NAV_ITEMS } from '../../config/nav';
 import { AppLogo } from './AppLogo';
 import { useSidebarContext } from '../providers/SidebarProvider';
+import { HEADER_ICON_BUTTON_CLASS } from './headerIconButton';
+import { LanguageToggle } from '../../features/i18n/components/LanguageToggle';
+import { ThemeToggle } from '../../features/theme/components/ThemeToggle';
+import { UserAvatar } from '../../features/profile/components/UserAvatar';
+
+const NAV_ICONS = {
+  overview: LayoutDashboard,
+  budget: Wallet,
+  expenses: Receipt,
+  profile: null,
+  settings: Settings,
+} as const;
 
 export function AppSidebar() {
   const { t } = useTranslation();
@@ -59,7 +71,7 @@ export function AppSidebar() {
             type="button"
             onClick={closeSidebar}
             aria-label={t('nav.closeMenu')}
-            className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:border-emerald-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
+            className={HEADER_ICON_BUTTON_CLASS}
           >
             <X className="w-5 h-5" />
           </button>
@@ -74,19 +86,36 @@ export function AppSidebar() {
         </div>
 
         <nav className="flex flex-col flex-1 gap-1 p-4">
-          <NavLink to={ROUTES.overview} className={navLinkClass} end onClick={closeSidebar}>
-            <LayoutDashboard className="w-5 h-5 shrink-0" />
-            <span>{t('nav.overview')}</span>
-          </NavLink>
-          <NavLink to={ROUTES.budget} className={navLinkClass} onClick={closeSidebar}>
-            <Wallet className="w-5 h-5 shrink-0" />
-            <span>{t('nav.budget')}</span>
-          </NavLink>
-          <NavLink to={ROUTES.expenses} className={navLinkClass} onClick={closeSidebar}>
-            <Receipt className="w-5 h-5 shrink-0" />
-            <span>{t('nav.expenses')}</span>
-          </NavLink>
+          {NAV_ITEMS.map((item) => {
+            const Icon = NAV_ICONS[item.id];
+
+            return (
+              <NavLink
+                key={item.id}
+                to={item.path}
+                className={navLinkClass}
+                end={item.end}
+                onClick={closeSidebar}
+                aria-label={item.id === 'profile' ? t('profile.goToProfile') : undefined}
+              >
+                {item.id === 'profile' ? (
+                  <UserAvatar size="sm" />
+                ) : (
+                  Icon && <Icon className="w-5 h-5 shrink-0" />
+                )}
+                <span>{t(`nav.${item.id}`)}</span>
+              </NavLink>
+            );
+          })}
         </nav>
+
+        <div
+          className="mt-auto flex items-center justify-end gap-1 p-4 border-t border-slate-200 dark:border-slate-700"
+          dir="ltr"
+        >
+          <LanguageToggle />
+          <ThemeToggle />
+        </div>
       </aside>
     </>
   );

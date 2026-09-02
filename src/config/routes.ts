@@ -4,6 +4,7 @@ export const ROUTES = {
   expenses: '/expenses',
   expenseDetail: '/expenses/:id',
   profile: '/profile',
+  settings: '/settings',
   categoryManagement: '/settings/categories',
   categoryCreate: '/settings/categories/new',
   categoryEdit: '/settings/categories/:id/edit',

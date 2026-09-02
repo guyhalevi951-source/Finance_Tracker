@@ -8,6 +8,7 @@ import { BudgetSettingsPage } from './pages/BudgetSettingsPage';
 import { ExpensesPage } from './pages/ExpensesPage';
 import { ExpenseDetailPage } from './pages/ExpenseDetailPage';
 import { ProfilePage } from './pages/ProfilePage';
+import { SettingsPage } from './pages/SettingsPage';
 import { CategoryManagementPage } from './pages/CategoryManagementPage';
 import { CategoryEditorPage } from './pages/CategoryEditorPage';
 import { SubCategoryManagementPage } from './pages/SubCategoryManagementPage';
@@ -25,6 +26,7 @@ function App() {
             <Route path={ROUTES.expenses} element={<ExpensesPage />} />
             <Route path={ROUTES.expenseDetail} element={<ExpenseDetailPage />} />
             <Route path={ROUTES.profile} element={<ProfilePage />} />
+            <Route path={ROUTES.settings} element={<SettingsPage />} />
             <Route path={ROUTES.categoryManagement} element={<CategoryManagementPage />} />
             <Route path={ROUTES.categoryCreate} element={<CategoryEditorPage />} />
             <Route path={ROUTES.categoryEdit} element={<CategoryEditorPage />} />
