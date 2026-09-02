@@ -63,7 +63,9 @@
         "expenses": "הוצאות"
       },
       "subcategories": {
-        "recurringExpenses": "הוצאות חוזרות"
+        "futureExpenses": "הוצאות עתידיות",
+        "recurringExpenses": "הוצאות חוזרות",
+        "oneTimeExpenses": "הוצאות חד פעמיות"
       },
       "recurring": {
         "empty": "אין הוצאות חוזרות פעילות.",
@@ -78,6 +80,18 @@
         "saveError": "לא ניתן לשמור את השינויים. נסה שוב.",
         "remainingOccurrences": "{{count}} חזרות נשארו",
         "unlimitedOccurrences": "ללא הגבלה"
+      },
+      "oneTime": {
+        "empty": "אין הוצאות חד פעמיות מתוזמנות.",
+        "editTitle": "עריכת הוצאה מתוזמנת",
+        "editAction": "ערוך הוצאה מתוזמנת",
+        "deleteAction": "מחק הוצאה מתוזמנת",
+        "deleteTitle": "למחוק הוצאה מתוזמנת?",
+        "deleteMessage": "הוצאה מתוזמנת זו עדיין לא נוספה לפנקס. למחוק אותה לצמיתות?",
+        "deleteConfirm": "מחק",
+        "deleteCancel": "ביטול",
+        "unnamed": "הוצאה מתוזמנת",
+        "saveError": "לא ניתן לשמור את השינויים. נסה שוב."
       }
     }
   },

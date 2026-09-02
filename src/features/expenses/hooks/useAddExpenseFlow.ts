@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { type Expense } from '../../../types/expense';
 import { validateExpenseInput } from '../../../domain/expenses/validateExpense';
+import { shouldScheduleOneTimeExpense } from '../../../domain/expenses/scheduled';
 import { generateExpenseId } from '../../../domain/expenses/generateId';
 import {
   DEFAULT_PAYMENT_METHOD,
@@ -92,6 +93,7 @@ export function useAddExpenseFlow({ userId, createExpense }: UseAddExpenseFlowOp
         date,
       },
       todayIso,
+      { allowFutureDate: true },
     );
 
     if (!result.ok) {
@@ -138,6 +140,12 @@ export function useAddExpenseFlow({ userId, createExpense }: UseAddExpenseFlowOp
         paymentMethod: result.value.paymentMethod as Expense['paymentMethod'],
         ...(attachmentUrl ? { attachmentUrl } : {}),
         ...(recurrenceRule ? { recurrenceRule } : {}),
+        ...(shouldScheduleOneTimeExpense(
+          { date: result.value.date, hasRecurrenceRule: Boolean(recurrenceRule) },
+          todayIso,
+        )
+          ? { scheduled: true }
+          : {}),
       };
 
       await createExpense(expense);

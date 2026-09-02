@@ -44,9 +44,19 @@ describe('validateExpenseInput', () => {
     if (!result.ok) expect(result.error).toBe('DATE_INVALID');
   });
 
-  it('rejects future dates', () => {
+  it('rejects future dates by default', () => {
     const result = validateExpenseInput({ ...valid, date: '2026-07-20' }, todayIso);
     expect(result.ok).toBe(false);
     if (!result.ok) expect(result.error).toBe('DATE_IN_FUTURE');
+  });
+
+  it('accepts future dates when allowFutureDate is true', () => {
+    const result = validateExpenseInput(
+      { ...valid, date: '2026-07-20' },
+      todayIso,
+      { allowFutureDate: true },
+    );
+    expect(result.ok).toBe(true);
+    if (result.ok) expect(result.value.date).toBe('2026-07-20');
   });
 });

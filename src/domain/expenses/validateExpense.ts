@@ -33,6 +33,10 @@ export interface EditExpenseInput {
   date: string;
 }
 
+export interface ValidateExpenseInputOptions {
+  allowFutureDate?: boolean;
+}
+
 /**
  * Validate raw expense form input.
  * Returns typed, parsed fields on success, or a typed error on the first violation found.
@@ -40,6 +44,7 @@ export interface EditExpenseInput {
 export function validateExpenseInput(
   input: NewExpenseInput | EditExpenseInput,
   todayIso: string,
+  options: ValidateExpenseInputOptions = {},
 ): Result<ValidatedExpenseInput, ExpenseValidationError> {
   const amount = parseFloat(input.amount);
   if (isNaN(amount)) return err('AMOUNT_INVALID');
@@ -47,7 +52,7 @@ export function validateExpenseInput(
 
   if (!isPaymentMethodId(input.paymentMethod)) return err('PAYMENT_METHOD_INVALID');
   if (!isIsoDateString(input.date)) return err('DATE_INVALID');
-  if (input.date > todayIso) return err('DATE_IN_FUTURE');
+  if (!options.allowFutureDate && input.date > todayIso) return err('DATE_IN_FUTURE');
 
   return ok({
     description: input.description.trim(),

@@ -8,6 +8,7 @@ import { useBudgetTracker } from '../features/budget/hooks/useBudgetTracker';
 import { BudgetSettingsCard } from '../features/budget/components/BudgetSettingsCard';
 import { useExpenses } from '../features/expenses/hooks/useExpenses';
 import { filterExpensesByPeriod } from '../domain/expenses/periods';
+import { filterTimelineVisibleExpenses } from '../domain/recurrence/filterTimelineVisibleExpenses';
 import { formatCurrencyAmount } from '../lib/format/formatDate';
 import { useTodayIso } from '../lib/hooks/useTodayIso';
 
@@ -23,7 +24,7 @@ export function BudgetSettingsPage() {
   }, [todayIso]);
 
   const currentMonthExpenses = useMemo(
-    () => filterExpensesByPeriod(expenses, currentMonthRange),
+    () => filterExpensesByPeriod(filterTimelineVisibleExpenses(expenses), currentMonthRange),
     [expenses, currentMonthRange],
   );
 

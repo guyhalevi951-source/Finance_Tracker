@@ -135,6 +135,7 @@ export function migrateExpense(raw: Record<string, unknown>): Expense {
   const recurrencePendingBasicFields = parseRecurrencePendingBasicFields(
     raw.recurrencePendingBasicFields,
   );
+  const scheduled = raw.scheduled === true ? true : undefined;
 
   const originalCategoryId = parseOptionalId(raw.originalCategoryId);
   const originalSubCategoryId = parseOptionalId(raw.originalSubCategoryId);
@@ -154,6 +155,7 @@ export function migrateExpense(raw: Record<string, unknown>): Expense {
       ? { recurrenceExcludedDates }
       : {}),
     ...(recurrencePendingBasicFields ? { recurrencePendingBasicFields } : {}),
+    ...(scheduled ? { scheduled } : {}),
     ...(originalCategoryId ? { originalCategoryId } : {}),
     ...(originalSubCategoryId ? { originalSubCategoryId } : {}),
   };

@@ -9,6 +9,7 @@ import {
 import { type Expense } from '../../types/expense';
 import { loadExpenses, saveExpense } from '../../services/expenses/expenseRepository';
 import { syncRecurringExpenses } from '../../services/recurrence/recurringExpenseSyncService';
+import { syncScheduledOneTimeExpenses } from '../../services/expenses/scheduledExpenseSyncService';
 import { useAuthSession } from '../../features/auth/hooks/useAuthSession';
 import { useTodayIso } from '../../lib/hooks/useTodayIso';
 
@@ -35,7 +36,12 @@ export function ExpensesProvider({ children }: ExpensesProviderProps) {
   const reload = useCallback(async () => {
     try {
       const loaded = await loadExpenses(userId);
-      const { expenses: synced } = await syncRecurringExpenses(userId, loaded, todayIso);
+      const { expenses: afterRecurring } = await syncRecurringExpenses(userId, loaded, todayIso);
+      const { expenses: synced } = await syncScheduledOneTimeExpenses(
+        userId,
+        afterRecurring,
+        todayIso,
+      );
       setExpenses(synced);
       setLoadError(false);
     } catch {

@@ -38,6 +38,7 @@ interface ExpenseEditModalProps {
   onClose: () => void;
   hideDateField?: boolean;
   hideRecurrenceField?: boolean;
+  allowFutureDate?: boolean;
   dateLabelKey?: string;
   modalTitleKey?: string;
   occurrencesTitleKey?: string;
@@ -63,6 +64,7 @@ export function ExpenseEditModal({
   onClose,
   hideDateField = false,
   hideRecurrenceField = false,
+  allowFutureDate = false,
   dateLabelKey = 'expense.dateLabel',
   modalTitleKey = 'expense.editModal.title',
   occurrencesTitleKey,
@@ -269,7 +271,7 @@ export function ExpenseEditModal({
         <CustomDatePicker
           open={dateModalOpen}
           value={input.date}
-          maxDate={todayIso}
+          maxDate={allowFutureDate ? undefined : todayIso}
           onConfirm={(isoDate) => {
             onChange({ ...input, date: isoDate });
             setDateModalOpen(false);

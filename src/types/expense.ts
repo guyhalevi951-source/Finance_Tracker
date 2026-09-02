@@ -49,4 +49,8 @@ export interface Expense {
    * Does not materialize those dates until sync runs when the calendar reaches them.
    */
   recurrencePendingBasicFields?: RecurrencePendingBasicFields;
+  /**
+   * One-time expense deferred until its date; hidden from the ledger until materialized.
+   */
+  scheduled?: boolean;
 }

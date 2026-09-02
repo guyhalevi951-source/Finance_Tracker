@@ -41,6 +41,14 @@ describe('filterTimelineVisibleExpenses', () => {
     expect(filterTimelineVisibleExpenses([template, oneTime])).toHaveLength(2);
   });
 
+  it('hides scheduled one-time expenses', () => {
+    const scheduled = makeExpense({ id: 's1', date: '2026-08-01', scheduled: true });
+    const ledger = makeExpense({ id: 'e1', date: '2026-03-05' });
+
+    expect(shouldShowExpenseOnTimeline(scheduled)).toBe(false);
+    expect(filterTimelineVisibleExpenses([scheduled, ledger])).toEqual([ledger]);
+  });
+
   it('shows materialized instances regardless of template excluded dates', () => {
     const template = makeExpense({
       id: 't1',

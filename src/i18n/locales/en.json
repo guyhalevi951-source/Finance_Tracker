@@ -63,7 +63,9 @@
         "expenses": "Expenses"
       },
       "subcategories": {
-        "recurringExpenses": "Recurring Expenses"
+        "futureExpenses": "Future Expenses",
+        "recurringExpenses": "Recurring Expenses",
+        "oneTimeExpenses": "One-time Expenses"
       },
       "recurring": {
         "empty": "No active recurring expenses.",
@@ -78,6 +80,18 @@
         "saveError": "Could not save changes. Please try again.",
         "remainingOccurrences": "{{count}} occurrences remaining",
         "unlimitedOccurrences": "Unlimited"
+      },
+      "oneTime": {
+        "empty": "No scheduled one-time expenses.",
+        "editTitle": "Edit scheduled expense",
+        "editAction": "Edit scheduled expense",
+        "deleteAction": "Delete scheduled expense",
+        "deleteTitle": "Delete scheduled expense?",
+        "deleteMessage": "This scheduled expense has not been added to your ledger yet. Delete it permanently?",
+        "deleteConfirm": "Delete",
+        "deleteCancel": "Cancel",
+        "unnamed": "Scheduled expense",
+        "saveError": "Could not save changes. Please try again."
       }
     }
   },

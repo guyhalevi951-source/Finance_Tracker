@@ -162,7 +162,6 @@ export function ExpenseEntryStep({
       <CustomDatePicker
         open={dateModalOpen}
         value={date}
-        maxDate={todayIso}
         onConfirm={(isoDate) => {
           onDateChange(isoDate);
           setDateModalOpen(false);
