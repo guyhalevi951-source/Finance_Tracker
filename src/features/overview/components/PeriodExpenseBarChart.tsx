@@ -5,7 +5,6 @@ import {
   BarChart,
   CartesianGrid,
   ReferenceArea,
-  ReferenceLine,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -23,6 +22,34 @@ const AXIS_TICK_FILL = {
 } as const;
 
 const BAR_FILL = '#38bdf8';
+
+interface DayAxisTickProps {
+  x?: number;
+  y?: number;
+  payload?: { value: string };
+  fill: string;
+  todayDayLabel: string | null;
+  todayLabel: string;
+}
+
+function DayAxisTick({ x = 0, y = 0, payload, fill, todayDayLabel, todayLabel }: DayAxisTickProps) {
+  if (!payload) return null;
+
+  const isToday = todayDayLabel !== null && payload.value === todayDayLabel;
+
+  return (
+    <g transform={`translate(${x},${y})`}>
+      <text textAnchor="middle" fill={fill} fontSize={9} dy={12}>
+        {payload.value}
+      </text>
+      {isToday && (
+        <text textAnchor="middle" fill="#ffffff" fontSize={9} dy={26}>
+          {todayLabel}
+        </text>
+      )}
+    </g>
+  );
+}
 
 interface PeriodExpenseBarChartProps {
   overview: PeriodOverview;
@@ -98,6 +125,12 @@ export function PeriodExpenseBarChart({ overview, locale, todayIso }: PeriodExpe
 
   const futureEndIso = overview.dailyTotals.at(-1)?.dateIso ?? null;
 
+  const todayInRange =
+    chartData.length > 0 &&
+    todayIso >= chartData[0].dateIso &&
+    todayIso <= chartData.at(-1)!.dateIso;
+  const todayDayLabel = todayInRange ? String(formatDayOfMonth(todayIso)) : null;
+
   if (chartData.length === 0) {
     return null;
   }
@@ -108,7 +141,7 @@ export function PeriodExpenseBarChart({ overview, locale, todayIso }: PeriodExpe
       dir="ltr"
     >
       <ResponsiveContainer width="100%" height={220}>
-        <BarChart data={chartData} margin={{ top: 36, right: 4, left: 0, bottom: 0 }}>
+        <BarChart data={chartData} margin={{ top: 8, right: 4, left: 0, bottom: 28 }}>
           <CartesianGrid
             strokeDasharray="3 3"
             vertical={false}
@@ -117,10 +150,16 @@ export function PeriodExpenseBarChart({ overview, locale, todayIso }: PeriodExpe
           />
           <XAxis
             dataKey="dayLabel"
-            tick={{ fontSize: 11, fill: axisTickFill }}
-            interval="preserveStartEnd"
+            interval={0}
             tickLine={false}
             axisLine={false}
+            tick={
+              <DayAxisTick
+                fill={axisTickFill}
+                todayDayLabel={todayDayLabel}
+                todayLabel={t('overview.today')}
+              />
+            }
           />
           <YAxis
             tick={{ fontSize: 11, fill: axisTickFill }}
@@ -145,21 +184,6 @@ export function PeriodExpenseBarChart({ overview, locale, todayIso }: PeriodExpe
               x2={String(formatDayOfMonth(futureEndIso))}
               fill="rgba(16, 185, 129, 0.08)"
               strokeOpacity={0}
-            />
-          )}
-          {todayIso >= chartData[0].dateIso && todayIso <= chartData.at(-1)!.dateIso && (
-            <ReferenceLine
-              x={String(formatDayOfMonth(todayIso))}
-              stroke="rgb(16, 185, 129)"
-              strokeWidth={2}
-              strokeDasharray="4 4"
-              label={{
-                value: t('overview.today'),
-                position: 'top',
-                fill: '#ffffff',
-                fontSize: 11,
-                dy: -2,
-              }}
             />
           )}
           <Bar

@@ -1,5 +1,10 @@
 import { useTranslation } from 'react-i18next';
 import { Check, Pencil, Trash2 } from 'lucide-react';
+import {
+  HEADER_ICON_BUTTON_CLASS,
+  HEADER_ICON_BUTTON_CONFIRM_CLASS,
+  HEADER_ICON_BUTTON_DANGER_CLASS,
+} from '../../../app/components/headerIconButton';
 import { type ExpenseBatchMode } from '../hooks/useExpenseBatchMode';
 import { BatchCancelButton } from './DiscardChangesModal';
 
@@ -28,10 +33,11 @@ export function ExpensesHeaderActions({
       <div className="flex items-center gap-2">
         <BatchCancelButton onClick={onCancel} />
         <button
+          type="button"
           onClick={onConfirm}
           disabled={isSaving}
           aria-label={t('expense.batch.confirm')}
-          className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-60"
+          className={HEADER_ICON_BUTTON_CONFIRM_CLASS}
         >
           <Check className="w-5 h-5" />
         </button>
@@ -42,16 +48,18 @@ export function ExpensesHeaderActions({
   return (
     <div className="flex items-center gap-2">
       <button
+        type="button"
         onClick={onEnterDelete}
         aria-label={t('expense.batch.deleteMode')}
-        className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:border-rose-400 hover:text-rose-600"
+        className={HEADER_ICON_BUTTON_DANGER_CLASS}
       >
         <Trash2 className="w-5 h-5" />
       </button>
       <button
+        type="button"
         onClick={onEnterEdit}
         aria-label={t('expense.batch.editMode')}
-        className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:border-emerald-400 hover:text-emerald-600"
+        className={HEADER_ICON_BUTTON_CLASS}
       >
         <Pencil className="w-5 h-5" />
       </button>

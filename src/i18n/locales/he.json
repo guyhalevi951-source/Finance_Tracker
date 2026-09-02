@@ -26,7 +26,9 @@
   "nav": {
     "overview": "סקירה חודשית",
     "budget": "תקציב",
-    "expenses": "הוצאות"
+    "expenses": "הוצאות",
+    "openMenu": "פתח תפריט",
+    "closeMenu": "סגור תפריט"
   },
   "header": {
     "date": "{{date}}"

@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { ArrowLeft, X } from 'lucide-react';
+import { HEADER_ICON_BUTTON_CLASS } from '../../../app/components/headerIconButton';
 
 interface DiscardChangesModalProps {
   open: boolean;
@@ -55,12 +56,12 @@ export function BatchCancelButton({ onClick }: { onClick: () => void }) {
   const { t } = useTranslation();
   return (
     <button
+      type="button"
       onClick={onClick}
-      className="flex items-center gap-2 text-slate-600 dark:text-slate-300 hover:text-slate-800 dark:hover:text-slate-100 min-h-[44px] px-2"
+      className={HEADER_ICON_BUTTON_CLASS}
       aria-label={t('expense.batch.cancel')}
     >
       <ArrowLeft className="w-5 h-5" />
-      <span className="text-sm font-medium">{t('expense.batch.cancel')}</span>
     </button>
   );
 }

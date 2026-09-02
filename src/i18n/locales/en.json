@@ -26,7 +26,9 @@
   "nav": {
     "overview": "Monthly Overview",
     "budget": "Budget",
-    "expenses": "Expenses"
+    "expenses": "Expenses",
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu"
   },
   "header": {
     "date": "{{date}}"
