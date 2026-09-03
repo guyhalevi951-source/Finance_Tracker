@@ -2,7 +2,10 @@ import { type Expense } from '../../types/expense';
 import { isScheduledOneTimeExpense } from '../expenses/scheduled';
 import { isRecurrenceDateExcluded } from './isRecurrenceDateExcluded';
 
-export function shouldShowExpenseOnTimeline(expense: Expense): boolean {
+export function shouldShowExpenseOnTimeline(expense: Expense, todayIso: string): boolean {
+  if (expense.date > todayIso) {
+    return false;
+  }
   if (isScheduledOneTimeExpense(expense)) {
     return false;
   }
@@ -12,6 +15,6 @@ export function shouldShowExpenseOnTimeline(expense: Expense): boolean {
   return true;
 }
 
-export function filterTimelineVisibleExpenses(expenses: Expense[]): Expense[] {
-  return expenses.filter(shouldShowExpenseOnTimeline);
+export function filterTimelineVisibleExpenses(expenses: Expense[], todayIso: string): Expense[] {
+  return expenses.filter((expense) => shouldShowExpenseOnTimeline(expense, todayIso));
 }

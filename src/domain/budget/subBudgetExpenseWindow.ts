@@ -1,6 +1,7 @@
 import { type Expense } from '../../types/expense';
 import { type SubBudgetRecord } from '../../types/budget';
-import { capTemplateEndDate, earliestEndDate } from '../recurrence/earliestEndDate';
+import { finalizeRecurrenceSchedule } from '../recurrence/finalizeRecurrenceSchedule';
+import { earliestEndDate } from '../recurrence/earliestEndDate';
 import { isDateWithinSubBudget } from './validateSubBudget';
 
 export interface SubBudgetWindow {
@@ -40,7 +41,8 @@ export function capExpenseRecurrenceToSubBudgetEnd(
   endDate: string,
 ): Expense {
   if (!expense.recurrenceRule) return expense;
-  return capTemplateEndDate(expense, endDate);
+  const result = finalizeRecurrenceSchedule(expense, { capEndDateIso: endDate });
+  return result.ok ? result.expense : expense;
 }
 
 export function capExpensesRecurrenceToSubBudgetEnd(
@@ -50,7 +52,7 @@ export function capExpensesRecurrenceToSubBudgetEnd(
 ): Expense[] {
   return expenses.map((expense) =>
     expense.budgetId === budgetId && expense.recurrenceRule
-      ? capTemplateEndDate(expense, endDate)
+      ? capExpenseRecurrenceToSubBudgetEnd(expense, endDate)
       : expense,
   );
 }

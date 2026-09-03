@@ -41,7 +41,8 @@ describe('subBudgetExpenseWindow', () => {
 
   it('caps recurrence end date on expense', () => {
     const capped = capExpenseRecurrenceToSubBudgetEnd(template, '2026-08-31');
-    expect(capped.recurrenceEndDate).toBe('2026-08-31');
+    expect(capped.recurrenceEndDate).toBe('2026-08-29');
+    expect(capped.recurrenceRule?.occurrences).toBe(5);
   });
 
   it('uses earliest end between recurrence and sub-budget', () => {
@@ -58,7 +59,7 @@ describe('subBudgetExpenseWindow', () => {
   it('batch caps linked recurring expenses', () => {
     const other: Expense = { ...template, id: 't2', budgetId: 'other' };
     const capped = capExpensesRecurrenceToSubBudgetEnd([template, other], 'b1', '2026-08-31');
-    expect(capped[0].recurrenceEndDate).toBe('2026-08-31');
+    expect(capped[0].recurrenceEndDate).toBe('2026-08-29');
     expect(capped[1].recurrenceEndDate).toBeUndefined();
   });
 });

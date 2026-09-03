@@ -1,15 +1,17 @@
 import { useTranslation } from 'react-i18next';
 import { Pencil, Trash2 } from 'lucide-react';
+import { type AppLocale } from '../../../config/app';
 import { type Expense } from '../../../types/expense';
 import { type MainCategoryRecord, type SubCategoryRecord } from '../../../types/category';
 import { resolveSubCategoryLabel } from '../../../domain/categories/resolveCategoryLabel';
 import { resolveExpenseDisplayLabel } from '../../../domain/expenses/resolveExpenseDisplayLabel';
 import { hasBilingualTextContent } from '../../../domain/i18n/buildBilingualText';
 import { resolveRecurrenceLabelDescriptorFromRule } from '../../../domain/recurrence/resolveRecurrenceLabelKey';
-import { resolveRemainingOccurrencesLabelDescriptor } from '../../../domain/recurrence/resolveRemainingOccurrencesLabel';
+import { resolveRecurringSeriesDateInfo } from '../../../domain/recurrence/resolveRecurringSeriesDates';
 import { resolveSettingsSeriesDisplayFields } from '../../../domain/recurrence/applyRecurringSettingsFieldUpdate';
 import { SEMANTIC_COLORS } from '../../../config/semanticColors';
-import { formatCurrencyAmount } from '../../../lib/format/formatDate';
+import { formatCurrencyAmount, formatExpenseDateNumeric } from '../../../lib/format/formatDate';
+import { useTodayIso } from '../../../lib/hooks/useTodayIso';
 
 interface ActiveRecurringExpenseListItemProps {
   template: Expense;
@@ -29,6 +31,7 @@ export function ActiveRecurringExpenseListItem({
   onDelete,
 }: ActiveRecurringExpenseListItemProps) {
   const { t } = useTranslation();
+  const todayIso = useTodayIso();
   const display = resolveSettingsSeriesDisplayFields(template);
 
   const categoryLabel = resolveSubCategoryLabel(display.category, subCategories, locale, t);
@@ -41,8 +44,14 @@ export function ActiveRecurringExpenseListItem({
     ? resolveRecurrenceLabelDescriptorFromRule(rule)
     : { key: 'addExpense.recurrence.never' };
   const scheduleLabel = t(scheduleDescriptor.key, scheduleDescriptor.params);
-  const remainingDescriptor = resolveRemainingOccurrencesLabelDescriptor(template, expenses);
-  const remainingLabel = t(remainingDescriptor.key, remainingDescriptor.params);
+  const dateInfo = resolveRecurringSeriesDateInfo(template, todayIso);
+  const startLabel = formatExpenseDateNumeric(dateInfo.startDateIso, locale);
+  const nextLabel = dateInfo.nextOccurrenceDateIso
+    ? formatExpenseDateNumeric(dateInfo.nextOccurrenceDateIso, locale)
+    : t('profile.settings.recurring.noNextOccurrence');
+  const endLabel = dateInfo.endDateIso
+    ? formatExpenseDateNumeric(dateInfo.endDateIso, locale)
+    : t('profile.settings.recurring.noEndDate');
 
   return (
     <li className="flex items-center gap-3 px-4 py-4 min-h-[64px]">
@@ -55,7 +64,11 @@ export function ActiveRecurringExpenseListItem({
           <span> · {scheduleLabel}</span>
         </p>
         <p className="text-xs text-slate-400 dark:text-slate-500 truncate mt-0.5">
-          {remainingLabel}
+          {t('profile.settings.recurring.startDate')}: {startLabel}
+          {' · '}
+          {t('profile.settings.recurring.nextOccurrence')}: {nextLabel}
+          {' · '}
+          {t('profile.settings.recurring.endDate')}: {endLabel}
         </p>
         {hasDescription && (
           <p className="text-xs text-slate-400 dark:text-slate-500 truncate mt-0.5">

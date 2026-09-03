@@ -81,7 +81,12 @@
         "unnamed": "הוצאה חוזרת",
         "saveError": "לא ניתן לשמור את השינויים. נסה שוב.",
         "remainingOccurrences": "{{count}} חזרות נשארו",
-        "unlimitedOccurrences": "ללא הגבלה"
+        "unlimitedOccurrences": "ללא הגבלה",
+        "startDate": "תאריך התחלה",
+        "nextOccurrence": "חיוב קרוב",
+        "endDate": "תאריך סיום",
+        "noNextOccurrence": "אין חיוב קרוב",
+        "noEndDate": "ללא תאריך סיום"
       },
       "oneTime": {
         "empty": "אין הוצאות חד פעמיות מתוזמנות.",
@@ -139,7 +144,8 @@
       "END_BEFORE_START": "תאריך הסיום חייב להיות אחרי תאריך ההתחלה",
       "END_IN_PAST": "תאריך הסיום לא יכול להיות בעבר",
       "DATE_OUT_OF_WINDOW": "תאריך ההוצאה חייב להיות בתוך תקופת התקציב",
-      "RECURRENCE_EXCEEDS_BUDGET": "הוצאות חוזרות לא יכולות להמשיך מעבר לתאריך סיום התקציב"
+      "RECURRENCE_EXCEEDS_BUDGET": "הוצאות חוזרות לא יכולות להמשיך מעבר לתאריך סיום התקציב",
+      "START_AFTER_BUDGET_END": "תאריך ההתחלה אחרי תאריך סיום התקציב"
     },
     "delete": {
       "title": "מחיקת תקציב",

@@ -8,13 +8,14 @@ export function usePeriodVisibleExpenses(
   expenses: Expense[],
   range: DateRange,
   activeBudgetId: string,
+  todayIso: string,
 ): Expense[] {
   return useMemo(
     () =>
       filterExpensesByPeriod(
-        filterTimelineVisibleExpenses(filterExpensesByBudget(expenses, activeBudgetId)),
+        filterTimelineVisibleExpenses(filterExpensesByBudget(expenses, activeBudgetId), todayIso),
         range,
       ),
-    [expenses, range, activeBudgetId],
+    [expenses, range, activeBudgetId, todayIso],
   );
 }

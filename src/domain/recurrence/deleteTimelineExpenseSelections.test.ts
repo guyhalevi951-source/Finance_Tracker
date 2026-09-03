@@ -129,6 +129,6 @@ describe('deleteTimelineExpenseSelections', () => {
     );
     expect(futureDates.length).toBeGreaterThan(0);
 
-    expect(filterTimelineVisibleExpenses(result)).toHaveLength(0);
+    expect(filterTimelineVisibleExpenses(result, todayIso)).toHaveLength(0);
   });
 });

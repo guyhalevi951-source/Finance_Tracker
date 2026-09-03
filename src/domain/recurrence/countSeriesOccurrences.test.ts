@@ -79,6 +79,6 @@ describe('countConsumedSeriesOccurrences', () => {
 
     const descriptor = resolveRemainingOccurrencesLabelDescriptor(updatedTemplate, afterDelete);
     expect(descriptor.params?.count).toBe(2);
-    expect(filterTimelineVisibleExpenses(afterDelete)).toHaveLength(0);
+    expect(filterTimelineVisibleExpenses(afterDelete, '2026-03-05')).toHaveLength(0);
   });
 });

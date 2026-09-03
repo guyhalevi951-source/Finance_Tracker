@@ -63,6 +63,7 @@ export function ExpensesPage() {
     batch.displayExpenses,
     timeFilter.range,
     activeBudgetId,
+    timeFilter.todayIso,
   );
 
   const subBudget =

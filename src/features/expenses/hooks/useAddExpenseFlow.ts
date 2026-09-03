@@ -15,7 +15,7 @@ import {
 import { selectionToRule } from '../../../domain/recurrence/presets';
 import { validateRecurrenceSelection } from '../../../domain/recurrence/validateRecurrenceRule';
 import { isDateWithinSubBudget } from '../../../domain/budget/validateSubBudget';
-import { capExpenseRecurrenceToSubBudgetEnd } from '../../../domain/budget/subBudgetExpenseWindow';
+import { finalizeRecurrenceSchedule } from '../../../domain/recurrence/finalizeRecurrenceSchedule';
 import { toIsoDate } from '../../../domain/expenses/parseExpenseDate';
 import { useTodayIso } from '../../../lib/hooks/useTodayIso';
 import { createBilingualText } from '../../../services/translation/createBilingualText';
@@ -169,8 +169,16 @@ export function useAddExpenseFlow({
         ...(isMaster ? {} : { budgetId: activeBudgetId }),
       };
 
-      if (!isMaster && subBudgetWindow && recurrenceRule) {
-        expense = capExpenseRecurrenceToSubBudgetEnd(expense, subBudgetWindow.endDate);
+      if (recurrenceRule) {
+        const finalized = finalizeRecurrenceSchedule(expense, {
+          capEndDateIso: !isMaster && subBudgetWindow ? subBudgetWindow.endDate : undefined,
+        });
+        if (!finalized.ok) {
+          setErrorKey(`budget.validation.${finalized.error}`);
+          setIsSaving(false);
+          return;
+        }
+        expense = finalized.expense;
       }
 
       await createExpense(expense);

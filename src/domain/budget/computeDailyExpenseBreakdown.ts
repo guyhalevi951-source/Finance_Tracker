@@ -53,7 +53,7 @@ function classifyStoredExpenses(
       continue;
     }
 
-    if (shouldShowExpenseOnTimeline(expense)) {
+    if (shouldShowExpenseOnTimeline(expense, todayIso)) {
       addToBucket(buckets, expense.date, expense.amount, 'actual');
     }
   }

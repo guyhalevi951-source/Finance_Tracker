@@ -81,7 +81,12 @@
         "unnamed": "Recurring expense",
         "saveError": "Could not save changes. Please try again.",
         "remainingOccurrences": "{{count}} occurrences remaining",
-        "unlimitedOccurrences": "Unlimited"
+        "unlimitedOccurrences": "Unlimited",
+        "startDate": "Start date",
+        "nextOccurrence": "Next charge",
+        "endDate": "End date",
+        "noNextOccurrence": "None scheduled",
+        "noEndDate": "No end date"
       },
       "oneTime": {
         "empty": "No scheduled one-time expenses.",
@@ -139,7 +144,8 @@
       "END_BEFORE_START": "End date must be on or after start date",
       "END_IN_PAST": "End date cannot be in the past",
       "DATE_OUT_OF_WINDOW": "Expense date must be within the budget period",
-      "RECURRENCE_EXCEEDS_BUDGET": "Recurring expenses cannot extend beyond the budget end date"
+      "RECURRENCE_EXCEEDS_BUDGET": "Recurring expenses cannot extend beyond the budget end date",
+      "START_AFTER_BUDGET_END": "Start date is after the budget end date"
     },
     "delete": {
       "title": "Delete budget",
