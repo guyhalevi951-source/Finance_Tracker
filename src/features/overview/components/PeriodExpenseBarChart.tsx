@@ -4,24 +4,25 @@ import {
   Bar,
   BarChart,
   CartesianGrid,
-  ReferenceArea,
   ResponsiveContainer,
   Tooltip,
   XAxis,
   YAxis,
 } from 'recharts';
 import { type AppLocale } from '../../../config/app';
+import { SEMANTIC_COLORS } from '../../../config/semanticColors';
 import { type PeriodOverview } from '../../../domain/budget/periodOverview';
 import { formatCurrencyAmount, formatDayOfMonth } from '../../../lib/format/formatDate';
-import { dayAfterIso } from '../../../domain/expenses/shiftIsoDate';
 import { useTheme } from '../../theme/hooks/useTheme';
+
+const { expense } = SEMANTIC_COLORS;
+const ACTUAL_FILL = expense.chartActual;
+const FUTURE_FILL = expense.chartFuture;
 
 const AXIS_TICK_FILL = {
   dark: '#f8fafc',
   light: '#64748b',
 } as const;
-
-const BAR_FILL = '#38bdf8';
 
 interface DayAxisTickProps {
   x?: number;
@@ -60,24 +61,19 @@ interface PeriodExpenseBarChartProps {
 interface ChartPoint {
   dateIso: string;
   dayLabel: string;
+  actualExpenses: number;
+  futureExpenses: number;
   total: number;
 }
 
 interface ChartTooltipProps {
   active?: boolean;
   payload?: Array<{ payload: ChartPoint }>;
-  averagePerDay: number;
   locale: AppLocale;
   todayIso: string;
 }
 
-function ChartTooltipContent({
-  active,
-  payload,
-  averagePerDay,
-  locale,
-  todayIso,
-}: ChartTooltipProps) {
+function ChartTooltipContent({ active, payload, locale, todayIso }: ChartTooltipProps) {
   const { t } = useTranslation();
 
   if (!active || !payload?.length) return null;
@@ -90,12 +86,27 @@ function ChartTooltipContent({
       <p className="font-semibold text-slate-800 dark:text-slate-100">
         {isToday ? t('overview.today') : point.dateIso}
       </p>
-      <p className="text-slate-600 dark:text-slate-300 mt-1 tabular-nums">
-        {formatCurrencyAmount(point.total, locale)}
-      </p>
-      <p className="text-slate-400 dark:text-slate-500 mt-2 text-xs">
-        {t('overview.averagePerDay')}: {formatCurrencyAmount(averagePerDay, locale)}
-      </p>
+      {point.actualExpenses > 0 && (
+        <p className="text-slate-600 dark:text-slate-300 mt-2 tabular-nums">
+          {t('overview.actualExpenses')}:{' '}
+          <span className={expense.valueText}>
+            {formatCurrencyAmount(point.actualExpenses, locale)}
+          </span>
+        </p>
+      )}
+      {point.futureExpenses > 0 && (
+        <p className="text-slate-600 dark:text-slate-300 mt-1 tabular-nums">
+          {t('overview.futureExpenses')}:{' '}
+          <span className={expense.valueText}>
+            {formatCurrencyAmount(point.futureExpenses, locale)}
+          </span>
+        </p>
+      )}
+      {point.total === 0 && (
+        <p className={`mt-2 tabular-nums ${expense.valueText}`}>
+          {formatCurrencyAmount(0, locale)}
+        </p>
+      )}
     </div>
   );
 }
@@ -110,20 +121,12 @@ export function PeriodExpenseBarChart({ overview, locale, todayIso }: PeriodExpe
       overview.dailyTotals.map((day) => ({
         dateIso: day.dateIso,
         dayLabel: String(formatDayOfMonth(day.dateIso)),
+        actualExpenses: day.actualExpenses,
+        futureExpenses: day.futureExpenses,
         total: day.total,
       })),
     [overview.dailyTotals],
   );
-
-  const futureStartIso = useMemo(() => {
-    if (todayIso >= overview.dailyTotals.at(-1)?.dateIso!) return null;
-    if (todayIso < overview.dailyTotals[0]?.dateIso!) {
-      return overview.dailyTotals[0]?.dateIso ?? null;
-    }
-    return dayAfterIso(todayIso);
-  }, [overview.dailyTotals, todayIso]);
-
-  const futureEndIso = overview.dailyTotals.at(-1)?.dateIso ?? null;
 
   const todayInRange =
     chartData.length > 0 &&
@@ -141,7 +144,7 @@ export function PeriodExpenseBarChart({ overview, locale, todayIso }: PeriodExpe
       dir="ltr"
     >
       <ResponsiveContainer width="100%" height={220}>
-        <BarChart data={chartData} margin={{ top: 8, right: 4, left: 0, bottom: 28 }}>
+        <BarChart data={chartData} margin={{ top: 8, right: 4, left: 0, bottom: 32 }}>
           <CartesianGrid
             strokeDasharray="3 3"
             vertical={false}
@@ -169,32 +172,46 @@ export function PeriodExpenseBarChart({ overview, locale, todayIso }: PeriodExpe
             tickFormatter={(value: number) => String(value)}
           />
           <Tooltip
-            cursor={{ fill: 'rgba(56, 189, 248, 0.08)' }}
-            content={
-              <ChartTooltipContent
-                averagePerDay={overview.averagePerDay}
-                locale={locale}
-                todayIso={todayIso}
-              />
-            }
+            cursor={{ fill: expense.tooltipCursor }}
+            content={<ChartTooltipContent locale={locale} todayIso={todayIso} />}
           />
-          {futureStartIso && futureEndIso && futureStartIso <= futureEndIso && (
-            <ReferenceArea
-              x1={String(formatDayOfMonth(futureStartIso))}
-              x2={String(formatDayOfMonth(futureEndIso))}
-              fill="rgba(16, 185, 129, 0.08)"
-              strokeOpacity={0}
-            />
-          )}
           <Bar
-            dataKey="total"
-            fill={BAR_FILL}
-            activeBar={{ fill: BAR_FILL, stroke: 'none' }}
+            dataKey="actualExpenses"
+            stackId="daily"
+            fill={ACTUAL_FILL}
+            activeBar={{ fill: ACTUAL_FILL, stroke: 'none' }}
+            radius={[0, 0, 0, 0]}
+            maxBarSize={32}
+          />
+          <Bar
+            dataKey="futureExpenses"
+            stackId="daily"
+            fill={FUTURE_FILL}
+            activeBar={{ fill: FUTURE_FILL, stroke: 'none' }}
             radius={[4, 4, 0, 0]}
             maxBarSize={32}
           />
         </BarChart>
       </ResponsiveContainer>
+
+      <div className="flex justify-center items-center gap-6 mt-4 text-xs text-slate-500 dark:text-slate-400">
+        <span className="flex items-center gap-2">
+          <span
+            className="w-2.5 h-2.5 rounded-sm shrink-0"
+            style={{ background: ACTUAL_FILL }}
+            aria-hidden="true"
+          />
+          {t('overview.actualExpenses')}
+        </span>
+        <span className="flex items-center gap-2">
+          <span
+            className="w-2.5 h-2.5 rounded-sm shrink-0"
+            style={{ background: FUTURE_FILL }}
+            aria-hidden="true"
+          />
+          {t('overview.futureExpenses')}
+        </span>
+      </div>
     </div>
   );
 }

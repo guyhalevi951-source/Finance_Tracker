@@ -6,6 +6,7 @@ import { type AppLocale } from '../../../config/app';
 import { resolveSubCategoryLabel } from '../../../domain/categories/resolveCategoryLabel';
 import { resolveExpenseDisplayLabel } from '../../../domain/expenses/resolveExpenseDisplayLabel';
 import { hasBilingualTextContent } from '../../../domain/i18n/buildBilingualText';
+import { SEMANTIC_COLORS } from '../../../config/semanticColors';
 import { formatCurrencyAmount, formatExpenseDateNumeric } from '../../../lib/format/formatDate';
 
 interface ActiveScheduledExpenseListItemProps {
@@ -34,8 +35,10 @@ export function ActiveScheduledExpenseListItem({
       <div className="flex-1 min-w-0">
         <p className="font-medium text-slate-800 dark:text-slate-100 truncate">{displayName}</p>
         <p className="text-sm text-slate-500 dark:text-slate-400 truncate">
-          {formatCurrencyAmount(expense.amount, locale)} ·{' '}
-          {formatExpenseDateNumeric(expense.date, locale)}
+          <span className={SEMANTIC_COLORS.expense.valueText}>
+            {formatCurrencyAmount(expense.amount, locale)}
+          </span>
+          <span> · {formatExpenseDateNumeric(expense.date, locale)}</span>
         </p>
         {hasDescription && (
           <p className="text-xs text-slate-400 dark:text-slate-500 truncate mt-0.5">

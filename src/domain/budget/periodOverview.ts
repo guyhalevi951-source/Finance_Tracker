@@ -2,7 +2,7 @@ import { type Expense } from '../../types/expense';
 import {
   type DateRange,
   countDaysInRange,
-  enumerateDaysInRange,
+  countElapsedDaysInPeriod,
   getMonthDayIsos,
 } from '../expenses/periods';
 import { isoDateToDate } from '../expenses/parseExpenseDate';
@@ -13,22 +13,27 @@ import {
   sumAmounts,
   toMinorUnits,
 } from '../money/arithmetic';
+import {
+  computeDailyExpenseBreakdown,
+  type DailyExpenseBreakdown,
+} from './computeDailyExpenseBreakdown';
 
-export interface DailyTotal {
-  dateIso: string;
-  total: number;
-}
+export type { DailyExpenseBreakdown };
 
 export interface PeriodOverview {
   periodBudget: number;
   spent: number;
+  futurePlanned: number;
+  totalPlanned: number;
   leftToSpend: number;
   isOverspent: boolean;
   daysInPeriod: number;
+  elapsedDays: number;
   remainingDays: number;
   averagePerDay: number;
+  averagePerDayUpToDate: number;
   leftPerDay: number;
-  dailyTotals: DailyTotal[];
+  dailyTotals: DailyExpenseBreakdown[];
 }
 
 export function computePeriodBudget(monthlyBudget: number, range: DateRange): number {
@@ -45,21 +50,6 @@ export function computePeriodBudget(monthlyBudget: number, range: DateRange): nu
   return fromMinorUnits(
     Math.round((toMinorUnits(monthlyBudget) * daysInPeriod) / daysInMonth),
   );
-}
-
-export function computeDailyTotals(expenses: Expense[], range: DateRange): DailyTotal[] {
-  const totalsByDate = new Map<string, number>();
-
-  for (const expense of expenses) {
-    if (expense.date < range.startIso || expense.date > range.endIso) continue;
-    const existing = totalsByDate.get(expense.date) ?? 0;
-    totalsByDate.set(expense.date, sumAmounts([existing, expense.amount]));
-  }
-
-  return enumerateDaysInRange(range).map((dateIso) => ({
-    dateIso,
-    total: totalsByDate.get(dateIso) ?? 0,
-  }));
 }
 
 function countRemainingDays(range: DateRange, todayIso: string): number {
@@ -80,24 +70,33 @@ export function computePeriodOverview({
   todayIso: string;
 }): PeriodOverview {
   const periodBudget = computePeriodBudget(monthlyBudget, range);
-  const dailyTotals = computeDailyTotals(expenses, range);
-  const spent = sumAmounts(dailyTotals.map((day) => day.total));
-  const leftToSpend = subtractAmounts(periodBudget, spent);
+  const dailyTotals = computeDailyExpenseBreakdown(expenses, range, todayIso);
+  const spent = sumAmounts(dailyTotals.map((day) => day.actualExpenses));
+  const futurePlanned = sumAmounts(dailyTotals.map((day) => day.futureExpenses));
+  const totalPlanned = sumAmounts([spent, futurePlanned]);
+  const leftToSpend = subtractAmounts(periodBudget, totalPlanned);
   const isOverspent = leftToSpend < 0;
   const daysInPeriod = countDaysInRange(range);
+  const elapsedDays = countElapsedDaysInPeriod(range, todayIso);
   const remainingDays = countRemainingDays(range, todayIso);
-  const averagePerDay = daysInPeriod > 0 ? divideAmount(spent, daysInPeriod) : 0;
+  const averagePerDay = daysInPeriod > 0 ? divideAmount(totalPlanned, daysInPeriod) : 0;
+  const averagePerDayUpToDate =
+    elapsedDays > 0 ? divideAmount(spent, elapsedDays) : 0;
   const leftPerDay =
     remainingDays > 0 ? divideAmount(leftToSpend, remainingDays) : 0;
 
   return {
     periodBudget,
     spent,
+    futurePlanned,
+    totalPlanned,
     leftToSpend,
     isOverspent,
     daysInPeriod,
+    elapsedDays,
     remainingDays,
     averagePerDay,
+    averagePerDayUpToDate,
     leftPerDay,
     dailyTotals,
   };

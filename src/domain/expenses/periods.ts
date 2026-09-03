@@ -80,6 +80,12 @@ export function countDaysInRange(range: DateRange): number {
   return enumerateDaysInRange(range).length;
 }
 
+export function countElapsedDaysInPeriod(range: DateRange, todayIso: string): number {
+  if (todayIso < range.startIso) return 0;
+  const effectiveEnd = todayIso <= range.endIso ? todayIso : range.endIso;
+  return countDaysInRange({ startIso: range.startIso, endIso: effectiveEnd });
+}
+
 export function getDefaultWeekIndex(
   year: number,
   month: number,

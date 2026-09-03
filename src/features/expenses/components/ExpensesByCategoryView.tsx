@@ -8,6 +8,7 @@ import {
   type SubCategoryRecord,
 } from '../../../types/category';
 import { type AppLocale } from '../../../config/app';
+import { SEMANTIC_COLORS } from '../../../config/semanticColors';
 import { groupExpensesByCategory } from '../../../domain/expenses/groupByCategory';
 import { resolveMainCategoryLabel } from '../../../domain/categories/resolveCategoryLabel';
 import { formatCurrencyAmount } from '../../../lib/format/formatDate';
@@ -90,7 +91,7 @@ export function ExpensesByCategoryView({
                   className={`w-4 h-4 text-slate-400 transition-transform ${isOpen ? 'rotate-180' : ''}`}
                 />
               </div>
-              <span className="font-semibold text-rose-600 dark:text-rose-400">
+              <span className={`font-semibold ${SEMANTIC_COLORS.expense.valueText}`}>
                 {formatCurrencyAmount(group.total, locale)}
               </span>
             </button>

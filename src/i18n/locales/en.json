@@ -98,14 +98,14 @@
     }
   },
   "budget": {
-    "pageTitle": "Budget",
-    "monthlyUsageTitle": "This month",
-    "title": "Set Monthly Budget",
+    "pageTitle": "Budgets",
+    "monthlyBudgetTitle": "Monthly Budget",
     "amountLabel": "Budget amount (₪)",
     "amountPlaceholder": "Enter amount",
     "amountPlaceholderWithCurrent": "Current: ₪{{amount}}",
     "updateButton": "Update Budget",
     "savedButton": "Saved!",
+    "carryOverToNext": "Save/carry over this budget to the next month?",
     "card": {
       "monthlyBudget": "Monthly Budget",
       "allocated": "Allocated for expenses",
@@ -125,6 +125,11 @@
     "usedAndPlanned": "used & planned",
     "leftPerDay": "left per day",
     "averagePerDay": "Average per day",
+    "dailyAverage": "Daily average",
+    "dailyAverageUpToDate": "Daily average (so far)",
+    "upToTodayBadge": "Up to today",
+    "actualExpenses": "Actual expenses",
+    "futureExpenses": "Future expenses",
     "today": "Today",
     "noBudget": "Set a budget to see how much is left"
   },

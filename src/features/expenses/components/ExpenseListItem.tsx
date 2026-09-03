@@ -11,6 +11,7 @@ import {
 } from '../../../types/category';
 import { resolveSubCategoryLabel } from '../../../domain/categories/resolveCategoryLabel';
 import { type AppLocale } from '../../../config/app';
+import { SEMANTIC_COLORS } from '../../../config/semanticColors';
 import { formatCurrencyAmount, formatExpenseDateNumeric } from '../../../lib/format/formatDate';
 import { getSubCategoryUI } from '../categoryUi';
 import { ExpenseIconBadges } from './ExpenseIconBadges';
@@ -93,7 +94,7 @@ export function ExpenseListItem({
       </div>
 
       <div className="flex items-center gap-2 flex-shrink-0">
-        <span className="font-semibold text-rose-600 dark:text-rose-400">
+        <span className={`font-semibold ${SEMANTIC_COLORS.expense.valueText}`}>
           {formatCurrencyAmount(expense.amount, locale)}
         </span>
         <div className="relative flex-shrink-0">

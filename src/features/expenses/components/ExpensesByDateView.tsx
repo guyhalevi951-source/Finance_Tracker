@@ -3,6 +3,7 @@ import { type Expense } from '../../../types/expense';
 import { type ExpenseBatchMode } from '../hooks/useExpenseBatchMode';
 import { type MainCategoryRecord, type SubCategoryRecord } from '../../../types/category';
 import { type AppLocale } from '../../../config/app';
+import { SEMANTIC_COLORS } from '../../../config/semanticColors';
 import { groupExpensesByDate } from '../../../domain/expenses/groupByDate';
 import { formatCurrencyAmount, formatExpenseDateLong } from '../../../lib/format/formatDate';
 import { ExpenseListItem } from './ExpenseListItem';
@@ -49,7 +50,7 @@ export function ExpensesByDateView({
             <h2 className="font-bold text-slate-800 dark:text-slate-100">
               {formatExpenseDateLong(group.date, locale)}
             </h2>
-            <span className="font-semibold text-rose-600 dark:text-rose-400">
+            <span className={`font-semibold ${SEMANTIC_COLORS.expense.valueText}`}>
               {formatCurrencyAmount(group.total, locale)}
             </span>
           </div>

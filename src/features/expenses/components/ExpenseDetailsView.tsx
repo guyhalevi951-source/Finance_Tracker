@@ -18,6 +18,7 @@ import { type AppLocale } from '../../../config/app';
 import { resolveRecurrenceRuleForExpense } from '../../../domain/recurrence/resolveRecurrenceRuleForExpense';
 import { resolveRecurrenceLabelDescriptorFromRule } from '../../../domain/recurrence/resolveRecurrenceLabelKey';
 
+import { SEMANTIC_COLORS } from '../../../config/semanticColors';
 import { formatCurrencyAmount, formatExpenseDateLong } from '../../../lib/format/formatDate';
 
 interface ExpenseDetailsViewProps {
@@ -87,7 +88,7 @@ export function ExpenseDetailsView({
         </button>
       </div>
 
-      <p className="text-5xl md:text-6xl font-bold text-slate-900 dark:text-slate-50 mb-4">
+      <p className={`text-5xl md:text-6xl font-bold mb-4 ${SEMANTIC_COLORS.expense.valueText}`}>
         {formatCurrencyAmount(expense.amount, locale)}
       </p>
 

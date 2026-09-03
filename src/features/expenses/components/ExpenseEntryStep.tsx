@@ -5,6 +5,7 @@ import { resolveSubCategoryLabel } from '../../../domain/categories/resolveCateg
 import { useTodayIso } from '../../../lib/hooks/useTodayIso';
 import { formatExpenseDateNumeric } from '../../../lib/format/formatDate';
 import { type AppLocale } from '../../../config/app';
+import { SEMANTIC_COLORS } from '../../../config/semanticColors';
 import { type SubCategoryRecord } from '../../../types/category';
 import { type PaymentMethodId } from '../../../types/paymentMethod';
 import {
@@ -95,7 +96,7 @@ export function ExpenseEntryStep({
         <p className="text-sm text-slate-500 dark:text-slate-400 truncate flex-1">
           {resolveSubCategoryLabel(selectedSubCategoryId, subCategories, locale, t)}
         </p>
-        <p className="text-4xl font-bold text-rose-600 dark:text-rose-400 tabular-nums">
+        <p className={`text-4xl font-bold tabular-nums ${SEMANTIC_COLORS.expense.valueText}`}>
           {formatNumpadDisplay(amountDigits)}
         </p>
       </header>

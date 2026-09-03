@@ -4,7 +4,6 @@ import { useAppHeader } from '../app/hooks/useAppHeader';
 import { useExpenses } from '../features/expenses/hooks/useExpenses';
 import { ExpenseFilterToolbar } from '../features/expenses/components/ExpenseFilterToolbar';
 import { useExpenseTimeFilter } from '../features/expenses/hooks/useExpenseTimeFilter';
-import { usePeriodVisibleExpenses } from '../features/expenses/hooks/usePeriodVisibleExpenses';
 import { usePeriodOverview } from '../features/overview/hooks/usePeriodOverview';
 import { PeriodOverviewSummary } from '../features/overview/components/PeriodOverviewSummary';
 import { PeriodExpenseBarChart } from '../features/overview/components/PeriodExpenseBarChart';
@@ -15,9 +14,8 @@ export function PeriodicOverviewPage() {
   const locale = i18n.language as AppLocale;
   const { expenses, loadError: expensesLoadError } = useExpenses();
   const timeFilter = useExpenseTimeFilter(locale);
-  const filteredExpenses = usePeriodVisibleExpenses(expenses, timeFilter.range);
   const { overview, hasBudget, loadError: budgetLoadError } = usePeriodOverview(
-    filteredExpenses,
+    expenses,
     timeFilter.range,
     timeFilter.todayIso,
   );

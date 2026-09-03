@@ -44,17 +44,21 @@ describe('computePeriodOverview', () => {
       monthlyBudget: 300,
       expenses,
       range: juneRange,
-      todayIso: '2026-06-01',
+      todayIso: '2026-06-25',
     });
 
     expect(overview.periodBudget).toBe(300);
     expect(overview.spent).toBe(143);
+    expect(overview.futurePlanned).toBe(0);
+    expect(overview.totalPlanned).toBe(143);
     expect(overview.leftToSpend).toBe(157);
     expect(overview.isOverspent).toBe(false);
     expect(overview.daysInPeriod).toBe(30);
-    expect(overview.remainingDays).toBe(30);
+    expect(overview.elapsedDays).toBe(25);
+    expect(overview.remainingDays).toBe(6);
     expect(overview.averagePerDay).toBeCloseTo(4.77, 2);
-    expect(overview.leftPerDay).toBeCloseTo(5.23, 2);
+    expect(overview.averagePerDayUpToDate).toBeCloseTo(5.72, 2);
+    expect(overview.leftPerDay).toBeCloseTo(26.17, 2);
     expect(overview.dailyTotals).toHaveLength(30);
   });
 
@@ -105,5 +109,53 @@ describe('computePeriodOverview', () => {
     expect(overview.periodBudget).toBeCloseTo(67.74, 2);
     expect(overview.daysInPeriod).toBe(7);
     expect(overview.dailyTotals).toHaveLength(7);
+  });
+
+  it('includes future expenses in totalPlanned and averagePerDay', () => {
+    const juneRange = { startIso: '2026-06-01', endIso: '2026-06-30' };
+    const expenses = [
+      expense('a', '2026-06-10', 100),
+      { ...expense('b', '2026-06-20', 50), scheduled: true },
+    ];
+    const overview = computePeriodOverview({
+      monthlyBudget: 300,
+      expenses,
+      range: juneRange,
+      todayIso: '2026-06-15',
+    });
+
+    expect(overview.spent).toBe(100);
+    expect(overview.futurePlanned).toBe(50);
+    expect(overview.totalPlanned).toBe(150);
+    expect(overview.averagePerDay).toBeCloseTo(5, 2);
+  });
+
+  it('computes averagePerDayUpToDate from actual spent divided by elapsed days', () => {
+    const juneRange = { startIso: '2026-06-01', endIso: '2026-06-30' };
+    const expenses = Array.from({ length: 17 }, (_, index) =>
+      expense(`e${index}`, `2026-06-${String(index + 1).padStart(2, '0')}`, 10),
+    );
+    const overview = computePeriodOverview({
+      monthlyBudget: 300,
+      expenses,
+      range: juneRange,
+      todayIso: '2026-06-17',
+    });
+
+    expect(overview.spent).toBe(170);
+    expect(overview.elapsedDays).toBe(17);
+    expect(overview.averagePerDayUpToDate).toBe(10);
+  });
+
+  it('returns zero averagePerDayUpToDate for a future period', () => {
+    const overview = computePeriodOverview({
+      monthlyBudget: 300,
+      expenses: [expense('a', '2026-08-05', 50)],
+      range: { startIso: '2026-08-01', endIso: '2026-08-31' },
+      todayIso: '2026-07-01',
+    });
+
+    expect(overview.elapsedDays).toBe(0);
+    expect(overview.averagePerDayUpToDate).toBe(0);
   });
 });

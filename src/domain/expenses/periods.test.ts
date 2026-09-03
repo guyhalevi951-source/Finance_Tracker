@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   countDaysInRange,
+  countElapsedDaysInPeriod,
   enumerateDaysInRange,
   filterExpensesByPeriod,
   getDefaultDayIso,
@@ -155,6 +156,22 @@ describe('countDaysInRange', () => {
   it('counts days in a range', () => {
     expect(countDaysInRange({ startIso: '2026-07-01', endIso: '2026-07-31' })).toBe(31);
     expect(countDaysInRange({ startIso: '2026-07-17', endIso: '2026-07-17' })).toBe(1);
+  });
+});
+
+describe('countElapsedDaysInPeriod', () => {
+  const julyRange = { startIso: '2026-07-01', endIso: '2026-07-31' };
+
+  it('counts from period start through today when today is in range', () => {
+    expect(countElapsedDaysInPeriod(julyRange, '2026-07-17')).toBe(17);
+  });
+
+  it('returns zero when today is before the period', () => {
+    expect(countElapsedDaysInPeriod(julyRange, '2026-06-15')).toBe(0);
+  });
+
+  it('counts full period when today is after the period end', () => {
+    expect(countElapsedDaysInPeriod(julyRange, '2026-08-01')).toBe(31);
   });
 });
 

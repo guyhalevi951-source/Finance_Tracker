@@ -98,14 +98,14 @@
     }
   },
   "budget": {
-    "pageTitle": "תקציב",
-    "monthlyUsageTitle": "החודש",
-    "title": "הגדר תקציב חודשי",
+    "pageTitle": "עמוד התקציבים",
+    "monthlyBudgetTitle": "התקציב החודשי",
     "amountLabel": "סכום התקציב (₪)",
     "amountPlaceholder": "הזן סכום",
     "amountPlaceholderWithCurrent": "נוכחי: ₪{{amount}}",
     "updateButton": "עדכן תקציב",
     "savedButton": "נשמר!",
+    "carryOverToNext": "האם לשמור את התקציב לחודש שאחריו?",
     "card": {
       "monthlyBudget": "תקציב חודשי",
       "allocated": "הסכום שהוקצב להוצאות",
@@ -125,6 +125,11 @@
     "usedAndPlanned": "נוצל ומתוכנן",
     "leftPerDay": "נותר ליום",
     "averagePerDay": "ממוצע ליום",
+    "dailyAverage": "ממוצע יומי",
+    "dailyAverageUpToDate": "ממוצע יומי (עד כה)",
+    "upToTodayBadge": "עד היום",
+    "actualExpenses": "הוצאות שבוצעו",
+    "futureExpenses": "הוצאות עתידיות",
     "today": "היום",
     "noBudget": "הגדר תקציב כדי לראות כמה נותר"
   },

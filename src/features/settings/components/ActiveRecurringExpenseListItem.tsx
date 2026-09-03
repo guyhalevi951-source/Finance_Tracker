@@ -8,6 +8,7 @@ import { hasBilingualTextContent } from '../../../domain/i18n/buildBilingualText
 import { resolveRecurrenceLabelDescriptorFromRule } from '../../../domain/recurrence/resolveRecurrenceLabelKey';
 import { resolveRemainingOccurrencesLabelDescriptor } from '../../../domain/recurrence/resolveRemainingOccurrencesLabel';
 import { resolveSettingsSeriesDisplayFields } from '../../../domain/recurrence/applyRecurringSettingsFieldUpdate';
+import { SEMANTIC_COLORS } from '../../../config/semanticColors';
 import { formatCurrencyAmount } from '../../../lib/format/formatDate';
 
 interface ActiveRecurringExpenseListItemProps {
@@ -48,7 +49,10 @@ export function ActiveRecurringExpenseListItem({
       <div className="flex-1 min-w-0">
         <p className="font-medium text-slate-800 dark:text-slate-100 truncate">{displayName}</p>
         <p className="text-sm text-slate-500 dark:text-slate-400 truncate">
-          {formatCurrencyAmount(display.amount, locale)} · {scheduleLabel}
+          <span className={SEMANTIC_COLORS.expense.valueText}>
+            {formatCurrencyAmount(display.amount, locale)}
+          </span>
+          <span> · {scheduleLabel}</span>
         </p>
         <p className="text-xs text-slate-400 dark:text-slate-500 truncate mt-0.5">
           {remainingLabel}

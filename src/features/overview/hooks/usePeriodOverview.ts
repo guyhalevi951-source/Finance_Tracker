@@ -1,7 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
+import { monthKeyFromRangeStart } from '../../../domain/budget/monthKey';
+import { resolveMonthBudget } from '../../../domain/budget/resolveMonthBudget';
 import { type DateRange } from '../../../domain/expenses/periods';
 import { computePeriodOverview, type PeriodOverview } from '../../../domain/budget/periodOverview';
-import { loadBudget } from '../../../services/storage/budgetLocalStorage';
+import { loadBudgetStore } from '../../../services/storage/budgetLocalStorage';
+import { type BudgetStore } from '../../../types/budget';
 import { type Expense } from '../../../types/expense';
 
 export interface UsePeriodOverviewReturn {
@@ -16,18 +19,25 @@ export function usePeriodOverview(
   range: DateRange,
   todayIso: string,
 ): UsePeriodOverviewReturn {
-  const [monthlyBudget, setMonthlyBudget] = useState(0);
+  const [store, setStore] = useState<BudgetStore>({});
   const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
-    const budgetResult = loadBudget();
+    const budgetResult = loadBudgetStore();
     if (budgetResult.ok) {
-      setMonthlyBudget(budgetResult.value);
-    } else if (budgetResult.error !== 'NOT_FOUND') {
-      console.warn(`[usePeriodOverview] Could not load budget: ${budgetResult.error}`);
+      setStore(budgetResult.value);
+    } else {
+      console.warn(`[usePeriodOverview] Could not load budget store: ${budgetResult.error}`);
       setLoadError('budget');
     }
   }, []);
+
+  const monthKey = useMemo(() => monthKeyFromRangeStart(range.startIso), [range.startIso]);
+
+  const monthlyBudget = useMemo(
+    () => resolveMonthBudget(store, monthKey).amount,
+    [store, monthKey],
+  );
 
   const overview = useMemo(
     () =>
