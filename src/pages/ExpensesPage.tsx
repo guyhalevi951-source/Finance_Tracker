@@ -25,6 +25,9 @@ import { RecurringInstanceLinkConfirmModal } from '../features/expenses/componen
 import { DEFAULT_RECURRENCE_SELECTION } from '../types/recurrenceRule';
 import { AddExpenseLauncher } from '../features/expenses/components/AddExpenseLauncher';
 import { resolveBilingualText } from '../domain/i18n/resolveBilingualText';
+import { buildBudgetScopedTitle } from '../domain/budget/buildBudgetScopedTitle';
+import { resolveBudgetLabel } from '../domain/budget/resolveBudgetLabel';
+import { useBudgets } from '../features/budget/hooks/useBudgets';
 import { type Expense } from '../types/expense';
 
 export function ExpensesPage() {
@@ -38,6 +41,7 @@ export function ExpensesPage() {
   const { userId } = useAuthSession();
   const { mainCategories, subCategories } = useCategories(userId);
   const { expenses, loadError, reload } = useExpenses();
+  const { activeBudgetId, activeBudget, isMaster, subBudgets } = useBudgets();
 
   useEffect(() => {
     const state = location.state as ExpensesLocationState | null;
@@ -55,7 +59,17 @@ export function ExpensesPage() {
   const timeFilter = useExpenseTimeFilter(locale);
   const batch = useExpenseBatchMode(expenses, userId, reload, timeFilter.todayIso);
 
-  const filteredExpenses = usePeriodVisibleExpenses(batch.displayExpenses, timeFilter.range);
+  const filteredExpenses = usePeriodVisibleExpenses(
+    batch.displayExpenses,
+    timeFilter.range,
+    activeBudgetId,
+  );
+
+  const subBudget =
+    !isMaster && 'name' in activeBudget ? activeBudget : null;
+  const subBudgetWindow = subBudget
+    ? { startDate: subBudget.startDate, endDate: subBudget.endDate }
+    : null;
 
   const categoryOptions = subCategories.map((c) => ({
     id: c.id,
@@ -79,6 +93,8 @@ export function ExpensesPage() {
     locale,
     mainCategories,
     subCategories,
+    subBudgets,
+    isMaster,
     mode: batch.mode,
     selectedIds: batch.selectedIds,
     onItemClick: handleItemClick,
@@ -105,7 +121,14 @@ export function ExpensesPage() {
     ],
   );
 
-  useAppHeader({ title: t('expense.pageTitle'), actions: headerActions });
+  useAppHeader({
+    title: buildBudgetScopedTitle(
+      resolveBudgetLabel(activeBudget, locale, t),
+      t('expense.pageTitle'),
+      isMaster,
+    ),
+    actions: headerActions,
+  });
 
   return (
     <div className="relative pb-20">
@@ -189,6 +212,9 @@ export function ExpensesPage() {
         hideFab={batch.mode !== 'view'}
         pendingOpen={pendingAddOpen}
         onPendingOpenHandled={() => setPendingAddOpen(null)}
+        activeBudgetId={activeBudgetId}
+        isMaster={isMaster}
+        subBudgetWindow={subBudgetWindow}
       />
     </div>
   );

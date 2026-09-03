@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { type Expense } from '../../../types/expense';
 import { type ExpenseBatchMode } from '../hooks/useExpenseBatchMode';
 import { type MainCategoryRecord, type SubCategoryRecord } from '../../../types/category';
+import { type SubBudgetRecord } from '../../../types/budget';
 import { type AppLocale } from '../../../config/app';
 import { SEMANTIC_COLORS } from '../../../config/semanticColors';
 import { groupExpensesByDate } from '../../../domain/expenses/groupByDate';
@@ -13,6 +14,8 @@ interface ExpensesByDateViewProps {
   locale: AppLocale;
   mainCategories: MainCategoryRecord[];
   subCategories: SubCategoryRecord[];
+  subBudgets?: SubBudgetRecord[];
+  isMaster: boolean;
   mode: ExpenseBatchMode;
   selectedIds: Set<string>;
   onItemClick: (expense: Expense) => void;
@@ -23,6 +26,8 @@ export function ExpensesByDateView({
   locale,
   mainCategories,
   subCategories,
+  subBudgets = [],
+  isMaster,
   mode,
   selectedIds,
   onItemClick,
@@ -62,6 +67,8 @@ export function ExpensesByDateView({
                 locale={locale}
                 mainCategories={mainCategories}
                 subCategories={subCategories}
+                subBudgets={subBudgets}
+                isMaster={isMaster}
                 mode={mode}
                 selected={selectedIds.has(expense.id)}
                 onItemClick={() => onItemClick(expense)}

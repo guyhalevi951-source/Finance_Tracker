@@ -48,6 +48,8 @@ import {
   PROTECTED_MAIN_CATEGORY_ID,
 } from '../../domain/categories/reassignSubCategoriesOnDelete';
 import { useAuthSession } from '../../features/auth/hooks/useAuthSession';
+import { useBudgets } from '../../features/budget/hooks/useBudgets';
+import { filterExpensesByBudget } from '../../domain/budget/filterExpensesByBudget';
 
 export interface CategoriesContextValue {
   mainCategories: MainCategoryRecord[];
@@ -100,6 +102,7 @@ interface CategoriesProviderProps {
 
 export function CategoriesProvider({ children }: CategoriesProviderProps) {
   const { userId } = useAuthSession();
+  const { activeBudgetId: profileId } = useBudgets();
   const [mainCategories, setMainCategories] = useState<MainCategoryRecord[]>([]);
   const [subCategories, setSubCategories] = useState<SubCategoryRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -121,7 +124,7 @@ export function CategoriesProvider({ children }: CategoriesProviderProps) {
     setIsLoading(true);
     setLoadCategoryError(null);
     try {
-      const catalog = await ensureDefaultCategoriesSeeded(userId);
+      const catalog = await ensureDefaultCategoriesSeeded(userId, profileId);
       applyCatalog(catalog);
     } catch (e) {
       console.warn('[CategoriesProvider] Could not load categories:', e);
@@ -129,7 +132,7 @@ export function CategoriesProvider({ children }: CategoriesProviderProps) {
     } finally {
       setIsLoading(false);
     }
-  }, [userId, applyCatalog]);
+  }, [userId, profileId, applyCatalog]);
 
   useEffect(() => {
     void reload();
@@ -152,7 +155,7 @@ export function CategoriesProvider({ children }: CategoriesProviderProps) {
           sortOrder: subCategories.filter((s) => s.parentId === PROTECTED_MAIN_CATEGORY_ID).length,
           createdAt: new Date().toISOString(),
         };
-        await saveSubCategory(userId, category);
+        await saveSubCategory(userId, profileId, category);
         await reload();
       } catch {
         setAddCategoryError('translationError');
@@ -160,7 +163,7 @@ export function CategoriesProvider({ children }: CategoriesProviderProps) {
         setIsAddingCategory(false);
       }
     },
-    [userId, mainCategories, subCategories, reload],
+    [userId, profileId, mainCategories, subCategories, reload],
   );
 
   const addMainCategory = useCallback(
@@ -197,8 +200,8 @@ export function CategoriesProvider({ children }: CategoriesProviderProps) {
           createdAt,
         );
 
-        await saveMainCategory(userId, main);
-        await saveSubCategory(userId, sub);
+        await saveMainCategory(userId, profileId, main);
+        await saveSubCategory(userId, profileId, sub);
         await reload();
         return main;
       } catch {
@@ -208,7 +211,7 @@ export function CategoriesProvider({ children }: CategoriesProviderProps) {
         setIsSavingMainCategory(false);
       }
     },
-    [userId, mainCategories.length, reload],
+    [userId, profileId, mainCategories.length, reload],
   );
 
   const updateMainCategory = useCallback(
@@ -259,9 +262,10 @@ export function CategoriesProvider({ children }: CategoriesProviderProps) {
           return { ...sub, color: updatedMain.color };
         });
 
-        await saveMainCategory(userId, updatedMain);
+        await saveMainCategory(userId, profileId, updatedMain);
         await saveSubCategories(
           userId,
+          profileId,
           updatedSubs.filter((s) => s.parentId === mainId),
         );
         await reload();
@@ -273,7 +277,7 @@ export function CategoriesProvider({ children }: CategoriesProviderProps) {
         setIsSavingMainCategory(false);
       }
     },
-    [userId, mainCategories, subCategories, reload],
+    [userId, profileId, mainCategories, subCategories, reload],
   );
 
   const deleteMainCategoryAction = useCallback(
@@ -286,8 +290,8 @@ export function CategoriesProvider({ children }: CategoriesProviderProps) {
       }
 
       try {
-        await deleteMainCategoryRecord(userId, mainId);
-        await saveSubCategories(userId, result.subs);
+        await deleteMainCategoryRecord(userId, profileId, mainId);
+        await saveSubCategories(userId, profileId, result.subs);
         await reload();
         return true;
       } catch {
@@ -295,7 +299,7 @@ export function CategoriesProvider({ children }: CategoriesProviderProps) {
         return false;
       }
     },
-    [userId, mainCategories, subCategories, reload],
+    [userId, profileId, mainCategories, subCategories, reload],
   );
 
   const reorderMainCategoriesAction = useCallback(
@@ -303,12 +307,12 @@ export function CategoriesProvider({ children }: CategoriesProviderProps) {
       const reordered = reorderMainCategories(mainCategories, orderedIds);
       setMainCategories(reordered);
       try {
-        await saveMainCategoriesOrder(userId, reordered);
+        await saveMainCategoriesOrder(userId, profileId, reordered);
       } catch {
         setMainCategoryActionError('reorderFailed');
       }
     },
-    [userId, mainCategories],
+    [userId, profileId, mainCategories],
   );
 
   const resetCategoriesToDefaultsAction = useCallback(
@@ -316,8 +320,9 @@ export function CategoriesProvider({ children }: CategoriesProviderProps) {
       setIsResettingCategories(true);
       setMainCategoryActionError(null);
       try {
+        const scopedExpenses = filterExpensesByBudget(liveExpenses, profileId);
         const { catalog, expenses: restoredExpenses } =
-          await resetCategoriesToDefaultsWithExpenseRestore(userId, liveExpenses);
+          await resetCategoriesToDefaultsWithExpenseRestore(userId, profileId, scopedExpenses);
         applyCatalog(catalog);
         return restoredExpenses;
       } catch {
@@ -327,7 +332,7 @@ export function CategoriesProvider({ children }: CategoriesProviderProps) {
         setIsResettingCategories(false);
       }
     },
-    [userId, applyCatalog],
+    [userId, profileId, applyCatalog],
   );
 
   const addSubCategory = useCallback(
@@ -376,7 +381,7 @@ export function CategoriesProvider({ children }: CategoriesProviderProps) {
         setIsSavingSubCategory(false);
       }
     },
-    [userId, mainCategories, subCategories, reload],
+    [userId, profileId, mainCategories, subCategories, reload],
   );
 
   const updateSubCategory = useCallback(
@@ -423,7 +428,7 @@ export function CategoriesProvider({ children }: CategoriesProviderProps) {
         setIsSavingSubCategory(false);
       }
     },
-    [userId, mainCategories, subCategories, reload],
+    [userId, profileId, mainCategories, subCategories, reload],
   );
 
   const deleteSubCategoryAction = useCallback(
@@ -432,11 +437,13 @@ export function CategoriesProvider({ children }: CategoriesProviderProps) {
       setIsSavingSubCategory(true);
 
       try {
+        const scopedExpenses = filterExpensesByBudget(liveExpenses, profileId);
         const result = await deleteSubCategoryWithExpenseReassignment(
           userId,
+          profileId,
           subCategories,
           subId,
-          liveExpenses,
+          scopedExpenses,
         );
 
         if (!result.ok) {
@@ -451,7 +458,7 @@ export function CategoriesProvider({ children }: CategoriesProviderProps) {
         setIsSavingSubCategory(false);
       }
     },
-    [userId, subCategories, reload],
+    [userId, profileId, subCategories, reload],
   );
 
   const reorderSubCategoriesAction = useCallback(
@@ -461,13 +468,14 @@ export function CategoriesProvider({ children }: CategoriesProviderProps) {
       try {
         await saveSubCategories(
           userId,
+          profileId,
           reordered.filter((sub) => sub.parentId === parentId),
         );
       } catch {
         setSubCategoryActionError('reorderFailed');
       }
     },
-    [userId, subCategories],
+    [userId, profileId, subCategories],
   );
 
   const moveSubCategoryAction = useCallback(
@@ -495,7 +503,7 @@ export function CategoriesProvider({ children }: CategoriesProviderProps) {
         setIsSavingSubCategory(false);
       }
     },
-    [userId, mainCategories, subCategories, reload],
+    [userId, profileId, mainCategories, subCategories, reload],
   );
 
   const clearAddCategoryError = useCallback(() => setAddCategoryError(null), []);

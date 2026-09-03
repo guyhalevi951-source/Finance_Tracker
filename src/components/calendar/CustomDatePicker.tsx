@@ -2,13 +2,14 @@ import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { type AppLocale } from '../../config/app';
-import { isoDateToDate } from '../../domain/expenses/parseExpenseDate';
+import { isoDateToDate, resolveIsoDateOrToday, toIsoDate } from '../../domain/expenses/parseExpenseDate';
 import { formatDate, getWeekdayInitials } from '../../lib/format/formatDate';
 import { buildCalendarGrid } from './buildCalendarGrid';
 
 export interface CustomDatePickerProps {
   open: boolean;
   value: string;
+  minDate?: string;
   maxDate?: string;
   onConfirm: (isoDate: string) => void;
   onCancel: () => void;
@@ -18,29 +19,42 @@ function monthIndex(date: Date): number {
   return date.getFullYear() * 12 + date.getMonth();
 }
 
-function clampToMaxDate(isoDate: string, maxDate?: string): string {
-  if (maxDate && isoDate > maxDate) return maxDate;
-  return isoDate;
+function clampToDateRange(isoDate: string, minDate?: string, maxDate?: string): string {
+  let result = isoDate;
+  if (minDate && result < minDate) result = minDate;
+  if (maxDate && result > maxDate) result = maxDate;
+  return result;
+}
+
+function canNavigateToPreviousMonth(viewMonth: Date, minDate?: string): boolean {
+  if (!minDate) return true;
+  const lastDayOfPreviousMonth = new Date(viewMonth.getFullYear(), viewMonth.getMonth(), 0);
+  return toIsoDate(lastDayOfPreviousMonth) >= minDate;
 }
 
 export function CustomDatePicker({
   open,
   value,
+  minDate,
   maxDate,
   onConfirm,
   onCancel,
 }: CustomDatePickerProps) {
   const { t, i18n } = useTranslation();
   const locale = i18n.language as AppLocale;
-  const [draftDate, setDraftDate] = useState(value);
-  const [viewMonth, setViewMonth] = useState(() => isoDateToDate(value));
+  const [draftDate, setDraftDate] = useState(() =>
+    resolveIsoDateOrToday(clampToDateRange(value, minDate, maxDate)),
+  );
+  const [viewMonth, setViewMonth] = useState(() =>
+    isoDateToDate(resolveIsoDateOrToday(clampToDateRange(value, minDate, maxDate))),
+  );
 
   useEffect(() => {
     if (!open) return;
-    const clamped = clampToMaxDate(value, maxDate);
-    setDraftDate(clamped);
-    setViewMonth(isoDateToDate(clamped));
-  }, [open, value, maxDate]);
+    const resolved = resolveIsoDateOrToday(clampToDateRange(value, minDate, maxDate));
+    setDraftDate(resolved);
+    setViewMonth(isoDateToDate(resolved));
+  }, [open, value, minDate, maxDate]);
 
   useEffect(() => {
     if (!open) return;
@@ -61,6 +75,11 @@ export function CustomDatePicker({
     locale,
   );
 
+  const canGoPreviousMonth = useMemo(
+    () => canNavigateToPreviousMonth(viewMonth, minDate),
+    [minDate, viewMonth],
+  );
+
   const canGoNextMonth = useMemo(() => {
     if (!maxDate) return true;
     const nextMonth = new Date(viewMonth.getFullYear(), viewMonth.getMonth() + 1, 1);
@@ -68,6 +87,7 @@ export function CustomDatePicker({
   }, [maxDate, viewMonth]);
 
   const goToPreviousMonth = () => {
+    if (!canGoPreviousMonth) return;
     setViewMonth((current) => new Date(current.getFullYear(), current.getMonth() - 1, 1));
   };
 
@@ -77,7 +97,7 @@ export function CustomDatePicker({
   };
 
   const handleConfirm = () => {
-    onConfirm(clampToMaxDate(draftDate, maxDate));
+    onConfirm(clampToDateRange(draftDate, minDate, maxDate));
   };
 
   if (!open) return null;
@@ -99,8 +119,14 @@ export function CustomDatePicker({
           <button
             type="button"
             onClick={goToPreviousMonth}
+            disabled={!canGoPreviousMonth}
             aria-label={t('calendar.prevMonth')}
-            className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 shrink-0"
+            aria-disabled={!canGoPreviousMonth}
+            className={`min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl shrink-0 ${
+              canGoPreviousMonth
+                ? 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'
+                : 'text-slate-200 dark:text-slate-700 cursor-not-allowed'
+            }`}
           >
             <ChevronLeft className="w-5 h-5 rtl:rotate-180" aria-hidden />
           </button>
@@ -137,21 +163,23 @@ export function CustomDatePicker({
 
           {weeks.flat().map((cell) => {
             const isSelected = cell.iso === draftDate;
-            const isFuture = maxDate != null && cell.iso > maxDate;
+            const isBeforeMin = minDate != null && cell.iso < minDate;
+            const isAfterMax = maxDate != null && cell.iso > maxDate;
+            const isDisabled = isBeforeMin || isAfterMax;
             const dayNumber = isoDateToDate(cell.iso).getDate();
 
             return (
               <button
                 key={cell.iso}
                 type="button"
-                disabled={isFuture}
+                disabled={isDisabled}
                 aria-pressed={isSelected}
-                aria-disabled={isFuture}
+                aria-disabled={isDisabled}
                 onClick={() => {
-                  if (!isFuture) setDraftDate(cell.iso);
+                  if (!isDisabled) setDraftDate(cell.iso);
                 }}
                 className={`h-11 w-11 mx-auto flex items-center justify-center rounded-full text-sm font-medium transition-colors ${
-                  isFuture
+                  isDisabled
                     ? 'text-slate-200 dark:text-slate-700 cursor-not-allowed'
                     : isSelected
                       ? 'bg-amber-400 text-slate-900'

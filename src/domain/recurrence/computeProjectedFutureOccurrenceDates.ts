@@ -6,6 +6,7 @@ import {
 } from './buildGeneratedExpense';
 import { computeDueDates } from './computeDueDates';
 import { countConsumedSeriesOccurrences } from './countSeriesOccurrences';
+import { earliestEndDate } from './earliestEndDate';
 import { isRecurrenceDateExcluded } from './isRecurrenceDateExcluded';
 import { computeRemainingOccurrences } from './occurrencesRemaining';
 
@@ -30,6 +31,7 @@ export function computeProjectedFutureOccurrenceDates(
   expenses: Expense[],
   template: Expense,
   todayIso: string,
+  capEndDateIso?: string,
 ): string[] {
   const rule = template.recurrenceRule;
   if (!rule) {
@@ -42,7 +44,10 @@ export function computeProjectedFutureOccurrenceDates(
     return [];
   }
 
-  const horizonIso = computeHorizonIso(todayIso, template.recurrenceEndDate);
+  const effectiveEndDate = capEndDateIso
+    ? earliestEndDate(template.recurrenceEndDate, capEndDateIso)
+    : template.recurrenceEndDate;
+  const horizonIso = computeHorizonIso(todayIso, effectiveEndDate);
   if (horizonIso <= todayIso) {
     return [];
   }
@@ -58,7 +63,7 @@ export function computeProjectedFutureOccurrenceDates(
     if (remainingSlots !== null && projectedDates.length >= remainingSlots) {
       break;
     }
-    if (template.recurrenceEndDate && dateIso > template.recurrenceEndDate) {
+    if (effectiveEndDate && dateIso > effectiveEndDate) {
       break;
     }
     if (isRecurrenceDateExcluded(template, dateIso)) {

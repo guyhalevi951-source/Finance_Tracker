@@ -41,6 +41,7 @@ interface ExpenseEntryStepProps {
   errorKey: string | null;
   onBack: () => void;
   onSubmit: () => void;
+  maxSelectableDate?: string;
 }
 
 export function ExpenseEntryStep({
@@ -63,6 +64,7 @@ export function ExpenseEntryStep({
   errorKey,
   onBack,
   onSubmit,
+  maxSelectableDate,
 }: ExpenseEntryStepProps) {
   const { t } = useTranslation();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -163,6 +165,7 @@ export function ExpenseEntryStep({
       <CustomDatePicker
         open={dateModalOpen}
         value={date}
+        maxDate={maxSelectableDate}
         onConfirm={(isoDate) => {
           onDateChange(isoDate);
           setDateModalOpen(false);

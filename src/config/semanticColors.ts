@@ -20,6 +20,7 @@ export const SEMANTIC_COLORS = {
     chart: '#F59E0B',
     progressBar: 'bg-gradient-to-r from-amber-400 to-amber-500',
     ctaGradient: 'bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700',
+    fabBg: 'bg-amber-500 hover:bg-amber-600 dark:bg-amber-500 dark:hover:bg-amber-600',
     iconBg: 'bg-amber-100 dark:bg-amber-900/30',
   },
 } as const;

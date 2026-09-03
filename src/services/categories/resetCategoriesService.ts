@@ -1,5 +1,6 @@
 import { type CategoryCatalog } from '../../types/category';
 import { type Expense } from '../../types/expense';
+import { type BudgetProfileId } from '../../config/budgetProfile';
 import {
   SUB_CATEGORY_DELETE_FALLBACK_ID,
 } from '../../domain/categories/deleteSubCategory';
@@ -25,9 +26,10 @@ export interface ResetCategoriesResult {
  */
 export async function resetCategoriesToDefaultsWithExpenseRestore(
   userId: string | null,
+  profileId: BudgetProfileId,
   liveExpenses: Expense[],
 ): Promise<ResetCategoriesResult> {
-  const catalog = await resetCategoriesToDefaults(userId);
+  const catalog = await resetCategoriesToDefaults(userId, profileId);
   const storedExpenses = await loadExpenses(userId);
   const merged = mergeExpenseLists(storedExpenses, liveExpenses);
   const restoredExpenses = restoreMigratedExpensesOnCategoryReset(

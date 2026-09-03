@@ -14,6 +14,8 @@ import {
 } from '../../../types/recurrenceRule';
 import { selectionToRule } from '../../../domain/recurrence/presets';
 import { validateRecurrenceSelection } from '../../../domain/recurrence/validateRecurrenceRule';
+import { isDateWithinSubBudget } from '../../../domain/budget/validateSubBudget';
+import { capExpenseRecurrenceToSubBudgetEnd } from '../../../domain/budget/subBudgetExpenseWindow';
 import { toIsoDate } from '../../../domain/expenses/parseExpenseDate';
 import { useTodayIso } from '../../../lib/hooks/useTodayIso';
 import { createBilingualText } from '../../../services/translation/createBilingualText';
@@ -25,9 +27,18 @@ export type AddExpenseStep = 'category' | 'entry';
 export interface UseAddExpenseFlowOptions {
   userId: string | null;
   createExpense: (expense: Expense) => Promise<void>;
+  activeBudgetId: string;
+  isMaster: boolean;
+  subBudgetWindow?: { startDate: string; endDate: string } | null;
 }
 
-export function useAddExpenseFlow({ userId, createExpense }: UseAddExpenseFlowOptions) {
+export function useAddExpenseFlow({
+  userId,
+  createExpense,
+  activeBudgetId,
+  isMaster,
+  subBudgetWindow,
+}: UseAddExpenseFlowOptions) {
   const { i18n } = useTranslation();
   const todayIso = useTodayIso();
   const [open, setOpen] = useState(false);
@@ -107,6 +118,15 @@ export function useAddExpenseFlow({ userId, createExpense }: UseAddExpenseFlowOp
       return;
     }
 
+    if (
+      !isMaster &&
+      subBudgetWindow &&
+      !isDateWithinSubBudget(result.value.date, subBudgetWindow.startDate, subBudgetWindow.endDate)
+    ) {
+      setErrorKey('budget.validation.DATE_OUT_OF_WINDOW');
+      return;
+    }
+
     const recurrenceRule = selectionToRule(recurrenceSelection);
 
     setIsSaving(true);
@@ -131,7 +151,7 @@ export function useAddExpenseFlow({ userId, createExpense }: UseAddExpenseFlowOp
         }
       }
 
-      const expense: Expense = {
+      let expense: Expense = {
         id: expenseId,
         description: bilingualDescription,
         amount: result.value.amount,
@@ -146,7 +166,12 @@ export function useAddExpenseFlow({ userId, createExpense }: UseAddExpenseFlowOp
         )
           ? { scheduled: true }
           : {}),
+        ...(isMaster ? {} : { budgetId: activeBudgetId }),
       };
+
+      if (!isMaster && subBudgetWindow && recurrenceRule) {
+        expense = capExpenseRecurrenceToSubBudgetEnd(expense, subBudgetWindow.endDate);
+      }
 
       await createExpense(expense);
       closeFlow();
@@ -168,6 +193,9 @@ export function useAddExpenseFlow({ userId, createExpense }: UseAddExpenseFlowOp
     userId,
     createExpense,
     closeFlow,
+    isMaster,
+    activeBudgetId,
+    subBudgetWindow,
   ]);
 
   return {

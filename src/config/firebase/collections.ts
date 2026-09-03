@@ -11,6 +11,7 @@ export const FIRESTORE_COLLECTIONS = {
   expenses: 'expenses',
   accounts: 'accounts',
   budgets: 'budgets',
+  budgetProfiles: 'budgetProfiles',
   exchangeRates: 'exchangeRates',
   deletedSubCategories: 'deletedSubCategories',
 } as const;

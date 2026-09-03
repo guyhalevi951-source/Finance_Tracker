@@ -106,6 +106,61 @@
     "updateButton": "Update Budget",
     "savedButton": "Saved!",
     "carryOverToNext": "Save/carry over this budget to the next month?",
+    "expenseTag": "Budget: {{name}}",
+    "switcher": {
+      "label": "Active budget"
+    },
+    "list": {
+      "masterLocked": "Always first — cannot be moved or deleted",
+      "edit": "Edit budget",
+      "delete": "Delete budget",
+      "reorder": "Reorder budget"
+    },
+    "add": {
+      "title": "Add Budget",
+      "fab": "Add budget"
+    },
+    "edit": {
+      "title": "Edit Budget"
+    },
+    "form": {
+      "name": "Budget name",
+      "totalAmount": "Total amount limit",
+      "startDate": "Start date",
+      "endDate": "End date",
+      "selectDate": "Select date",
+      "save": "Save",
+      "cancel": "Cancel"
+    },
+    "validation": {
+      "NAME_REQUIRED": "Budget name is required",
+      "AMOUNT_INVALID": "Enter a valid amount",
+      "DATE_REQUIRED": "Start and end dates are required",
+      "END_BEFORE_START": "End date must be on or after start date",
+      "END_IN_PAST": "End date cannot be in the past",
+      "DATE_OUT_OF_WINDOW": "Expense date must be within the budget period",
+      "RECURRENCE_EXCEEDS_BUDGET": "Recurring expenses cannot extend beyond the budget end date"
+    },
+    "delete": {
+      "title": "Delete budget",
+      "confirmName": "Delete \"{{name}}\"?",
+      "message": "Do you want to delete all related expenses as well?",
+      "deleteWithExpenses": "Delete budget and expenses",
+      "keepExpenses": "Delete budget, keep expenses",
+      "cancel": "Cancel"
+    },
+    "history": {
+      "link": "Budget history",
+      "title": "Budget History",
+      "empty": "No archived budgets yet",
+      "notFound": "Budget not found",
+      "dateRange": "Date range",
+      "originalAmount": "Original amount",
+      "totalSpent": "Total spent",
+      "remaining": "Remaining",
+      "readOnly": "This is a read-only archive view",
+      "delete": "Delete from history"
+    },
     "card": {
       "monthlyBudget": "Monthly Budget",
       "allocated": "Allocated for expenses",

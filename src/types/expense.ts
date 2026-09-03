@@ -53,4 +53,6 @@ export interface Expense {
    * One-time expense deferred until its date; hidden from the ledger until materialized.
    */
   scheduled?: boolean;
+  /** Links this expense to a sub-budget; absent means master-ledger-only */
+  budgetId?: string;
 }

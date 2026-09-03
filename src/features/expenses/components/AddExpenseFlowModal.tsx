@@ -36,6 +36,7 @@ interface AddExpenseFlowModalProps {
   onAddSubCategory: (parentId: string) => void;
   onSubmit: () => void;
   initialCategoryParentId?: string | null;
+  maxSelectableDate?: string;
 }
 
 export function AddExpenseFlowModal({
@@ -68,6 +69,7 @@ export function AddExpenseFlowModal({
   onAddSubCategory,
   onSubmit,
   initialCategoryParentId = null,
+  maxSelectableDate,
 }: AddExpenseFlowModalProps) {
   if (!open) return null;
 
@@ -108,6 +110,7 @@ export function AddExpenseFlowModal({
           errorKey={errorKey}
           onBack={onBackToCategories}
           onSubmit={onSubmit}
+          maxSelectableDate={maxSelectableDate}
         />
       )}
     </div>

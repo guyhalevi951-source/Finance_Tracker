@@ -106,6 +106,61 @@
     "updateButton": "עדכן תקציב",
     "savedButton": "נשמר!",
     "carryOverToNext": "האם לשמור את התקציב לחודש שאחריו?",
+    "expenseTag": "תקציב: {{name}}",
+    "switcher": {
+      "label": "תקציב פעיל"
+    },
+    "list": {
+      "masterLocked": "תמיד ראשון — לא ניתן להזיז או למחוק",
+      "edit": "ערוך תקציב",
+      "delete": "מחק תקציב",
+      "reorder": "סדר תקציב מחדש"
+    },
+    "add": {
+      "title": "הוסף תקציב",
+      "fab": "הוסף תקציב"
+    },
+    "edit": {
+      "title": "ערוך תקציב"
+    },
+    "form": {
+      "name": "שם התקציב",
+      "totalAmount": "סכום מקסימלי",
+      "startDate": "תאריך התחלה",
+      "endDate": "תאריך סיום",
+      "selectDate": "בחר תאריך",
+      "save": "שמור",
+      "cancel": "ביטול"
+    },
+    "validation": {
+      "NAME_REQUIRED": "יש להזין שם תקציב",
+      "AMOUNT_INVALID": "יש להזין סכום תקין",
+      "DATE_REQUIRED": "יש לבחור תאריכי התחלה וסיום",
+      "END_BEFORE_START": "תאריך הסיום חייב להיות אחרי תאריך ההתחלה",
+      "END_IN_PAST": "תאריך הסיום לא יכול להיות בעבר",
+      "DATE_OUT_OF_WINDOW": "תאריך ההוצאה חייב להיות בתוך תקופת התקציב",
+      "RECURRENCE_EXCEEDS_BUDGET": "הוצאות חוזרות לא יכולות להמשיך מעבר לתאריך סיום התקציב"
+    },
+    "delete": {
+      "title": "מחיקת תקציב",
+      "confirmName": "למחוק את \"{{name}}\"?",
+      "message": "האם למחוק גם את כל ההוצאות הקשורות לתקציב זה?",
+      "deleteWithExpenses": "מחק תקציב והוצאות",
+      "keepExpenses": "מחק תקציב, השאר הוצאות",
+      "cancel": "ביטול"
+    },
+    "history": {
+      "link": "היסטוריית תקציבים",
+      "title": "היסטוריית תקציבים",
+      "empty": "אין תקציבים בארכיון",
+      "notFound": "התקציב לא נמצא",
+      "dateRange": "טווח תאריכים",
+      "originalAmount": "סכום מקורי",
+      "totalSpent": "סה\"כ הוצא",
+      "remaining": "נותר",
+      "readOnly": "תצוגת ארכיון לקריאה בלבד",
+      "delete": "מחק מההיסטוריה"
+    },
     "card": {
       "monthlyBudget": "תקציב חודשי",
       "allocated": "הסכום שהוקצב להוצאות",

@@ -15,6 +15,10 @@ import {
 } from '../features/settings';
 import { type AppLocale } from '../config/app';
 import { resolveBilingualText } from '../domain/i18n/resolveBilingualText';
+import { buildBudgetScopedTitle } from '../domain/budget/buildBudgetScopedTitle';
+import { filterExpensesByBudget } from '../domain/budget/filterExpensesByBudget';
+import { resolveBudgetLabel } from '../domain/budget/resolveBudgetLabel';
+import { useBudgets } from '../features/budget/hooks/useBudgets';
 
 export function SettingsPage() {
   const { t, i18n } = useTranslation();
@@ -22,22 +26,37 @@ export function SettingsPage() {
   const { userId } = useAuthSession();
   const { subCategories } = useCategories(userId);
   const { expenses, reload } = useExpenses();
+  const { activeBudgetId, activeBudget, isMaster } = useBudgets();
+
+  const subBudget =
+    !isMaster && 'name' in activeBudget ? activeBudget : null;
+
+  const scopedExpenses = useMemo(
+    () => filterExpensesByBudget(expenses, activeBudgetId),
+    [expenses, activeBudgetId],
+  );
 
   const recurringSettings = useRecurringExpensesSettings({
     userId,
-    expenses,
+    expenses: scopedExpenses,
     reload,
     locale,
   });
 
   const scheduledSettings = useScheduledOneTimeExpensesSettings({
     userId,
-    expenses,
+    expenses: scopedExpenses,
     reload,
     locale,
   });
 
-  useAppHeader({ title: t('nav.settings') });
+  useAppHeader({
+    title: buildBudgetScopedTitle(
+      resolveBudgetLabel(activeBudget, locale, t),
+      t('nav.settings'),
+      isMaster,
+    ),
+  });
 
   const categoryOptions = useMemo(
     () =>
@@ -53,7 +72,7 @@ export function SettingsPage() {
       <SettingsSection
         activeTemplates={recurringSettings.activeTemplates}
         scheduledExpenses={scheduledSettings.scheduledExpenses}
-        expenses={expenses}
+        expenses={scopedExpenses}
         locale={locale}
         subCategories={subCategories}
         onEditRecurring={recurringSettings.openEdit}
@@ -104,6 +123,7 @@ export function SettingsPage() {
           onClose={scheduledSettings.closeEdit}
           hideRecurrenceField
           allowFutureDate
+          maxSelectableDate={subBudget?.endDate}
           modalTitleKey="profile.settings.oneTime.editTitle"
         />
       )}

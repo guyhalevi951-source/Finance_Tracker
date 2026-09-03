@@ -5,11 +5,10 @@ import { type ExpenseBatchMode } from '../hooks/useExpenseBatchMode';
 import { resolveBilingualText } from '../../../domain/i18n/resolveBilingualText';
 import { hasBilingualTextContent } from '../../../domain/i18n/buildBilingualText';
 import { migrateCategoryId } from '../../../domain/categories/constants';
-import {
-  type MainCategoryRecord,
-  type SubCategoryRecord,
-} from '../../../types/category';
+import { type MainCategoryRecord, type SubCategoryRecord } from '../../../types/category';
+import { type SubBudgetRecord } from '../../../types/budget';
 import { resolveSubCategoryLabel } from '../../../domain/categories/resolveCategoryLabel';
+import { resolveBudgetLabel } from '../../../domain/budget/resolveBudgetLabel';
 import { type AppLocale } from '../../../config/app';
 import { SEMANTIC_COLORS } from '../../../config/semanticColors';
 import { formatCurrencyAmount, formatExpenseDateNumeric } from '../../../lib/format/formatDate';
@@ -23,6 +22,8 @@ interface ExpenseListItemProps {
   subCategories: SubCategoryRecord[];
   /** @deprecated Use subCategories */
   customCategories?: SubCategoryRecord[];
+  subBudgets?: SubBudgetRecord[];
+  isMaster: boolean;
   mode: ExpenseBatchMode;
   selected: boolean;
   showNestedDate?: boolean;
@@ -35,6 +36,8 @@ export function ExpenseListItem({
   locale,
   mainCategories,
   subCategories,
+  subBudgets = [],
+  isMaster,
   mode,
   selected,
   showNestedDate = false,
@@ -47,6 +50,14 @@ export function ExpenseListItem({
   const categoryLabel = resolveSubCategoryLabel(categoryId, subCategories, locale, t);
   const descriptionText = resolveBilingualText(expense.description, locale);
   const hasDescription = hasBilingualTextContent(expense.description);
+  const linkedSubBudget = expense.budgetId
+    ? subBudgets.find((budget) => budget.id === expense.budgetId)
+    : undefined;
+  const showSubBudgetIndicator = Boolean(linkedSubBudget) && isMaster;
+  const subBudgetTag =
+    showSubBudgetIndicator && linkedSubBudget
+      ? t('budget.expenseTag', { name: resolveBudgetLabel(linkedSubBudget, locale, t) })
+      : null;
 
   return (
     <button
@@ -73,9 +84,14 @@ export function ExpenseListItem({
 
       <div className="flex-1 min-w-0">
         {hideCategoryLabel ? (
-          <p className="font-medium text-slate-800 dark:text-slate-100 truncate">
-            {hasDescription ? descriptionText : categoryLabel}
-          </p>
+          <>
+            <p className="font-medium text-slate-800 dark:text-slate-100 truncate">
+              {hasDescription ? descriptionText : categoryLabel}
+            </p>
+            {subBudgetTag && (
+              <p className="text-xs text-slate-400 dark:text-slate-500 mt-1 truncate">{subBudgetTag}</p>
+            )}
+          </>
         ) : (
           <>
             <p className="font-medium text-slate-800 dark:text-slate-100 truncate">{categoryLabel}</p>
@@ -83,6 +99,9 @@ export function ExpenseListItem({
               <p className="text-sm text-slate-500 dark:text-slate-400 truncate">
                 {descriptionText}
               </p>
+            )}
+            {subBudgetTag && (
+              <p className="text-xs text-slate-400 dark:text-slate-500 mt-1 truncate">{subBudgetTag}</p>
             )}
           </>
         )}
@@ -104,6 +123,7 @@ export function ExpenseListItem({
           <ExpenseIconBadges
             hasAttachment={!!expense.attachmentUrl}
             isRecurring={isRecurringExpense(expense)}
+            hasSubBudget={showSubBudgetIndicator}
           />
         </div>
       </div>

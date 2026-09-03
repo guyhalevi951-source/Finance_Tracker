@@ -1,5 +1,6 @@
 import { type SubCategoryRecord } from '../../types/category';
 import { type Expense } from '../../types/expense';
+import { type BudgetProfileId } from '../../config/budgetProfile';
 import {
   deleteSubCategoryPolicy,
   expenseLinksToSubCategory,
@@ -31,6 +32,7 @@ function mergeExpenseLists(stored: Expense[], live: Expense[]): Expense[] {
  */
 export async function deleteSubCategoryWithExpenseReassignment(
   userId: string | null,
+  profileId: BudgetProfileId,
   subCategories: SubCategoryRecord[],
   subId: string,
   liveExpenses: Expense[],
@@ -61,12 +63,12 @@ export async function deleteSubCategoryWithExpenseReassignment(
       await applyExpenseBatch(userId, updatedExpenses);
     }
 
-    await deleteSubCategory(userId, subId);
-    await rememberDeletedSubCategory(userId, subId);
+    await deleteSubCategory(userId, profileId, subId);
+    await rememberDeletedSubCategory(userId, profileId, subId);
 
     if (parentId) {
       const remaining = policyResult.subs.filter((sub) => sub.parentId === parentId);
-      await saveSubCategories(userId, remaining);
+      await saveSubCategories(userId, profileId, remaining);
     }
 
     return { ok: true, updatedSubs: policyResult.subs, updatedExpenses, reassignedCount };

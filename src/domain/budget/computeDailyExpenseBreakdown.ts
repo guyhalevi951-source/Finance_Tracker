@@ -1,4 +1,6 @@
 import { type Expense } from '../../types/expense';
+import { type SubBudgetRecord } from '../../types/budget';
+import { resolveSubBudgetEndDate } from './subBudgetExpenseWindow';
 import { isScheduledOneTimeExpense } from '../expenses/scheduled';
 import { type DateRange, enumerateDaysInRange } from '../expenses/periods';
 import { sumAmounts } from '../money/arithmetic';
@@ -62,15 +64,18 @@ function projectFutureRecurringExpenses(
   range: DateRange,
   todayIso: string,
   buckets: Map<string, { actual: number; future: number }>,
+  subBudgets: SubBudgetRecord[],
 ): void {
   const templates = listActiveRecurrenceTemplates(expenses, todayIso);
   if (templates.length === 0) return;
 
   for (const template of templates) {
+    const capEndDateIso = resolveSubBudgetEndDate(subBudgets, template.budgetId);
     const globalProjectedDates = computeProjectedFutureOccurrenceDates(
       expenses,
       template,
       todayIso,
+      capEndDateIso,
     );
 
     const datesInRange = globalProjectedDates.filter((dateIso) => isInRange(dateIso, range));
@@ -85,11 +90,12 @@ export function computeDailyExpenseBreakdown(
   expenses: Expense[],
   range: DateRange,
   todayIso: string,
+  subBudgets: SubBudgetRecord[] = [],
 ): DailyExpenseBreakdown[] {
   const buckets = new Map<string, { actual: number; future: number }>();
 
   classifyStoredExpenses(expenses, range, todayIso, buckets);
-  projectFutureRecurringExpenses(expenses, range, todayIso, buckets);
+  projectFutureRecurringExpenses(expenses, range, todayIso, buckets, subBudgets);
 
   return enumerateDaysInRange(range).map((dateIso) => {
     const day = buckets.get(dateIso) ?? { actual: 0, future: 0 };

@@ -2,9 +2,12 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AppShell } from './app/AppShell';
 import { ExpensesProvider } from './app/providers/ExpensesProvider';
 import { CategoriesProvider } from './app/providers/CategoriesProvider';
+import { BudgetsProvider } from './app/providers/BudgetsProvider';
 import { ROUTES } from './config/routes';
 import { PeriodicOverviewPage } from './pages/PeriodicOverviewPage';
 import { BudgetSettingsPage } from './pages/BudgetSettingsPage';
+import { BudgetHistoryPage } from './pages/BudgetHistoryPage';
+import { BudgetHistoryDetailPage } from './pages/BudgetHistoryDetailPage';
 import { ExpensesPage } from './pages/ExpensesPage';
 import { ExpenseDetailPage } from './pages/ExpenseDetailPage';
 import { ProfilePage } from './pages/ProfilePage';
@@ -18,11 +21,14 @@ function App() {
   return (
     <BrowserRouter>
       <ExpensesProvider>
-        <CategoriesProvider>
+        <BudgetsProvider>
+          <CategoriesProvider>
           <Routes>
           <Route element={<AppShell />}>
             <Route path={ROUTES.overview} element={<PeriodicOverviewPage />} />
             <Route path={ROUTES.budget} element={<BudgetSettingsPage />} />
+            <Route path={ROUTES.budgetHistory} element={<BudgetHistoryPage />} />
+            <Route path={ROUTES.budgetHistoryDetail} element={<BudgetHistoryDetailPage />} />
             <Route path={ROUTES.expenses} element={<ExpensesPage />} />
             <Route path={ROUTES.expenseDetail} element={<ExpenseDetailPage />} />
             <Route path={ROUTES.profile} element={<ProfilePage />} />
@@ -35,7 +41,8 @@ function App() {
             <Route path={ROUTES.categorySubEdit} element={<SubCategoryEditorPage />} />
           </Route>
         </Routes>
-        </CategoriesProvider>
+          </CategoriesProvider>
+        </BudgetsProvider>
       </ExpensesProvider>
     </BrowserRouter>
   );

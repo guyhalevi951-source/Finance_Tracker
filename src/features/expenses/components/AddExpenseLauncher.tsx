@@ -18,6 +18,9 @@ interface AddExpenseLauncherProps {
   hideFab?: boolean;
   pendingOpen?: { parentId: string | null } | null;
   onPendingOpenHandled?: () => void;
+  activeBudgetId: string;
+  isMaster: boolean;
+  subBudgetWindow?: { startDate: string; endDate: string } | null;
 }
 
 export function AddExpenseLauncher({
@@ -25,12 +28,15 @@ export function AddExpenseLauncher({
   hideFab = false,
   pendingOpen,
   onPendingOpenHandled,
+  activeBudgetId,
+  isMaster,
+  subBudgetWindow = null,
 }: AddExpenseLauncherProps) {
   const navigate = useNavigate();
   const { userId } = useAuthSession();
   const { mainCategories, subCategories } = useCategories(userId);
   const { createExpense } = useExpenses();
-  const addFlow = useAddExpenseFlow({ userId, createExpense });
+  const addFlow = useAddExpenseFlow({ userId, createExpense, activeBudgetId, isMaster, subBudgetWindow });
   const { openFlow } = addFlow;
   const [initialCategoryParentId, setInitialCategoryParentId] = useState<string | null>(null);
 
@@ -95,6 +101,7 @@ export function AddExpenseLauncher({
         onSubmit={() => void addFlow.submit()}
         mainCategories={mainCategories}
         subCategories={subCategories}
+        maxSelectableDate={subBudgetWindow?.endDate}
       />
     </>
   );

@@ -8,6 +8,7 @@ import {
 } from 'react';
 import { type Expense } from '../../types/expense';
 import { loadExpenses, saveExpense } from '../../services/expenses/expenseRepository';
+import { loadSubBudgets } from '../../services/budgets/subBudgetRepository';
 import { syncRecurringExpenses } from '../../services/recurrence/recurringExpenseSyncService';
 import { syncScheduledOneTimeExpenses } from '../../services/expenses/scheduledExpenseSyncService';
 import { useAuthSession } from '../../features/auth/hooks/useAuthSession';
@@ -36,7 +37,13 @@ export function ExpensesProvider({ children }: ExpensesProviderProps) {
   const reload = useCallback(async () => {
     try {
       const loaded = await loadExpenses(userId);
-      const { expenses: afterRecurring } = await syncRecurringExpenses(userId, loaded, todayIso);
+      const subBudgets = await loadSubBudgets(userId);
+      const { expenses: afterRecurring } = await syncRecurringExpenses(
+        userId,
+        loaded,
+        todayIso,
+        subBudgets,
+      );
       const { expenses: synced } = await syncScheduledOneTimeExpenses(
         userId,
         afterRecurring,

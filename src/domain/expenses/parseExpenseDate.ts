@@ -37,3 +37,8 @@ export function toIsoDate(date: Date): string {
 export function isoDateToDate(iso: string): Date {
   return new Date(`${iso}T00:00:00`);
 }
+
+/** Returns a valid ISO date string, falling back to today when input is empty or invalid. */
+export function resolveIsoDateOrToday(iso: string): string {
+  return isIsoDateString(iso) ? iso : toIsoDate(new Date());
+}

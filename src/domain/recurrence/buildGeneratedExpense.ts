@@ -13,6 +13,7 @@ export function buildGeneratedExpense(template: Expense, occurrenceDateIso: stri
     date: occurrenceDateIso,
     paymentMethod: fields.paymentMethod,
     recurrenceSeriesId: template.id,
+    ...(template.budgetId ? { budgetId: template.budgetId } : {}),
     ...(template.attachmentUrl ? { attachmentUrl: template.attachmentUrl } : {}),
   };
 }

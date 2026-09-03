@@ -1,6 +1,8 @@
 export const ROUTES = {
   overview: '/',
   budget: '/budget',
+  budgetHistory: '/budget/history',
+  budgetHistoryDetail: '/budget/history/:id',
   expenses: '/expenses',
   expenseDetail: '/expenses/:id',
   profile: '/profile',
@@ -15,6 +17,10 @@ export const ROUTES = {
 
 export function expenseDetailPath(id: string): string {
   return `/expenses/${id}`;
+}
+
+export function budgetHistoryDetailPath(id: string): string {
+  return `/budget/history/${id}`;
 }
 
 export function categoryEditPath(id: string): string {

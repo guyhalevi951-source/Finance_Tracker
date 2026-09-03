@@ -1,6 +1,10 @@
 import { useTranslation } from 'react-i18next';
 import { type AppLocale } from '../config/app';
 import { useAppHeader } from '../app/hooks/useAppHeader';
+import { buildBudgetScopedTitle } from '../domain/budget/buildBudgetScopedTitle';
+import { filterExpensesByBudget } from '../domain/budget/filterExpensesByBudget';
+import { resolveBudgetLabel } from '../domain/budget/resolveBudgetLabel';
+import { useBudgets } from '../features/budget/hooks/useBudgets';
 import { useExpenses } from '../features/expenses/hooks/useExpenses';
 import { ExpenseFilterToolbar } from '../features/expenses/components/ExpenseFilterToolbar';
 import { useExpenseTimeFilter } from '../features/expenses/hooks/useExpenseTimeFilter';
@@ -13,16 +17,34 @@ export function PeriodicOverviewPage() {
   const { t, i18n } = useTranslation();
   const locale = i18n.language as AppLocale;
   const { expenses, loadError: expensesLoadError } = useExpenses();
+  const { activeBudgetId, activeBudget, isMaster, subBudgets } = useBudgets();
   const timeFilter = useExpenseTimeFilter(locale);
-  const { overview, hasBudget, loadError: budgetLoadError } = usePeriodOverview(
-    expenses,
+
+  const subBudget =
+    !isMaster && 'name' in activeBudget ? activeBudget : null;
+
+  const subBudgetWindow = subBudget
+    ? { startDate: subBudget.startDate, endDate: subBudget.endDate }
+    : null;
+
+  const scopedExpenses = filterExpensesByBudget(expenses, activeBudgetId);
+
+  const { overview, hasBudget, effectiveRange, loadError: budgetLoadError } = usePeriodOverview(
+    scopedExpenses,
     timeFilter.range,
     timeFilter.todayIso,
+    { activeBudgetId, subBudget, subBudgets },
   );
 
   const loadError = budgetLoadError || expensesLoadError;
 
-  useAppHeader({ title: t('nav.overview') });
+  const pageTitle = buildBudgetScopedTitle(
+    resolveBudgetLabel(activeBudget, locale, t),
+    t('nav.overview'),
+    isMaster,
+  );
+
+  useAppHeader({ title: pageTitle });
 
   return (
     <div className="relative pb-20">
@@ -32,12 +54,14 @@ export function PeriodicOverviewPage() {
         </div>
       )}
 
-      <ExpenseFilterToolbar
-        locale={locale}
-        showViewModeToggle={false}
-        showGranularityToggle={false}
-        {...timeFilter}
-      />
+      {isMaster && (
+        <ExpenseFilterToolbar
+          locale={locale}
+          showViewModeToggle={false}
+          showGranularityToggle={false}
+          {...timeFilter}
+        />
+      )}
 
       <PeriodOverviewSummary overview={overview} locale={locale} hasBudget={hasBudget} />
 
@@ -47,7 +71,12 @@ export function PeriodicOverviewPage() {
         todayIso={timeFilter.todayIso}
       />
 
-      <AddExpenseLauncher locale={locale} />
+      <AddExpenseLauncher
+        locale={locale}
+        activeBudgetId={activeBudgetId}
+        isMaster={isMaster}
+        subBudgetWindow={subBudgetWindow}
+      />
     </div>
   );
 }

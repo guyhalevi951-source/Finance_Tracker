@@ -1,4 +1,5 @@
 import { type Expense } from '../../types/expense';
+import { type SubBudgetRecord } from '../../types/budget';
 import {
   type DateRange,
   countDaysInRange,
@@ -58,19 +59,20 @@ function countRemainingDays(range: DateRange, todayIso: string): number {
   return countDaysInRange({ startIso: effectiveStart, endIso: range.endIso });
 }
 
-export function computePeriodOverview({
-  monthlyBudget,
+export function computeOverviewForPeriodBudget({
+  periodBudget,
   expenses,
   range,
   todayIso,
+  subBudgets = [],
 }: {
-  monthlyBudget: number;
+  periodBudget: number;
   expenses: Expense[];
   range: DateRange;
   todayIso: string;
+  subBudgets?: SubBudgetRecord[];
 }): PeriodOverview {
-  const periodBudget = computePeriodBudget(monthlyBudget, range);
-  const dailyTotals = computeDailyExpenseBreakdown(expenses, range, todayIso);
+  const dailyTotals = computeDailyExpenseBreakdown(expenses, range, todayIso, subBudgets);
   const spent = sumAmounts(dailyTotals.map((day) => day.actualExpenses));
   const futurePlanned = sumAmounts(dailyTotals.map((day) => day.futureExpenses));
   const totalPlanned = sumAmounts([spent, futurePlanned]);
@@ -100,4 +102,21 @@ export function computePeriodOverview({
     leftPerDay,
     dailyTotals,
   };
+}
+
+export function computePeriodOverview({
+  monthlyBudget,
+  expenses,
+  range,
+  todayIso,
+  subBudgets = [],
+}: {
+  monthlyBudget: number;
+  expenses: Expense[];
+  range: DateRange;
+  todayIso: string;
+  subBudgets?: SubBudgetRecord[];
+}): PeriodOverview {
+  const periodBudget = computePeriodBudget(monthlyBudget, range);
+  return computeOverviewForPeriodBudget({ periodBudget, expenses, range, todayIso, subBudgets });
 }

@@ -139,6 +139,7 @@ export function migrateExpense(raw: Record<string, unknown>): Expense {
 
   const originalCategoryId = parseOptionalId(raw.originalCategoryId);
   const originalSubCategoryId = parseOptionalId(raw.originalSubCategoryId);
+  const budgetId = typeof raw.budgetId === 'string' ? raw.budgetId : undefined;
 
   return {
     id: raw.id as string,
@@ -158,6 +159,7 @@ export function migrateExpense(raw: Record<string, unknown>): Expense {
     ...(scheduled ? { scheduled } : {}),
     ...(originalCategoryId ? { originalCategoryId } : {}),
     ...(originalSubCategoryId ? { originalSubCategoryId } : {}),
+    ...(budgetId ? { budgetId } : {}),
   };
 }
 
