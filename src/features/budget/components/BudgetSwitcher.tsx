@@ -1,15 +1,17 @@
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, Plus } from 'lucide-react';
 import { type AppLocale } from '../../../config/app';
 import { MASTER_BUDGET_ID } from '../../../domain/budget/constants';
 import { resolveBudgetLabel } from '../../../domain/budget/resolveBudgetLabel';
 import { useBudgets } from '../hooks/useBudgets';
+import { useSubBudgetEditor } from '../hooks/useSubBudgetEditor';
 
 export function BudgetSwitcher() {
   const { t, i18n } = useTranslation();
   const locale = i18n.language as AppLocale;
   const { activeBudgetId, activeBudget, activeSubBudgets, setActiveBudgetId } = useBudgets();
+  const { openAddSubBudget } = useSubBudgetEditor();
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -72,6 +74,19 @@ export function BudgetSwitcher() {
               </button>
             </li>
           ))}
+          <li className="border-t border-slate-200 dark:border-slate-700 mt-1 pt-1">
+            <button
+              type="button"
+              onClick={() => {
+                openAddSubBudget();
+                setOpen(false);
+              }}
+              className="w-full flex items-center gap-2 px-4 py-3 text-sm min-h-[44px] font-medium text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors"
+            >
+              <Plus className="w-4 h-4 shrink-0" />
+              <span className="truncate">{t('budget.add.dropdownAction')}</span>
+            </button>
+          </li>
         </ul>
       )}
     </div>

@@ -3,11 +3,12 @@ import { AppShell } from './app/AppShell';
 import { ExpensesProvider } from './app/providers/ExpensesProvider';
 import { CategoriesProvider } from './app/providers/CategoriesProvider';
 import { BudgetsProvider } from './app/providers/BudgetsProvider';
+import { SubBudgetEditorProvider } from './app/providers/SubBudgetEditorProvider';
 import { ROUTES } from './config/routes';
 import { PeriodicOverviewPage } from './pages/PeriodicOverviewPage';
 import { BudgetSettingsPage } from './pages/BudgetSettingsPage';
-import { BudgetHistoryPage } from './pages/BudgetHistoryPage';
-import { BudgetHistoryDetailPage } from './pages/BudgetHistoryDetailPage';
+import { BudgetHistoryPage } from './pages/BudgetHistoryPage.tsx';
+import { BudgetHistoryDetailPage } from './pages/BudgetHistoryDetailPage.tsx';
 import { ExpensesPage } from './pages/ExpensesPage';
 import { ExpenseDetailPage } from './pages/ExpenseDetailPage';
 import { ProfilePage } from './pages/ProfilePage';
@@ -22,6 +23,7 @@ function App() {
     <BrowserRouter>
       <ExpensesProvider>
         <BudgetsProvider>
+          <SubBudgetEditorProvider>
           <CategoriesProvider>
           <Routes>
           <Route element={<AppShell />}>
@@ -42,6 +44,7 @@ function App() {
           </Route>
         </Routes>
           </CategoriesProvider>
+          </SubBudgetEditorProvider>
         </BudgetsProvider>
       </ExpensesProvider>
     </BrowserRouter>

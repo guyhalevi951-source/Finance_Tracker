@@ -1,22 +1,20 @@
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { NavLink } from 'react-router-dom';
-import { Receipt, Settings, Wallet, X } from 'lucide-react';
+import { Receipt, Settings, User, Wallet, X } from 'lucide-react';
 import { NAV_ITEMS } from '../../config/nav';
+import { ROUTES } from '../../config/routes';
 import { AppLogo } from './AppLogo';
 import { useSidebarContext } from '../providers/SidebarProvider';
 import { HEADER_ICON_BUTTON_CLASS } from './headerIconButton';
 import { LanguageToggle } from '../../features/i18n/components/LanguageToggle';
 import { ThemeToggle } from '../../features/theme/components/ThemeToggle';
-import { UserAvatar } from '../../features/profile/components/UserAvatar';
 
 const SIDEBAR_NAV_ICON_SLOT = 'flex items-center justify-center w-5 h-5 shrink-0';
 
 const NAV_ICONS = {
   budget: Wallet,
   expenses: Receipt,
-  profile: null,
-  settings: Settings,
 } as const;
 
 export function AppSidebar() {
@@ -47,6 +45,11 @@ export function AppSidebar() {
       isActive
         ? 'text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/30'
         : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700'
+    }`;
+
+  const utilityNavClass = ({ isActive }: { isActive: boolean }) =>
+    `${HEADER_ICON_BUTTON_CLASS}${
+      isActive ? ' text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/30' : ''
     }`;
 
   return (
@@ -97,14 +100,9 @@ export function AppSidebar() {
                 className={navLinkClass}
                 end={item.end}
                 onClick={closeSidebar}
-                aria-label={item.id === 'profile' ? t('profile.goToProfile') : undefined}
               >
                 <span className={SIDEBAR_NAV_ICON_SLOT}>
-                  {item.id === 'profile' ? (
-                    <UserAvatar variant="nav" />
-                  ) : (
-                    Icon && <Icon className="w-5 h-5" />
-                  )}
+                  {Icon && <Icon className="w-5 h-5" />}
                 </span>
                 <span>{t(`nav.${item.id}`)}</span>
               </NavLink>
@@ -113,11 +111,31 @@ export function AppSidebar() {
         </nav>
 
         <div
-          className="mt-auto flex items-center justify-end gap-1 p-4 border-t border-slate-200 dark:border-slate-700"
+          className="mt-auto flex items-center justify-between w-full p-4 border-t border-slate-200 dark:border-slate-700"
           dir="ltr"
         >
-          <LanguageToggle />
-          <ThemeToggle />
+          <NavLink
+            to={ROUTES.settings}
+            className={utilityNavClass}
+            aria-label={t('nav.settings')}
+            onClick={closeSidebar}
+          >
+            <Settings className="w-5 h-5" />
+          </NavLink>
+
+          <div className="flex items-center gap-1">
+            <LanguageToggle />
+            <ThemeToggle />
+          </div>
+
+          <NavLink
+            to={ROUTES.profile}
+            className={utilityNavClass}
+            aria-label={t('profile.goToProfile')}
+            onClick={closeSidebar}
+          >
+            <User className="w-5 h-5" />
+          </NavLink>
         </div>
       </aside>
     </>

@@ -43,7 +43,7 @@
   },
   "nav": {
     "overview": "סקירה",
-    "budget": "תקציב",
+    "budget": "תקציבים",
     "expenses": "הוצאות",
     "profile": "פרופיל",
     "settings": "הגדרות",
@@ -105,6 +105,7 @@
   "budget": {
     "pageTitle": "עמוד התקציבים",
     "monthlyBudgetTitle": "התקציב החודשי",
+    "personalBudgets": "תקציבים אישיים",
     "amountLabel": "סכום התקציב (₪)",
     "amountPlaceholder": "הזן סכום",
     "amountPlaceholderWithCurrent": "נוכחי: ₪{{amount}}",
@@ -125,7 +126,8 @@
     },
     "add": {
       "title": "הוסף תקציב",
-      "fab": "הוסף תקציב"
+      "fab": "הוסף תקציב",
+      "dropdownAction": "הוסף תקציב חדש"
     },
     "edit": {
       "title": "ערוך תקציב"

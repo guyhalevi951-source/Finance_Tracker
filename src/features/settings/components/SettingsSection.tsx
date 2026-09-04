@@ -35,10 +35,10 @@ export function SettingsSection({
   onDeleteScheduled,
 }: SettingsSectionProps) {
   const { t } = useTranslation();
-  const [expensesOpen, setExpensesOpen] = useState(true);
-  const [futureOpen, setFutureOpen] = useState(true);
-  const [recurringOpen, setRecurringOpen] = useState(true);
-  const [oneTimeOpen, setOneTimeOpen] = useState(true);
+  const [expensesOpen, setExpensesOpen] = useState(false);
+  const [futureOpen, setFutureOpen] = useState(false);
+  const [recurringOpen, setRecurringOpen] = useState(false);
+  const [oneTimeOpen, setOneTimeOpen] = useState(false);
 
   return (
     <section>

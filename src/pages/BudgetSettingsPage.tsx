@@ -7,18 +7,18 @@ import { ROUTES } from '../config/routes';
 import { useAppHeader } from '../app/hooks/useAppHeader';
 import { useMonthBudget } from '../features/budget/hooks/useMonthBudget';
 import { useBudgets } from '../features/budget/hooks/useBudgets';
+import { useSubBudgetEditor } from '../features/budget/hooks/useSubBudgetEditor';
 import { useExpenseTimeFilter } from '../features/expenses/hooks/useExpenseTimeFilter';
 import { AddSubBudgetFab } from '../features/budget/components/AddSubBudgetFab';
 import { SubBudgetList } from '../features/budget/components/SubBudgetList';
-import { SubBudgetEditorModal } from '../features/budget/components/SubBudgetEditorModal';
-import { type SubBudgetRecord } from '../types/budget';
 
 export function BudgetSettingsPage() {
   const { t, i18n } = useTranslation();
   const locale = i18n.language as AppLocale;
   const timeFilter = useExpenseTimeFilter(locale);
-  const { activeSubBudgets, addSubBudget, updateSubBudget, deleteSubBudgetAction, reorderSubBudgetsAction, setActiveBudgetId } =
+  const { activeSubBudgets, deleteSubBudgetAction, reorderSubBudgetsAction, setActiveBudgetId } =
     useBudgets();
+  const { open, openAddSubBudget, openEditSubBudget } = useSubBudgetEditor();
 
   const {
     effectiveAmount,
@@ -34,10 +34,7 @@ export function BudgetSettingsPage() {
     handleResetBudget,
   } = useMonthBudget(timeFilter.year, timeFilter.month);
 
-  const [editorOpen, setEditorOpen] = useState(false);
-  const [editingBudget, setEditingBudget] = useState<SubBudgetRecord | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
 
   useAppHeader({ title: t('budget.pageTitle') });
 
@@ -47,29 +44,6 @@ export function BudgetSettingsPage() {
     },
     [setActiveBudgetId],
   );
-
-  const handleOpenAdd = () => {
-    setEditingBudget(null);
-    setEditorOpen(true);
-  };
-
-  const handleEdit = (budget: SubBudgetRecord) => {
-    setEditingBudget(budget);
-    setEditorOpen(true);
-  };
-
-  const handleSave = async (input: Parameters<typeof addSubBudget>[0]) => {
-    setIsSaving(true);
-    try {
-      if (editingBudget) {
-        await updateSubBudget(editingBudget.id, input);
-      } else {
-        await addSubBudget(input);
-      }
-    } finally {
-      setIsSaving(false);
-    }
-  };
 
   const handleDelete = async (id: string, deleteExpenses: boolean) => {
     setIsDeleting(true);
@@ -122,22 +96,13 @@ export function BudgetSettingsPage() {
           },
         }}
         onReorder={(orderedIds) => void reorderSubBudgetsAction(orderedIds)}
-        onEdit={handleEdit}
+        onEdit={openEditSubBudget}
         onDelete={handleDelete}
         onOpenOverview={handleOpenOverview}
         isDeleting={isDeleting}
       />
 
-      <AddSubBudgetFab onClick={handleOpenAdd} hidden={editorOpen} />
-
-      <SubBudgetEditorModal
-        open={editorOpen}
-        locale={locale}
-        editingBudget={editingBudget}
-        isSaving={isSaving}
-        onSave={handleSave}
-        onClose={() => setEditorOpen(false)}
-      />
+      <AddSubBudgetFab onClick={openAddSubBudget} hidden={open} />
     </div>
   );
 }

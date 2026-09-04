@@ -1,18 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import {
-  isProfileNavSecondToLast,
-  isSettingsNavLast,
-  NAV_ITEMS,
-} from './nav';
+import { NAV_ITEMS } from './nav';
 
 describe('nav', () => {
-  it('keeps Settings as the last nav item', () => {
-    expect(isSettingsNavLast(NAV_ITEMS)).toBe(true);
-    expect(NAV_ITEMS[NAV_ITEMS.length - 1]?.id).toBe('settings');
+  it('lists Expenses as the first primary nav item', () => {
+    expect(NAV_ITEMS[0]?.id).toBe('expenses');
   });
 
-  it('keeps Profile as the second-to-last nav item', () => {
-    expect(isProfileNavSecondToLast(NAV_ITEMS)).toBe(true);
-    expect(NAV_ITEMS[NAV_ITEMS.length - 2]?.id).toBe('profile');
+  it('includes only Expenses and Budget in the primary nav list', () => {
+    expect(NAV_ITEMS.map((item) => item.id)).toEqual(['expenses', 'budget']);
   });
 });

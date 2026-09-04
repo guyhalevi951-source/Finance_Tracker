@@ -27,6 +27,7 @@ import { formatCurrencyAmount, formatExpenseDateNumeric } from '../../../lib/for
 import { type SubBudgetRecord } from '../../../types/budget';
 import { BudgetOverviewButton } from './BudgetOverviewButton';
 import { DeleteSubBudgetConfirmModal } from './DeleteSubBudgetConfirmModal';
+import { SettingsCategoryPanel } from '../../settings/components/SettingsCategoryPanel';
 import {
   BUDGET_ACTION_CLUSTER_WIDTH_CLASS,
   BUDGET_LIST_ROW_LAYOUT,
@@ -135,6 +136,7 @@ export function SubBudgetList({
 }: SubBudgetListProps) {
   const { t } = useTranslation();
   const [deleteTarget, setDeleteTarget] = useState<SubBudgetRecord | null>(null);
+  const [personalBudgetsOpen, setPersonalBudgetsOpen] = useState(false);
 
   const ids = useMemo(() => subBudgets.map((budget) => budget.id), [subBudgets]);
 
@@ -161,25 +163,34 @@ export function SubBudgetList({
           {...masterBudget}
           onOpenOverview={() => onOpenOverview(MASTER_BUDGET_ID)}
         />
+      </div>
 
-        {subBudgets.length > 0 && (
-          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-            <SortableContext items={ids} strategy={verticalListSortingStrategy}>
-              <ul className="divide-y divide-slate-200 dark:divide-slate-700">
-                {subBudgets.map((budget) => (
-                  <SortableSubBudgetRow
-                    key={budget.id}
-                    budget={budget}
-                    locale={locale}
-                    onEdit={() => onEdit(budget)}
-                    onDeleteRequest={() => setDeleteTarget(budget)}
-                    onOpenOverview={() => onOpenOverview(budget.id)}
-                  />
-                ))}
-              </ul>
-            </SortableContext>
-          </DndContext>
-        )}
+      <div className="mt-6">
+        <SettingsCategoryPanel
+          title={t('budget.personalBudgets')}
+          open={personalBudgetsOpen}
+          onToggle={() => setPersonalBudgetsOpen((prev) => !prev)}
+          depth={0}
+        >
+          {subBudgets.length > 0 && (
+            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+              <SortableContext items={ids} strategy={verticalListSortingStrategy}>
+                <ul className="divide-y divide-slate-200 dark:divide-slate-700">
+                  {subBudgets.map((budget) => (
+                    <SortableSubBudgetRow
+                      key={budget.id}
+                      budget={budget}
+                      locale={locale}
+                      onEdit={() => onEdit(budget)}
+                      onDeleteRequest={() => setDeleteTarget(budget)}
+                      onOpenOverview={() => onOpenOverview(budget.id)}
+                    />
+                  ))}
+                </ul>
+              </SortableContext>
+            </DndContext>
+          )}
+        </SettingsCategoryPanel>
       </div>
 
       <DeleteSubBudgetConfirmModal

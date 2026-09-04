@@ -5,6 +5,7 @@ import { type AppLocale } from '../../../config/app';
 import { CustomDatePicker } from '../../../components/calendar';
 import { parseSubBudgetInput } from '../../../domain/budget/validateSubBudget';
 import { toIsoDate } from '../../../domain/expenses/parseExpenseDate';
+import { formatExpenseDateNumeric } from '../../../lib/format/formatDate';
 import { useTodayIso } from '../../../lib/hooks/useTodayIso';
 import { preventNumberInputScroll } from '../../../lib/input/preventNumberInputScroll';
 import { createBilingualText } from '../../../services/translation/createBilingualText';
@@ -91,7 +92,7 @@ export function SubBudgetEditorModal({
             type="button"
             onClick={onClose}
             disabled={isSaving}
-            className="text-slate-400 min-h-[44px] min-w-[44px] flex items-center justify-center"
+            className="text-slate-400 dark:text-slate-200 min-h-[44px] min-w-[44px] flex items-center justify-center"
             aria-label={t('budget.form.cancel')}
           >
             <X className="w-5 h-5" />
@@ -136,9 +137,13 @@ export function SubBudgetEditorModal({
             <button
               type="button"
               onClick={() => setStartPickerOpen(true)}
-              className="w-full px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-600 text-start min-h-[48px]"
+              className={`w-full px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-start min-h-[48px] ${
+                startDate
+                  ? 'text-slate-900 dark:text-white'
+                  : 'text-slate-400 dark:text-slate-400'
+              }`}
             >
-              {startDate || t('budget.form.selectDate')}
+              {startDate ? formatExpenseDateNumeric(startDate, locale) : t('budget.form.selectDate')}
             </button>
           </div>
 
@@ -149,9 +154,13 @@ export function SubBudgetEditorModal({
             <button
               type="button"
               onClick={() => setEndPickerOpen(true)}
-              className="w-full px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-600 text-start min-h-[48px]"
+              className={`w-full px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-start min-h-[48px] ${
+                endDate
+                  ? 'text-slate-900 dark:text-white'
+                  : 'text-slate-400 dark:text-slate-400'
+              }`}
             >
-              {endDate || t('budget.form.selectDate')}
+              {endDate ? formatExpenseDateNumeric(endDate, locale) : t('budget.form.selectDate')}
             </button>
           </div>
         </div>
@@ -161,7 +170,7 @@ export function SubBudgetEditorModal({
             type="button"
             onClick={onClose}
             disabled={isSaving}
-            className="flex-1 px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-600 min-h-[48px]"
+            className="flex-1 px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-600 min-h-[48px] text-slate-700 dark:text-white hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors"
           >
             {t('budget.form.cancel')}
           </button>

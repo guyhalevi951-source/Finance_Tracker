@@ -43,7 +43,7 @@
   },
   "nav": {
     "overview": "Overview",
-    "budget": "Budget",
+    "budget": "Budgets",
     "expenses": "Expenses",
     "profile": "Profile",
     "settings": "Settings",
@@ -105,6 +105,7 @@
   "budget": {
     "pageTitle": "Budgets",
     "monthlyBudgetTitle": "Monthly Budget",
+    "personalBudgets": "Personal Budgets",
     "amountLabel": "Budget amount (₪)",
     "amountPlaceholder": "Enter amount",
     "amountPlaceholderWithCurrent": "Current: ₪{{amount}}",
@@ -125,7 +126,8 @@
     },
     "add": {
       "title": "Add Budget",
-      "fab": "Add budget"
+      "fab": "Add budget",
+      "dropdownAction": "Add New Budget"
     },
     "edit": {
       "title": "Edit Budget"
