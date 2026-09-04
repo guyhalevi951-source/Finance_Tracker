@@ -6,7 +6,7 @@ export interface MonthBudgetPatch {
 }
 
 function defaultEntry(): MonthBudgetEntry {
-  return { amount: null, carryOverToNext: true };
+  return { amount: null, carryOverToNext: false };
 }
 
 /** Upsert a single month entry without mutating other months. */
@@ -29,4 +29,9 @@ export function upsertMonthBudgetEntry(
 
 export function getMonthBudgetEntry(store: BudgetStore, monthKey: string): MonthBudgetEntry {
   return store[monthKey] ?? defaultEntry();
+}
+
+/** Clear a month's manually saved amount; preserves carryOverToNext. */
+export function clearMonthBudgetAmount(store: BudgetStore, monthKey: string): BudgetStore {
+  return upsertMonthBudgetEntry(store, monthKey, { amount: null });
 }

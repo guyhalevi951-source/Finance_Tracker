@@ -110,7 +110,8 @@
     "amountPlaceholderWithCurrent": "Current: ₪{{amount}}",
     "updateButton": "Update Budget",
     "savedButton": "Saved!",
-    "carryOverToNext": "Save/carry over this budget to the next month?",
+    "carryOverToNext": "Save for next month?",
+    "resetButton": "Reset",
     "expenseTag": "Budget: {{name}}",
     "switcher": {
       "label": "Active budget"

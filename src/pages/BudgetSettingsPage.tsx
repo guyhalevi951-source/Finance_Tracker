@@ -7,8 +7,6 @@ import { ROUTES } from '../config/routes';
 import { useAppHeader } from '../app/hooks/useAppHeader';
 import { useMonthBudget } from '../features/budget/hooks/useMonthBudget';
 import { useBudgets } from '../features/budget/hooks/useBudgets';
-import { BudgetSettingsCard } from '../features/budget/components/BudgetSettingsCard';
-import { ExpenseFilterToolbar } from '../features/expenses/components/ExpenseFilterToolbar';
 import { useExpenseTimeFilter } from '../features/expenses/hooks/useExpenseTimeFilter';
 import { AddSubBudgetFab } from '../features/budget/components/AddSubBudgetFab';
 import { SubBudgetList } from '../features/budget/components/SubBudgetList';
@@ -19,18 +17,21 @@ export function BudgetSettingsPage() {
   const { t, i18n } = useTranslation();
   const locale = i18n.language as AppLocale;
   const timeFilter = useExpenseTimeFilter(locale);
-  const { isMaster, activeSubBudgets, addSubBudget, updateSubBudget, deleteSubBudgetAction, reorderSubBudgetsAction } =
+  const { activeSubBudgets, addSubBudget, updateSubBudget, deleteSubBudgetAction, reorderSubBudgetsAction } =
     useBudgets();
 
   const {
     effectiveAmount,
     carryOverToNext,
+    budgetSource,
+    showCarryOverCheckbox,
     budgetInput,
     showBudgetSaved,
     loadError,
     setBudgetInput,
     handleSetBudget,
     handleCarryOverChange,
+    handleResetBudget,
   } = useMonthBudget(timeFilter.year, timeFilter.month);
 
   const [editorOpen, setEditorOpen] = useState(false);
@@ -90,33 +91,29 @@ export function BudgetSettingsPage() {
         </Link>
       </div>
 
-      {isMaster && (
-        <>
-          <ExpenseFilterToolbar
-            locale={locale}
-            showViewModeToggle={false}
-            showGranularityToggle={false}
-            {...timeFilter}
-          />
-
-          <div className="mb-8">
-            <BudgetSettingsCard
-              effectiveAmount={effectiveAmount}
-              carryOverToNext={carryOverToNext}
-              budgetInput={budgetInput}
-              showBudgetSaved={showBudgetSaved}
-              locale={locale}
-              setBudgetInput={setBudgetInput}
-              handleSetBudget={handleSetBudget}
-              handleCarryOverChange={handleCarryOverChange}
-            />
-          </div>
-        </>
-      )}
-
       <SubBudgetList
         locale={locale}
         subBudgets={activeSubBudgets}
+        masterBudget={{
+          year: timeFilter.year,
+          month: timeFilter.month,
+          monthLabel: timeFilter.monthLabel,
+          goToPreviousMonth: timeFilter.goToPreviousMonth,
+          goToNextMonth: timeFilter.goToNextMonth,
+          selectMonth: timeFilter.selectMonth,
+          monthBudget: {
+            effectiveAmount,
+            carryOverToNext,
+            budgetSource,
+            showCarryOverCheckbox,
+            budgetInput,
+            showBudgetSaved,
+            setBudgetInput,
+            handleSetBudget,
+            handleCarryOverChange,
+            handleResetBudget,
+          },
+        }}
         onReorder={(orderedIds) => void reorderSubBudgetsAction(orderedIds)}
         onEdit={handleEdit}
         onDelete={handleDelete}

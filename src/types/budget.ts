@@ -1,9 +1,9 @@
 import { type BilingualText } from './bilingual';
 
 export interface MonthBudgetEntry {
-  /** null = not explicitly set by user for this month */
+  /** null = unset or inherited via carryover; non-null = user typed and saved */
   amount: number | null;
-  /** When true, month N+1 inherits this month's resolved amount */
+  /** When true (user opt-in), month N+1 inherits this month's resolved amount. Defaults to false. */
   carryOverToNext: boolean;
 }
 

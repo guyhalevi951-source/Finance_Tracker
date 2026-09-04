@@ -25,14 +25,26 @@ describe('resolveMonthBudget', () => {
     expect(resolveMonthBudget(store, '2026-08')).toEqual({
       amount: 4000,
       source: 'inherited',
-      carryOverToNext: true,
+      carryOverToNext: false,
       isExplicit: false,
     });
   });
 
-  it('chains inheritance across multiple months', () => {
+  it('does not chain inheritance through months without carryOver opt-in', () => {
     const store: BudgetStore = {
       '2026-01': { amount: 3000, carryOverToNext: true },
+    };
+
+    expect(resolveMonthBudget(store, '2026-02').amount).toBe(3000);
+    expect(resolveMonthBudget(store, '2026-02').source).toBe('inherited');
+    expect(resolveMonthBudget(store, '2026-03').amount).toBe(0);
+    expect(resolveMonthBudget(store, '2026-03').source).toBe('none');
+  });
+
+  it('chains inheritance when intermediate month opts in to carryover', () => {
+    const store: BudgetStore = {
+      '2026-01': { amount: 3000, carryOverToNext: true },
+      '2026-02': { amount: null, carryOverToNext: true },
     };
 
     expect(resolveMonthBudget(store, '2026-03').amount).toBe(3000);
@@ -47,17 +59,17 @@ describe('resolveMonthBudget', () => {
     expect(resolveMonthBudget(store, '2026-08')).toEqual({
       amount: 0,
       source: 'none',
-      carryOverToNext: true,
+      carryOverToNext: false,
       isExplicit: false,
     });
   });
 
-  it('defaults carryOverToNext to true when entry is missing', () => {
+  it('defaults carryOverToNext to false when entry is missing', () => {
     const store: BudgetStore = {
       '2026-06': { amount: 2000, carryOverToNext: true },
     };
 
-    expect(resolveMonthBudget(store, '2026-07').carryOverToNext).toBe(true);
+    expect(resolveMonthBudget(store, '2026-07').carryOverToNext).toBe(false);
     expect(resolveMonthBudget(store, '2026-07').amount).toBe(2000);
   });
 
@@ -75,7 +87,7 @@ describe('resolveMonthBudget', () => {
     expect(resolveMonthBudget({}, '2026-09')).toEqual({
       amount: 0,
       source: 'none',
-      carryOverToNext: true,
+      carryOverToNext: false,
       isExplicit: false,
     });
   });
@@ -91,5 +103,19 @@ describe('resolveMonthBudget', () => {
     expect(next['2026-07']).toEqual({ amount: 4000, carryOverToNext: true });
     expect(next['2026-08']).toEqual({ amount: 5000, carryOverToNext: true });
     expect(next['2026-09']).toEqual({ amount: null, carryOverToNext: false });
+  });
+
+  it('manual amount on N+1 beats inheritance from N', () => {
+    const store: BudgetStore = {
+      '2026-09': { amount: 4000, carryOverToNext: true },
+      '2026-10': { amount: 6000, carryOverToNext: true },
+    };
+
+    expect(resolveMonthBudget(store, '2026-10')).toEqual({
+      amount: 6000,
+      source: 'explicit',
+      carryOverToNext: true,
+      isExplicit: true,
+    });
   });
 });

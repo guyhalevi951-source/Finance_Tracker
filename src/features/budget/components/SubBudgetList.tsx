@@ -18,17 +18,23 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { GripHorizontal, Lock, Pencil, Trash2 } from 'lucide-react';
+import { GripHorizontal, Pencil, Trash2 } from 'lucide-react';
 import { type AppLocale } from '../../../config/app';
 import { SEMANTIC_COLORS } from '../../../config/semanticColors';
 import { resolveBudgetLabel } from '../../../domain/budget/resolveBudgetLabel';
 import { formatCurrencyAmount, formatExpenseDateNumeric } from '../../../lib/format/formatDate';
 import { type SubBudgetRecord } from '../../../types/budget';
 import { DeleteSubBudgetConfirmModal } from './DeleteSubBudgetConfirmModal';
+import {
+  BUDGET_LIST_ROW_LAYOUT,
+  MasterBudgetListRow,
+  type MasterBudgetListRowProps,
+} from './MasterBudgetListRow';
 
 interface SubBudgetListProps {
   locale: AppLocale;
   subBudgets: SubBudgetRecord[];
+  masterBudget: Omit<MasterBudgetListRowProps, 'locale'>;
   onReorder: (orderedIds: string[]) => void;
   onEdit: (budget: SubBudgetRecord) => void;
   onDelete: (id: string, deleteExpenses: boolean) => Promise<void>;
@@ -58,29 +64,10 @@ function SortableSubBudgetRow({ budget, locale, onEdit, onDeleteRequest }: Sorta
     <li
       ref={setNodeRef}
       style={style}
-      className={`flex items-center gap-3 px-4 py-4 min-h-[64px] bg-white dark:bg-slate-800 ${
+      className={`flex justify-between items-start gap-3 ${BUDGET_LIST_ROW_LAYOUT} bg-white dark:bg-slate-800 ${
         isDragging ? 'opacity-80 shadow-lg z-10 relative' : ''
       }`}
     >
-      <button
-        type="button"
-        onClick={onDeleteRequest}
-        className="text-slate-400 hover:text-rose-600 min-h-[44px] min-w-[44px] flex items-center justify-center shrink-0"
-        aria-label={t('budget.list.delete')}
-      >
-        <Trash2 className="w-5 h-5" />
-      </button>
-
-      <button
-        type="button"
-        className="text-slate-400 cursor-grab active:cursor-grabbing min-h-[44px] min-w-[44px] flex items-center justify-center shrink-0 touch-none"
-        aria-label={t('budget.list.reorder')}
-        {...attributes}
-        {...listeners}
-      >
-        <GripHorizontal className="w-5 h-5" />
-      </button>
-
       <div className="flex-1 min-w-0">
         <p className="font-medium text-slate-800 dark:text-slate-100 truncate">{label}</p>
         <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
@@ -92,14 +79,35 @@ function SortableSubBudgetRow({ budget, locale, onEdit, onDeleteRequest }: Sorta
         </p>
       </div>
 
-      <button
-        type="button"
-        onClick={onEdit}
-        className="text-slate-400 hover:text-amber-600 min-h-[44px] min-w-[44px] flex items-center justify-center shrink-0"
-        aria-label={t('budget.list.edit')}
-      >
-        <Pencil className="w-5 h-5" />
-      </button>
+      <div className="flex items-center gap-3 shrink-0 self-center">
+        <button
+          type="button"
+          onClick={onDeleteRequest}
+          className="text-slate-400 hover:text-rose-600 min-h-[44px] min-w-[44px] flex items-center justify-center"
+          aria-label={t('budget.list.delete')}
+        >
+          <Trash2 className="w-5 h-5" />
+        </button>
+
+        <button
+          type="button"
+          onClick={onEdit}
+          className="text-slate-400 hover:text-amber-600 min-h-[44px] min-w-[44px] flex items-center justify-center"
+          aria-label={t('budget.list.edit')}
+        >
+          <Pencil className="w-5 h-5" />
+        </button>
+
+        <button
+          type="button"
+          className="text-slate-400 cursor-grab active:cursor-grabbing min-h-[44px] min-w-[44px] flex items-center justify-center touch-none"
+          aria-label={t('budget.list.reorder')}
+          {...attributes}
+          {...listeners}
+        >
+          <GripHorizontal className="w-5 h-5" />
+        </button>
+      </div>
     </li>
   );
 }
@@ -107,6 +115,7 @@ function SortableSubBudgetRow({ budget, locale, onEdit, onDeleteRequest }: Sorta
 export function SubBudgetList({
   locale,
   subBudgets,
+  masterBudget,
   onReorder,
   onEdit,
   onDelete,
@@ -135,17 +144,7 @@ export function SubBudgetList({
   return (
     <>
       <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
-        <div className="flex items-center gap-3 px-4 py-4 min-h-[64px] border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/40">
-          <Lock className="w-5 h-5 text-slate-400 shrink-0" aria-hidden />
-          <div className="flex-1 min-w-0">
-            <p className="font-medium text-slate-800 dark:text-slate-100">
-              {t('budget.monthlyBudgetTitle')}
-            </p>
-            <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
-              {t('budget.list.masterLocked')}
-            </p>
-          </div>
-        </div>
+        <MasterBudgetListRow locale={locale} {...masterBudget} />
 
         {subBudgets.length > 0 && (
           <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>

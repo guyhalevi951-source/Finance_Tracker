@@ -63,7 +63,7 @@ describe('loadBudgetStore', () => {
 
     const today = new Date();
     const monthKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
-    expect(result.value[monthKey]).toEqual({ amount: 2500, carryOverToNext: true });
+    expect(result.value[monthKey]).toEqual({ amount: 2500, carryOverToNext: false });
     expect(localStorage.getItem('monthlyBudget')).toBeNull();
   });
 

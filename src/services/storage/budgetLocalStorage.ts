@@ -59,7 +59,7 @@ function migrateLegacyBudget(store: BudgetStore): BudgetStore {
   const monthKey = toMonthKey(today.getFullYear(), today.getMonth());
   const migrated: BudgetStore = {
     ...store,
-    [monthKey]: { amount: parsed, carryOverToNext: true },
+    [monthKey]: { amount: parsed, carryOverToNext: false },
   };
 
   localStorage.removeItem(LEGACY_BUDGET_KEY);

@@ -31,3 +31,22 @@ export function previousMonthKey(key: string): string | null {
 
   return `${year}-${String(month).padStart(2, '0')}`;
 }
+
+/** Return the next month's key, or null if the key format is invalid. */
+export function nextMonthKey(key: string): string | null {
+  const match = /^(\d{4})-(\d{2})$/.exec(key);
+  if (!match) {
+    return null;
+  }
+
+  let year = Number(match[1]);
+  let month = Number(match[2]);
+
+  month += 1;
+  if (month > 12) {
+    month = 1;
+    year += 1;
+  }
+
+  return `${year}-${String(month).padStart(2, '0')}`;
+}
