@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ArrowLeft, Check } from 'lucide-react';
+import { type AppLocale } from '../../../config/app';
 import {
   DEFAULT_RECURRENCE_SELECTION,
   type OccurrencesLimitPreset,
@@ -10,6 +11,7 @@ import {
   type RecurrenceSelection,
 } from '../../../types/recurrenceRule';
 import { validateRecurrenceSelection } from '../../../domain/recurrence/validateRecurrenceRule';
+import { evaluateSubBudgetOccurrenceCap } from '../../../domain/recurrence/subBudgetRecurrenceOccurrenceCap';
 import { preventNumberInputScroll } from '../../../lib/input/preventNumberInputScroll';
 import {
   mergeOccurrencesIntoSelection,
@@ -37,6 +39,9 @@ interface ExpenseRecurrencePickerModalProps {
   occurrencesCustomLabelKey?: string;
   minCustomOccurrences?: number;
   hideOccurrencesField?: boolean;
+  expenseStartDate?: string;
+  subBudgetEndDate?: string;
+  locale?: AppLocale;
 }
 
 function resolvePresetLabelKey(preset: RecurrencePresetId, selection: RecurrenceSelection): string {
@@ -68,8 +73,12 @@ export function ExpenseRecurrencePickerModal({
   occurrencesCustomLabelKey,
   minCustomOccurrences,
   hideOccurrencesField = false,
+  expenseStartDate,
+  subBudgetEndDate,
+  locale,
 }: ExpenseRecurrencePickerModalProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const displayLocale = locale ?? (i18n.language as AppLocale);
   const [pendingPreset, setPendingPreset] = useState<RecurrencePresetId>('never');
   const [presetListExpanded, setPresetListExpanded] = useState(true);
   const [customFormActive, setCustomFormActive] = useState(false);
@@ -101,6 +110,45 @@ export function ExpenseRecurrencePickerModal({
       document.body.style.overflow = prev;
     };
   }, [open]);
+
+  const subBudgetOccurrenceCap = useMemo(() => {
+    if (!expenseStartDate || !subBudgetEndDate || pendingPreset === 'never') {
+      return null;
+    }
+
+    const selection: RecurrenceSelection =
+      pendingPreset === 'custom'
+        ? {
+            preset: 'custom',
+            customMode,
+            customIntervalDays: intervalDays,
+            customWeekdays: weekdays,
+            occurrencesLimit,
+            ...(occurrencesLimit === 'custom' ? { customOccurrences } : {}),
+          }
+        : mergeOccurrencesIntoSelection(
+            { preset: pendingPreset },
+            occurrencesLimit,
+            customOccurrences,
+          );
+
+    return evaluateSubBudgetOccurrenceCap(
+      expenseStartDate,
+      selection,
+      subBudgetEndDate,
+    );
+  }, [
+    expenseStartDate,
+    subBudgetEndDate,
+    pendingPreset,
+    customMode,
+    intervalDays,
+    weekdays,
+    occurrencesLimit,
+    customOccurrences,
+  ]);
+
+  const occurrenceCapBlocked = subBudgetOccurrenceCap?.exceedsCap ?? false;
 
   if (!open) return null;
 
@@ -169,6 +217,7 @@ export function ExpenseRecurrencePickerModal({
   };
 
   const handleConfirm = () => {
+    if (occurrenceCapBlocked) return;
     const baseSelection = buildSelection();
     const { limit, custom } = resolveOccurrencesForMerge();
     const selection = mergeOccurrencesIntoSelection(baseSelection, limit, custom);
@@ -184,6 +233,7 @@ export function ExpenseRecurrencePickerModal({
   };
 
   const handleCustomConfirm = () => {
+    if (occurrenceCapBlocked) return;
     const baseSelection = buildSelection();
     const { limit, custom } = resolveOccurrencesForMerge();
     const selection = mergeOccurrencesIntoSelection(baseSelection, limit, custom);
@@ -248,6 +298,8 @@ export function ExpenseRecurrencePickerModal({
         occurrencesTitleKey={occurrencesTitleKey}
         occurrencesCustomLabelKey={occurrencesCustomLabelKey}
         minCustomOccurrences={minCustomOccurrences}
+        locale={displayLocale}
+        subBudgetOccurrenceCap={subBudgetOccurrenceCap}
       />
     );
   };
@@ -360,7 +412,8 @@ export function ExpenseRecurrencePickerModal({
             <button
               type="button"
               onClick={handleCustomConfirm}
-              className="w-full px-4 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-medium min-h-[48px]"
+              disabled={occurrenceCapBlocked}
+              className="w-full px-4 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-medium min-h-[48px] disabled:opacity-40 disabled:cursor-not-allowed"
             >
               {t('addExpense.recurrence.confirm')}
             </button>
@@ -386,7 +439,8 @@ export function ExpenseRecurrencePickerModal({
               <button
                 type="button"
                 onClick={handleConfirm}
-                className="w-full mt-4 px-4 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-medium min-h-[48px]"
+                disabled={occurrenceCapBlocked}
+                className="w-full mt-4 px-4 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-medium min-h-[48px] disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 {t('addExpense.recurrence.confirm')}
               </button>

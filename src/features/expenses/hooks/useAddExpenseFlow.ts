@@ -16,6 +16,7 @@ import { selectionToRule } from '../../../domain/recurrence/presets';
 import { validateRecurrenceSelection } from '../../../domain/recurrence/validateRecurrenceRule';
 import { isDateWithinSubBudget } from '../../../domain/budget/validateSubBudget';
 import { finalizeRecurrenceSchedule } from '../../../domain/recurrence/finalizeRecurrenceSchedule';
+import { exceedsSubBudgetOccurrenceCap } from '../../../domain/recurrence/subBudgetRecurrenceOccurrenceCap';
 import { toIsoDate } from '../../../domain/expenses/parseExpenseDate';
 import { useTodayIso } from '../../../lib/hooks/useTodayIso';
 import { createBilingualText } from '../../../services/translation/createBilingualText';
@@ -128,6 +129,20 @@ export function useAddExpenseFlow({
     }
 
     const recurrenceRule = selectionToRule(recurrenceSelection);
+
+    if (
+      !isMaster &&
+      subBudgetWindow &&
+      recurrenceRule &&
+      exceedsSubBudgetOccurrenceCap(
+        result.value.date,
+        recurrenceSelection,
+        subBudgetWindow.endDate,
+      )
+    ) {
+      setErrorKey('budget.validation.RECURRENCE_EXCEEDS_BUDGET');
+      return;
+    }
 
     setIsSaving(true);
     setErrorKey(null);

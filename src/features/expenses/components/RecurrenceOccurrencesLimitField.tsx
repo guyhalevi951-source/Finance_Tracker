@@ -1,9 +1,12 @@
 import { useTranslation } from 'react-i18next';
+import { type AppLocale } from '../../../config/app';
 import {
   type OccurrencesLimitPreset,
   type RecurrenceSelection,
 } from '../../../types/recurrenceRule';
+import { type SubBudgetOccurrenceCapEvaluation } from '../../../domain/recurrence/subBudgetRecurrenceOccurrenceCap';
 import { resolveOccurrencesLimitChipLabelDescriptor } from '../../../domain/recurrence/resolveOccurrencesLimitLabelKey';
+import { formatExpenseDateNumeric } from '../../../lib/format/formatDate';
 import { preventNumberInputScroll } from '../../../lib/input/preventNumberInputScroll';
 import { expenseCompactChipClass } from './expenseCompactButtonStyles';
 
@@ -25,6 +28,8 @@ interface RecurrenceOccurrencesLimitFieldProps {
   occurrencesCustomLabelKey?: string;
   minCustomOccurrences?: number;
   variant?: 'modal' | 'inline';
+  locale?: AppLocale;
+  subBudgetOccurrenceCap?: SubBudgetOccurrenceCapEvaluation | null;
 }
 
 export function RecurrenceOccurrencesLimitField({
@@ -36,8 +41,25 @@ export function RecurrenceOccurrencesLimitField({
   occurrencesCustomLabelKey = 'addExpense.recurrence.occurrencesCustomLabel',
   minCustomOccurrences = 2,
   variant = 'modal',
+  locale,
+  subBudgetOccurrenceCap = null,
 }: RecurrenceOccurrencesLimitFieldProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const displayLocale = locale ?? (i18n.language as AppLocale);
+  const capActive = subBudgetOccurrenceCap !== null;
+  const maxAllowed = subBudgetOccurrenceCap?.maxAllowed ?? null;
+  const effectiveMinCustom =
+    capActive && maxAllowed !== null && maxAllowed > 0
+      ? Math.min(minCustomOccurrences, maxAllowed)
+      : minCustomOccurrences;
+
+  const isPresetDisabled = (preset: OccurrencesLimitPreset): boolean => {
+    if (!capActive || maxAllowed === null) return false;
+    if (preset === 'unlimited') return true;
+    if (preset === 'custom') return maxAllowed < effectiveMinCustom;
+    const count = Number.parseInt(preset, 10);
+    return count > maxAllowed;
+  };
 
   const chipLabel = (preset: OccurrencesLimitPreset) => {
     const descriptor = resolveOccurrencesLimitChipLabelDescriptor(preset);
@@ -59,16 +81,20 @@ export function RecurrenceOccurrencesLimitField({
       <div className="flex flex-wrap gap-1">
         {OCCURRENCE_CHIP_PRESETS.map((preset) => {
           const isActive = occurrencesLimit === preset;
+          const isDisabled = isPresetDisabled(preset);
           return (
             <button
               key={preset}
               type="button"
               aria-pressed={isActive}
+              disabled={isDisabled}
               onClick={() => onOccurrencesLimitChange(preset)}
               className={`flex-1 min-w-0 min-h-[44px] px-1 py-1.5 rounded-xl ${expenseCompactChipClass} transition-colors ${
-                isActive
-                  ? 'bg-amber-500 text-white'
-                  : 'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200'
+                isDisabled
+                  ? 'opacity-40 cursor-not-allowed bg-slate-100 dark:bg-slate-700 text-slate-400 dark:text-slate-500'
+                  : isActive
+                    ? 'bg-amber-500 text-white'
+                    : 'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200'
               }`}
             >
               {chipLabel(preset)}
@@ -84,17 +110,44 @@ export function RecurrenceOccurrencesLimitField({
           </label>
           <input
             type="number"
-            min={minCustomOccurrences}
+            min={effectiveMinCustom}
+            max={capActive && maxAllowed !== null ? maxAllowed : undefined}
             value={customOccurrences}
-            onChange={(event) =>
-              onCustomOccurrencesChange(
-                Math.max(minCustomOccurrences, Number(event.target.value) || minCustomOccurrences),
-              )
-            }
+            onChange={(event) => {
+              const parsed = Number(event.target.value) || effectiveMinCustom;
+              const capped =
+                capActive && maxAllowed !== null
+                  ? Math.min(parsed, maxAllowed)
+                  : parsed;
+              onCustomOccurrencesChange(Math.max(effectiveMinCustom, capped));
+            }}
             onWheel={preventNumberInputScroll}
             className="w-full px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 min-h-[44px]"
           />
+          {subBudgetOccurrenceCap?.exceedsCap && (
+            <p className="mt-2 text-sm text-rose-600 dark:text-rose-400">
+              {t('budget.validation.OCCURRENCES_EXCEED_SUB_BUDGET', {
+                endDate: formatExpenseDateNumeric(
+                  subBudgetOccurrenceCap.capEndDateIso,
+                  displayLocale,
+                ),
+                maxAllowed: subBudgetOccurrenceCap.maxAllowed,
+              })}
+            </p>
+          )}
         </div>
+      )}
+
+      {occurrencesLimit !== 'custom' && subBudgetOccurrenceCap?.exceedsCap && (
+        <p className="text-sm text-rose-600 dark:text-rose-400">
+          {t('budget.validation.OCCURRENCES_EXCEED_SUB_BUDGET', {
+            endDate: formatExpenseDateNumeric(
+              subBudgetOccurrenceCap.capEndDateIso,
+              displayLocale,
+            ),
+            maxAllowed: subBudgetOccurrenceCap.maxAllowed,
+          })}
+        </p>
       )}
     </div>
   );

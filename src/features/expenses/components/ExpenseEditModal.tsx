@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { X } from 'lucide-react';
 import { type AppLocale } from '../../../config/app';
@@ -9,6 +9,7 @@ import {
   resolveRecurrenceLabelDescriptor,
 } from '../../../domain/recurrence/resolveRecurrenceLabelKey';
 import { type RecurrenceSelection } from '../../../types/recurrenceRule';
+import { evaluateSubBudgetOccurrenceCap } from '../../../domain/recurrence/subBudgetRecurrenceOccurrenceCap';
 import { preventNumberInputScroll } from '../../../lib/input/preventNumberInputScroll';
 import { formatExpenseDateNumeric } from '../../../lib/format/formatDate';
 import { useTodayIso } from '../../../lib/hooks/useTodayIso';
@@ -81,6 +82,13 @@ export function ExpenseEditModal({
   const recurrenceDescriptor = resolveRecurrenceLabelDescriptor(recurrenceSelection);
   const recurrenceLabel = t(recurrenceDescriptor.key, recurrenceDescriptor.params);
   const recurrenceActive = isRecurrenceActive(recurrenceSelection);
+
+  const subBudgetOccurrenceCap = useMemo(() => {
+    if (!maxSelectableDate || !recurrenceActive) return null;
+    return evaluateSubBudgetOccurrenceCap(input.date, recurrenceSelection, maxSelectableDate);
+  }, [maxSelectableDate, recurrenceActive, input.date, recurrenceSelection]);
+
+  const saveBlockedByOccurrenceCap = subBudgetOccurrenceCap?.exceedsCap ?? false;
 
   if (!open) return null;
 
@@ -225,6 +233,8 @@ export function ExpenseEditModal({
                 occurrencesTitleKey={occurrencesTitleKey}
                 occurrencesCustomLabelKey={occurrencesCustomLabelKey}
                 minCustomOccurrences={minCustomOccurrences}
+                locale={locale}
+                subBudgetOccurrenceCap={subBudgetOccurrenceCap}
               />
             )}
             </>
@@ -250,7 +260,7 @@ export function ExpenseEditModal({
             </button>
             <button
               onClick={onSave}
-              disabled={isSaving}
+              disabled={isSaving || saveBlockedByOccurrenceCap}
               className="flex-1 px-4 py-3 rounded-xl bg-emerald-600 text-white font-medium min-h-[48px] disabled:opacity-60"
             >
               {isSaving ? t('expense.editModal.saving') : t('expense.editModal.save')}
@@ -266,6 +276,9 @@ export function ExpenseEditModal({
         onSelect={onRecurrenceSelectionChange}
         onClose={() => setRecurrenceModalOpen(false)}
         hideOccurrencesField
+        expenseStartDate={input.date}
+        subBudgetEndDate={maxSelectableDate}
+        locale={locale}
       />
       )}
 

@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useRef, useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ArrowLeft, Camera } from 'lucide-react';
 import { resolveSubCategoryLabel } from '../../../domain/categories/resolveCategoryLabel';
@@ -16,6 +16,7 @@ import {
   resolveRecurrenceLabelDescriptor,
 } from '../../../domain/recurrence/resolveRecurrenceLabelKey';
 import { resolveOccurrencesLimitLabelDescriptor } from '../../../domain/recurrence/resolveOccurrencesLimitLabelKey';
+import { evaluateSubBudgetOccurrenceCap } from '../../../domain/recurrence/subBudgetRecurrenceOccurrenceCap';
 import { ExpenseNumpad, formatNumpadDisplay } from './ExpenseNumpad';
 import { CustomDatePicker } from '../../../components/calendar';
 import { ExpensePaymentMethodPickerModal } from './ExpensePaymentMethodPickerModal';
@@ -83,6 +84,13 @@ export function ExpenseEntryStep({
     ? occurrencesDescriptor.literal ??
       t(occurrencesDescriptor.key, occurrencesDescriptor.params)
     : null;
+
+  const subBudgetOccurrenceCap = useMemo(() => {
+    if (!maxSelectableDate || !recurrenceActive) return null;
+    return evaluateSubBudgetOccurrenceCap(date, recurrenceSelection, maxSelectableDate);
+  }, [maxSelectableDate, recurrenceActive, date, recurrenceSelection]);
+
+  const submitBlockedByOccurrenceCap = subBudgetOccurrenceCap?.exceedsCap ?? false;
 
   return (
     <div className="flex flex-col h-full">
@@ -158,6 +166,7 @@ export function ExpenseEntryStep({
             onRecurrenceClick={() => setRecurrenceModalOpen(true)}
             onSubmit={onSubmit}
             isSaving={isSaving}
+            submitBlocked={submitBlockedByOccurrenceCap}
           />
         </div>
       </div>
@@ -185,6 +194,9 @@ export function ExpenseEntryStep({
         value={recurrenceSelection}
         onSelect={onRecurrenceSelectionChange}
         onClose={() => setRecurrenceModalOpen(false)}
+        expenseStartDate={date}
+        subBudgetEndDate={maxSelectableDate}
+        locale={locale}
       />
     </div>
   );

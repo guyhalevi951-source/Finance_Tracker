@@ -24,6 +24,7 @@ interface ExpenseNumpadProps {
   onRecurrenceClick: () => void;
   onSubmit: () => void;
   isSaving: boolean;
+  submitBlocked?: boolean;
 }
 
 export function ExpenseNumpad({
@@ -40,9 +41,10 @@ export function ExpenseNumpad({
   onRecurrenceClick,
   onSubmit,
   isSaving,
+  submitBlocked = false,
 }: ExpenseNumpadProps) {
   const { t } = useTranslation();
-  const canSubmit = numpadAmountToNumber(amountDigits) > 0 && !isSaving;
+  const canSubmit = numpadAmountToNumber(amountDigits) > 0 && !isSaving && !submitBlocked;
 
   const handleKey = (key: string) => {
     if (key === 'backspace') {

@@ -145,7 +145,8 @@
       "END_IN_PAST": "תאריך הסיום לא יכול להיות בעבר",
       "DATE_OUT_OF_WINDOW": "תאריך ההוצאה חייב להיות בתוך תקופת התקציב",
       "RECURRENCE_EXCEEDS_BUDGET": "הוצאות חוזרות לא יכולות להמשיך מעבר לתאריך סיום התקציב",
-      "START_AFTER_BUDGET_END": "תאריך ההתחלה אחרי תאריך סיום התקציב"
+      "START_AFTER_BUDGET_END": "תאריך ההתחלה אחרי תאריך סיום התקציב",
+      "OCCURRENCES_EXCEED_SUB_BUDGET": "⚠️ שים לב: התקציב מסתיים ב-{{endDate}}, ולכן ניתן להגדיר לכל היותר {{maxAllowed}} חזרות."
     },
     "delete": {
       "title": "מחיקת תקציב",
