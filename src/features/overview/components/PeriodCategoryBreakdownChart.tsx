@@ -27,6 +27,10 @@ import { useTheme } from '../../theme/hooks/useTheme';
 
 const PIE_INNER_RADIUS_PERCENT = '40%';
 const PIE_OUTER_RADIUS_PERCENT = '54%';
+const CHART_VIEW_MARGIN = 48;
+
+const CHART_WRAPPER_CLASS =
+  'px-2 py-2 flex justify-center outline-none focus:outline-none select-none [&_svg]:outline-none [&_svg]:focus:outline-none [&_svg]:overflow-visible [&_*]:outline-none [&_*]:focus:outline-none';
 
 function selectedRadialOffset(outerRadius: number): number {
   return Math.max(12, outerRadius * 0.12);
@@ -190,7 +194,9 @@ function InteractiveBreakdownPie({
             endAngle={endAngle}
             fill={fill}
             stroke="none"
+            tabIndex={-1}
             style={{ cursor: 'pointer', outline: 'none' }}
+            onMouseDown={(event) => event.preventDefault()}
             onClick={() => onToggleSegment(datum.segmentKey)}
           />
         </g>
@@ -243,10 +249,18 @@ function BreakdownDoughnutChart({
   labelFill: string;
 }) {
   return (
-    <div className="px-2 py-2 flex justify-center">
+    <div className={CHART_WRAPPER_CLASS}>
       <div className="relative mx-auto w-[88%] max-w-[320px] aspect-square overflow-visible">
         <ResponsiveContainer width="100%" height="100%" className="overflow-visible">
-          <PieChart style={{ overflow: 'visible' }}>
+          <PieChart
+            margin={{
+              top: CHART_VIEW_MARGIN,
+              right: CHART_VIEW_MARGIN,
+              bottom: CHART_VIEW_MARGIN,
+              left: CHART_VIEW_MARGIN,
+            }}
+            style={{ overflow: 'visible' }}
+          >
             <InteractiveBreakdownPie
               chartData={chartData}
               selectedSegments={selectedSegments}
