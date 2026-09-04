@@ -57,6 +57,17 @@ export function formatCurrencyAmount(amount: number, locale: AppLocale): string 
   return `₪${formatNumber(amount, locale)}`;
 }
 
+export function formatCurrencyAmountFixed(
+  amount: number,
+  locale: AppLocale,
+  fractionDigits = 2,
+): string {
+  return `₪${amount.toLocaleString(DATE_LOCALES[locale], {
+    minimumFractionDigits: fractionDigits,
+    maximumFractionDigits: fractionDigits,
+  })}`;
+}
+
 export function formatNumber(value: number, locale: AppLocale): string {
   return value.toLocaleString(DATE_LOCALES[locale]);
 }

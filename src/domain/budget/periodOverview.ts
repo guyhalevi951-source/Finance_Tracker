@@ -21,6 +21,8 @@ import {
 
 export type { DailyExpenseBreakdown };
 
+export type PlannedDailyAverageDivisor = 'calendarMonth' | 'rangeInclusive';
+
 export interface PeriodOverview {
   periodBudget: number;
   spent: number;
@@ -33,8 +35,22 @@ export interface PeriodOverview {
   remainingDays: number;
   averagePerDay: number;
   averagePerDayUpToDate: number;
+  plannedDailyAverage: number;
   leftPerDay: number;
   dailyTotals: DailyExpenseBreakdown[];
+}
+
+export function resolvePlannedDailyAverageDivisor(
+  mode: PlannedDailyAverageDivisor,
+  range: DateRange,
+): number {
+  if (mode === 'calendarMonth') {
+    const startDate = isoDateToDate(range.startIso);
+    const daysInMonth = getMonthDayIsos(startDate.getFullYear(), startDate.getMonth()).length;
+    return Math.max(1, daysInMonth);
+  }
+
+  return Math.max(1, countDaysInRange(range));
 }
 
 export function computePeriodBudget(monthlyBudget: number, range: DateRange): number {
@@ -65,12 +81,14 @@ export function computeOverviewForPeriodBudget({
   range,
   todayIso,
   subBudgets = [],
+  plannedDailyAverageDivisor = 'rangeInclusive',
 }: {
   periodBudget: number;
   expenses: Expense[];
   range: DateRange;
   todayIso: string;
   subBudgets?: SubBudgetRecord[];
+  plannedDailyAverageDivisor?: PlannedDailyAverageDivisor;
 }): PeriodOverview {
   const dailyTotals = computeDailyExpenseBreakdown(expenses, range, todayIso, subBudgets);
   const spent = sumAmounts(dailyTotals.map((day) => day.actualExpenses));
@@ -84,6 +102,8 @@ export function computeOverviewForPeriodBudget({
   const averagePerDay = daysInPeriod > 0 ? divideAmount(totalPlanned, daysInPeriod) : 0;
   const averagePerDayUpToDate =
     elapsedDays > 0 ? divideAmount(spent, elapsedDays) : 0;
+  const plannedDivisor = resolvePlannedDailyAverageDivisor(plannedDailyAverageDivisor, range);
+  const plannedDailyAverage = divideAmount(totalPlanned, plannedDivisor);
   const leftPerDay =
     remainingDays > 0 ? divideAmount(leftToSpend, remainingDays) : 0;
 
@@ -99,6 +119,7 @@ export function computeOverviewForPeriodBudget({
     remainingDays,
     averagePerDay,
     averagePerDayUpToDate,
+    plannedDailyAverage,
     leftPerDay,
     dailyTotals,
   };
@@ -118,5 +139,12 @@ export function computePeriodOverview({
   subBudgets?: SubBudgetRecord[];
 }): PeriodOverview {
   const periodBudget = computePeriodBudget(monthlyBudget, range);
-  return computeOverviewForPeriodBudget({ periodBudget, expenses, range, todayIso, subBudgets });
+  return computeOverviewForPeriodBudget({
+    periodBudget,
+    expenses,
+    range,
+    todayIso,
+    subBudgets,
+    plannedDailyAverageDivisor: 'calendarMonth',
+  });
 }

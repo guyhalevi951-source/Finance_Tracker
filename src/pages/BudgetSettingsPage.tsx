@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { History } from 'lucide-react';
@@ -17,7 +17,7 @@ export function BudgetSettingsPage() {
   const { t, i18n } = useTranslation();
   const locale = i18n.language as AppLocale;
   const timeFilter = useExpenseTimeFilter(locale);
-  const { activeSubBudgets, addSubBudget, updateSubBudget, deleteSubBudgetAction, reorderSubBudgetsAction } =
+  const { activeSubBudgets, addSubBudget, updateSubBudget, deleteSubBudgetAction, reorderSubBudgetsAction, setActiveBudgetId } =
     useBudgets();
 
   const {
@@ -40,6 +40,13 @@ export function BudgetSettingsPage() {
   const [isSaving, setIsSaving] = useState(false);
 
   useAppHeader({ title: t('budget.pageTitle') });
+
+  const handleOpenOverview = useCallback(
+    (budgetId: string) => {
+      setActiveBudgetId(budgetId);
+    },
+    [setActiveBudgetId],
+  );
 
   const handleOpenAdd = () => {
     setEditingBudget(null);
@@ -117,6 +124,7 @@ export function BudgetSettingsPage() {
         onReorder={(orderedIds) => void reorderSubBudgetsAction(orderedIds)}
         onEdit={handleEdit}
         onDelete={handleDelete}
+        onOpenOverview={handleOpenOverview}
         isDeleting={isDeleting}
       />
 

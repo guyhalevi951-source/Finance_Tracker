@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, Receipt, Settings, Wallet, X } from 'lucide-react';
+import { Receipt, Settings, Wallet, X } from 'lucide-react';
 import { NAV_ITEMS } from '../../config/nav';
 import { AppLogo } from './AppLogo';
 import { useSidebarContext } from '../providers/SidebarProvider';
@@ -13,7 +13,6 @@ import { UserAvatar } from '../../features/profile/components/UserAvatar';
 const SIDEBAR_NAV_ICON_SLOT = 'flex items-center justify-center w-5 h-5 shrink-0';
 
 const NAV_ICONS = {
-  overview: LayoutDashboard,
   budget: Wallet,
   expenses: Receipt,
   profile: null,

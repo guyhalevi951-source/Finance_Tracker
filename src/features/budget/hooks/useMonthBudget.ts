@@ -130,30 +130,6 @@ export function useMonthBudget(year: number, month: number): UseMonthBudgetRetur
 
   const resolved = useMemo(() => resolveMonthBudget(store, monthKey), [store, monthKey]);
 
-  // #region agent log
-  useEffect(() => {
-    fetch('http://127.0.0.1:7787/ingest/85325ec4-61eb-48fe-9ac8-a4df78cb3f3d', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': 'ea7dae' },
-      body: JSON.stringify({
-        sessionId: 'ea7dae',
-        runId: 'carryover-default',
-        hypothesisId: 'A',
-        location: 'useMonthBudget.ts:resolved',
-        message: 'month budget resolved',
-        data: {
-          monthKey,
-          carryOverToNext: resolved.carryOverToNext,
-          budgetSource: resolved.source,
-          hasStoreEntry: monthKey in store,
-          storeCarryOver: store[monthKey]?.carryOverToNext ?? null,
-        },
-        timestamp: Date.now(),
-      }),
-    }).catch(() => {});
-  }, [monthKey, resolved.carryOverToNext, resolved.source, store]);
-  // #endregion
-
   const showCarryOverCheckbox = useMemo(
 
     () => canShowCarryOverCheckbox(store, monthKey),

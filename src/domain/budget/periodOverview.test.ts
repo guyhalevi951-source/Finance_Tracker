@@ -1,7 +1,9 @@
 import { describe, it, expect } from 'vitest';
 import {
+  computeOverviewForPeriodBudget,
   computePeriodBudget,
   computePeriodOverview,
+  resolvePlannedDailyAverageDivisor,
 } from './periodOverview';
 import { type Expense } from '../../types/expense';
 
@@ -157,5 +159,78 @@ describe('computePeriodOverview', () => {
 
     expect(overview.elapsedDays).toBe(0);
     expect(overview.averagePerDayUpToDate).toBe(0);
+  });
+
+  it('uses full calendar month for plannedDailyAverage even on a weekly range', () => {
+    const weekRange = { startIso: '2026-07-01', endIso: '2026-07-07' };
+    const overview = computePeriodOverview({
+      monthlyBudget: 300,
+      expenses: [expense('a', '2026-07-03', 50)],
+      range: weekRange,
+      todayIso: '2026-07-05',
+    });
+
+    expect(overview.totalPlanned).toBe(50);
+    expect(overview.plannedDailyAverage).toBeCloseTo(50 / 31, 2);
+    expect(overview.averagePerDay).toBeCloseTo(50 / 7, 2);
+  });
+});
+
+describe('resolvePlannedDailyAverageDivisor', () => {
+  it('returns calendar month length for calendarMonth mode', () => {
+    expect(
+      resolvePlannedDailyAverageDivisor('calendarMonth', {
+        startIso: '2026-07-01',
+        endIso: '2026-07-07',
+      }),
+    ).toBe(31);
+  });
+
+  it('returns inclusive range days for rangeInclusive mode', () => {
+    expect(
+      resolvePlannedDailyAverageDivisor('rangeInclusive', {
+        startIso: '2026-07-01',
+        endIso: '2026-07-07',
+      }),
+    ).toBe(7);
+  });
+
+  it('falls back to at least one day for same-day sub-budget window', () => {
+    expect(
+      resolvePlannedDailyAverageDivisor('rangeInclusive', {
+        startIso: '2026-09-04',
+        endIso: '2026-09-04',
+      }),
+    ).toBe(1);
+  });
+});
+
+describe('computeOverviewForPeriodBudget plannedDailyAverage', () => {
+  it('divides totalPlanned by inclusive sub-budget window days', () => {
+    const overview = computeOverviewForPeriodBudget({
+      periodBudget: 800,
+      expenses: [
+        expense('a', '2026-09-01', 100),
+        { ...expense('b', '2026-09-03', 50), scheduled: true },
+      ],
+      range: { startIso: '2026-09-01', endIso: '2026-09-04' },
+      todayIso: '2026-09-02',
+      plannedDailyAverageDivisor: 'rangeInclusive',
+    });
+
+    expect(overview.totalPlanned).toBe(150);
+    expect(overview.plannedDailyAverage).toBeCloseTo(37.5, 2);
+  });
+
+  it('uses one-day divisor for same-day sub-budget window', () => {
+    const overview = computeOverviewForPeriodBudget({
+      periodBudget: 800,
+      expenses: [expense('a', '2026-09-04', 200)],
+      range: { startIso: '2026-09-04', endIso: '2026-09-04' },
+      todayIso: '2026-09-04',
+      plannedDailyAverageDivisor: 'rangeInclusive',
+    });
+
+    expect(overview.plannedDailyAverage).toBe(200);
   });
 });

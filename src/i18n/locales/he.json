@@ -42,7 +42,7 @@
     }
   },
   "nav": {
-    "overview": "סקירה חודשית",
+    "overview": "סקירה",
     "budget": "תקציב",
     "expenses": "הוצאות",
     "profile": "פרופיל",
@@ -120,7 +120,8 @@
       "masterLocked": "תמיד ראשון — לא ניתן להזיז או למחוק",
       "edit": "ערוך תקציב",
       "delete": "מחק תקציב",
-      "reorder": "סדר תקציב מחדש"
+      "reorder": "סדר תקציב מחדש",
+      "overview": "סקירה"
     },
     "add": {
       "title": "הוסף תקציב",
@@ -189,6 +190,7 @@
     "leftPerDay": "נותר ליום",
     "averagePerDay": "ממוצע ליום",
     "dailyAverage": "ממוצע יומי",
+    "dailyAveragePlanned": "ממוצע יומי מתוכנן",
     "dailyAverageUpToDate": "ממוצע יומי (עד כה)",
     "upToTodayBadge": "עד היום",
     "actualExpenses": "הוצאות שבוצעו",

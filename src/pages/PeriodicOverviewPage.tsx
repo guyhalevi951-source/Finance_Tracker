@@ -1,7 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { type AppLocale } from '../config/app';
 import { useAppHeader } from '../app/hooks/useAppHeader';
-import { buildBudgetScopedTitle } from '../domain/budget/buildBudgetScopedTitle';
 import { filterExpensesByBudget } from '../domain/budget/filterExpensesByBudget';
 import { resolveBudgetLabel } from '../domain/budget/resolveBudgetLabel';
 import { useBudgets } from '../features/budget/hooks/useBudgets';
@@ -38,11 +37,9 @@ export function PeriodicOverviewPage() {
 
   const loadError = budgetLoadError || expensesLoadError;
 
-  const pageTitle = buildBudgetScopedTitle(
-    resolveBudgetLabel(activeBudget, locale, t),
-    t('nav.overview'),
-    isMaster,
-  );
+  const overviewTitle = t('nav.overview');
+  const budgetLabel = resolveBudgetLabel(activeBudget, locale, t);
+  const pageTitle = isMaster ? overviewTitle : `${overviewTitle} - ${budgetLabel}`;
 
   useAppHeader({ title: pageTitle });
 

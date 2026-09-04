@@ -7,7 +7,6 @@ import { ROUTES } from './routes';
  * New primary items must be appended before Profile.
  */
 export const NAV_ITEMS = [
-  { id: 'overview', path: ROUTES.overview, end: true },
   { id: 'budget', path: ROUTES.budget, end: false },
   { id: 'expenses', path: ROUTES.expenses, end: false },
   { id: 'profile', path: ROUTES.profile, end: false },

@@ -16,6 +16,8 @@ import { preventNumberInputScroll } from '../../../lib/input/preventNumberInputS
 
 import { ExpenseTimeNavigator } from '../../expenses/components/ExpenseTimeNavigator';
 
+import { BudgetOverviewButton } from './BudgetOverviewButton';
+
 import { type UseMonthBudgetReturn } from '../hooks/useMonthBudget';
 
 
@@ -72,6 +74,8 @@ export interface MasterBudgetListRowProps {
 
   >;
 
+  onOpenOverview: () => void;
+
 }
 
 
@@ -93,6 +97,8 @@ export function MasterBudgetListRow({
   selectMonth,
 
   monthBudget,
+
+  onOpenOverview,
 
 }: MasterBudgetListRowProps) {
 
@@ -319,6 +325,8 @@ export function MasterBudgetListRow({
           </label>
 
         )}
+
+        <BudgetOverviewButton onOpen={onOpenOverview} />
 
       </div>
 

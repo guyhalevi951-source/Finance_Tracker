@@ -42,7 +42,7 @@
     }
   },
   "nav": {
-    "overview": "Monthly Overview",
+    "overview": "Overview",
     "budget": "Budget",
     "expenses": "Expenses",
     "profile": "Profile",
@@ -120,7 +120,8 @@
       "masterLocked": "Always first — cannot be moved or deleted",
       "edit": "Edit budget",
       "delete": "Delete budget",
-      "reorder": "Reorder budget"
+      "reorder": "Reorder budget",
+      "overview": "Overview"
     },
     "add": {
       "title": "Add Budget",
@@ -189,6 +190,7 @@
     "leftPerDay": "left per day",
     "averagePerDay": "Average per day",
     "dailyAverage": "Daily average",
+    "dailyAveragePlanned": "Planned daily average",
     "dailyAverageUpToDate": "Daily average (so far)",
     "upToTodayBadge": "Up to today",
     "actualExpenses": "Actual expenses",
