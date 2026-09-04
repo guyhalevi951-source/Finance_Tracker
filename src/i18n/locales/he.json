@@ -186,6 +186,13 @@
     }
   },
   "overview": {
+    "monthlyTitle": "סקירה חודשית",
+    "graphicView": "הצגה גרפית",
+    "dailyView": "הצגה יומית",
+    "subBudgetTag": "(תקציב)",
+    "breakdownBudgets": "תקציבים",
+    "breakdownCategories": "קטגוריות",
+    "breakdownEmpty": "אין הוצאות בתקופה זו",
     "leftToSpend": "נותר לבזבוז",
     "overspent": "חריגה",
     "usedAndPlanned": "נוצל ומתוכנן",

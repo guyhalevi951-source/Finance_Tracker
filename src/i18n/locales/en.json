@@ -186,6 +186,13 @@
     }
   },
   "overview": {
+    "monthlyTitle": "Monthly Overview",
+    "graphicView": "Graphic View",
+    "dailyView": "Daily view",
+    "subBudgetTag": "(Budget)",
+    "breakdownBudgets": "Budgets",
+    "breakdownCategories": "Categories",
+    "breakdownEmpty": "No expenses in this period",
     "leftToSpend": "left to spend",
     "overspent": "overspent",
     "usedAndPlanned": "used & planned",
