@@ -6,6 +6,7 @@ import { ROUTES } from './routes';
  */
 export const NAV_ITEMS = [
   { id: 'expenses', path: ROUTES.expenses, end: false },
+  { id: 'charts', path: ROUTES.overview, end: true },
   { id: 'budget', path: ROUTES.budget, end: false },
 ] as const;
 

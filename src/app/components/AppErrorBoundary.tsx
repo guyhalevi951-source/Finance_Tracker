@@ -22,6 +22,9 @@ class AppErrorBoundaryBase extends Component<AppErrorBoundaryProps, AppErrorBoun
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
     console.error('AppErrorBoundary caught an error:', error, errorInfo);
+    // #region agent log
+    fetch('http://127.0.0.1:7787/ingest/85325ec4-61eb-48fe-9ac8-a4df78cb3f3d',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'ea7dae'},body:JSON.stringify({sessionId:'ea7dae',runId:'pre-fix',hypothesisId:'C',location:'AppErrorBoundary.tsx:componentDidCatch',message:'error boundary caught',data:{errorName:error.name,errorMessage:error.message,stack:error.stack?.slice(0,800),componentStack:errorInfo.componentStack?.slice(0,800)},timestamp:Date.now()})}).catch(()=>{});
+    // #endregion
   }
 
   private handleReload = (): void => {

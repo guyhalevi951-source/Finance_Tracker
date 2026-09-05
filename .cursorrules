@@ -105,6 +105,7 @@ Before writing or editing code, **search for an existing owner**. If one exists,
 | Shared types & enums | `types/` |
 | Firebase query shapes | `services/<entity>/` — one repository per aggregate root |
 | User display-currency preference (client-only) | `app/providers/` or feature hook state — **not** persisted as transaction truth |
+| Interactive text/link color | `src/config/semanticColors.ts` (`SEMANTIC_COLORS.interactive.text`) |
 
 ### SSOT red flags — stop immediately
 
@@ -119,6 +120,8 @@ Before writing or editing code, **search for an existing owner**. If one exists,
 | "I'll use the transaction date to pick the rate" | Display always uses current-day global rates (Section 7.2F). |
 | "I'll store converted/display amounts in Firestore" | Only `originalAmount` + `originalCurrency` are canonical (Section 7.1A). |
 | "I'll use type=\"date\" or a native browser date picker" | Import `CustomDatePicker` from `src/components/calendar` (Section 16). |
+| "I'll use text-slate-500 for this clickable label" | Use `SEMANTIC_COLORS.interactive.text` so clickable copy is obvious. |
+| "I'll hardcode text-blue-400 on this button" | Import `SEMANTIC_COLORS.interactive.text` from `src/config/semanticColors.ts`. |
 
 ### Acceptable local logic (not duplication)
 
@@ -177,6 +180,7 @@ Firestore → service (map/normalize) → domain (validate/compute) → hook (or
 - No `useEffect` for data fetching in `components/` — that belongs in `hooks/`.
 - No derived business state in JSX (no inline `.reduce()`, `.filter()` for domain aggregations).
 - Styling: match project convention once established; keep touch targets ≥ 44px; support narrow viewports first.
+- **Interactive text color:** All clickable text buttons and interactive text links must use `SEMANTIC_COLORS.interactive.text` from `src/config/semanticColors.ts` to indicate clickability. Do not use muted slate/gray for clickable copy, and do not hardcode blue utility classes at call sites.
 
 ### Hooks
 

@@ -1,6 +1,9 @@
 /** SSOT for semantic finance category colors (numeric values, charts, progress bars, icons). */
 
 export const SEMANTIC_COLORS = {
+  interactive: {
+    text: 'text-blue-500 dark:text-blue-400',
+  },
   expense: {
     valueText: 'text-red-600 dark:text-red-400',
     chartActual: '#DC2626',

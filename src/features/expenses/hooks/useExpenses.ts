@@ -1,5 +1,5 @@
 import { useContext } from 'react';
-import { ExpensesContext, type ExpensesContextValue } from '../../../app/providers/ExpensesProvider';
+import { ExpensesContext, type ExpensesContextValue } from '../../../app/providers/expensesContext';
 
 export type UseExpensesReturn = ExpensesContextValue;
 

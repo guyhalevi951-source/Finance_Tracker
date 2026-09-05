@@ -1,9 +1,9 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import { AppShell } from './app/AppShell';
 import { ExpensesProvider } from './app/providers/ExpensesProvider';
-import { CategoriesProvider } from './app/providers/CategoriesProvider';
 import { BudgetsProvider } from './app/providers/BudgetsProvider';
 import { SubBudgetEditorProvider } from './app/providers/SubBudgetEditorProvider';
+import { CategoriesProvider } from './app/providers/CategoriesProvider';
+import { AppShell } from './app/AppShell';
 import { ROUTES } from './config/routes';
 import { PeriodicOverviewPage } from './pages/PeriodicOverviewPage';
 import { BudgetSettingsPage } from './pages/BudgetSettingsPage';
@@ -19,6 +19,9 @@ import { SubCategoryManagementPage } from './pages/SubCategoryManagementPage';
 import { SubCategoryEditorPage } from './pages/SubCategoryEditorPage';
 
 function App() {
+  // #region agent log
+  fetch('http://127.0.0.1:7787/ingest/85325ec4-61eb-48fe-9ac8-a4df78cb3f3d',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'ea7dae'},body:JSON.stringify({sessionId:'ea7dae',runId:'pre-fix',hypothesisId:'B',location:'App.tsx:App',message:'App render',data:{},timestamp:Date.now()})}).catch(()=>{});
+  // #endregion
   return (
     <BrowserRouter>
       <ExpensesProvider>

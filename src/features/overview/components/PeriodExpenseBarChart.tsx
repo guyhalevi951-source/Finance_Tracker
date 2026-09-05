@@ -14,6 +14,7 @@ import { SEMANTIC_COLORS } from '../../../config/semanticColors';
 import { type PeriodOverview } from '../../../domain/budget/periodOverview';
 import { formatCurrencyAmount, formatDayOfMonth } from '../../../lib/format/formatDate';
 import { useTheme } from '../../theme/hooks/useTheme';
+import { OverviewDataModeToggle } from './OverviewDataModeToggle';
 
 const { expense } = SEMANTIC_COLORS;
 const ACTUAL_FILL = expense.chartActual;
@@ -56,6 +57,9 @@ interface PeriodExpenseBarChartProps {
   overview: PeriodOverview;
   locale: AppLocale;
   todayIso: string;
+  isPlannedAverage: boolean;
+  onSelectMode: (isPlannedAverage: boolean) => void;
+  showDataModeControls: boolean;
 }
 
 interface ChartPoint {
@@ -71,9 +75,16 @@ interface ChartTooltipProps {
   payload?: Array<{ payload: ChartPoint }>;
   locale: AppLocale;
   todayIso: string;
+  showFutureExpenses: boolean;
 }
 
-function ChartTooltipContent({ active, payload, locale, todayIso }: ChartTooltipProps) {
+function ChartTooltipContent({
+  active,
+  payload,
+  locale,
+  todayIso,
+  showFutureExpenses,
+}: ChartTooltipProps) {
   const { t } = useTranslation();
 
   if (!active || !payload?.length) return null;
@@ -94,7 +105,7 @@ function ChartTooltipContent({ active, payload, locale, todayIso }: ChartTooltip
           </span>
         </p>
       )}
-      {point.futureExpenses > 0 && (
+      {showFutureExpenses && point.futureExpenses > 0 && (
         <p className="text-slate-600 dark:text-slate-300 mt-1 tabular-nums">
           {t('overview.futureExpenses')}:{' '}
           <span className={expense.valueText}>
@@ -111,7 +122,14 @@ function ChartTooltipContent({ active, payload, locale, todayIso }: ChartTooltip
   );
 }
 
-export function PeriodExpenseBarChart({ overview, locale, todayIso }: PeriodExpenseBarChartProps) {
+export function PeriodExpenseBarChart({
+  overview,
+  locale,
+  todayIso,
+  isPlannedAverage,
+  onSelectMode,
+  showDataModeControls,
+}: PeriodExpenseBarChartProps) {
   const { t } = useTranslation();
   const { theme } = useTheme();
   const axisTickFill = AXIS_TICK_FILL[theme];
@@ -173,44 +191,67 @@ export function PeriodExpenseBarChart({ overview, locale, todayIso }: PeriodExpe
           />
           <Tooltip
             cursor={{ fill: expense.tooltipCursor }}
-            content={<ChartTooltipContent locale={locale} todayIso={todayIso} />}
+            content={
+              <ChartTooltipContent
+                locale={locale}
+                todayIso={todayIso}
+                showFutureExpenses={isPlannedAverage}
+              />
+            }
           />
           <Bar
             dataKey="actualExpenses"
             stackId="daily"
             fill={ACTUAL_FILL}
             activeBar={{ fill: ACTUAL_FILL, stroke: 'none' }}
-            radius={[0, 0, 0, 0]}
+            radius={isPlannedAverage ? [0, 0, 0, 0] : [4, 4, 0, 0]}
             maxBarSize={32}
           />
-          <Bar
-            dataKey="futureExpenses"
-            stackId="daily"
-            fill={FUTURE_FILL}
-            activeBar={{ fill: FUTURE_FILL, stroke: 'none' }}
-            radius={[4, 4, 0, 0]}
-            maxBarSize={32}
-          />
+          {isPlannedAverage && (
+            <Bar
+              dataKey="futureExpenses"
+              stackId="daily"
+              fill={FUTURE_FILL}
+              activeBar={{ fill: FUTURE_FILL, stroke: 'none' }}
+              radius={[4, 4, 0, 0]}
+              maxBarSize={32}
+            />
+          )}
         </BarChart>
       </ResponsiveContainer>
 
-      <div className="flex justify-center items-center gap-6 mt-4 text-xs text-slate-500 dark:text-slate-400">
-        <span className="flex items-center gap-2">
-          <span
-            className="w-2.5 h-2.5 rounded-sm shrink-0"
-            style={{ background: ACTUAL_FILL }}
-            aria-hidden="true"
+      <div
+        dir="ltr"
+        className={`mt-4 flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400 ${
+          showDataModeControls ? 'justify-between' : 'justify-end'
+        }`}
+      >
+        {showDataModeControls && (
+          <OverviewDataModeToggle
+            isPlannedAverage={isPlannedAverage}
+            onSelectMode={onSelectMode}
           />
-          {t('overview.actualExpenses')}
-        </span>
-        <span className="flex items-center gap-2">
-          <span
-            className="w-2.5 h-2.5 rounded-sm shrink-0"
-            style={{ background: FUTURE_FILL }}
-            aria-hidden="true"
-          />
-          {t('overview.futureExpenses')}
-        </span>
+        )}
+        <div className="flex items-center gap-6">
+          <span className="flex items-center gap-2">
+            <span
+              className="w-2.5 h-2.5 rounded-sm shrink-0"
+              style={{ background: ACTUAL_FILL }}
+              aria-hidden="true"
+            />
+            {t('overview.actualExpenses')}
+          </span>
+          {isPlannedAverage && (
+            <span className="flex items-center gap-2">
+              <span
+                className="w-2.5 h-2.5 rounded-sm shrink-0"
+                style={{ background: FUTURE_FILL }}
+                aria-hidden="true"
+              />
+              {t('overview.futureExpenses')}
+            </span>
+          )}
+        </div>
       </div>
     </div>
   );

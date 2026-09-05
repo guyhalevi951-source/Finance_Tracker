@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { NavLink } from 'react-router-dom';
-import { Receipt, Settings, User, Wallet, X } from 'lucide-react';
+import { PieChart, Receipt, Settings, User, Wallet, X } from 'lucide-react';
 import { NAV_ITEMS } from '../../config/nav';
 import { ROUTES } from '../../config/routes';
 import { AppLogo } from './AppLogo';
@@ -14,6 +14,7 @@ const SIDEBAR_NAV_ICON_SLOT = 'flex items-center justify-center w-5 h-5 shrink-0
 
 const NAV_ICONS = {
   budget: Wallet,
+  charts: PieChart,
   expenses: Receipt,
 } as const;
 
@@ -92,6 +93,9 @@ export function AppSidebar() {
         <nav className="flex flex-col flex-1 gap-1 p-4">
           {NAV_ITEMS.map((item) => {
             const Icon = NAV_ICONS[item.id];
+            // #region agent log
+            fetch('http://127.0.0.1:7787/ingest/85325ec4-61eb-48fe-9ac8-a4df78cb3f3d',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'ea7dae'},body:JSON.stringify({sessionId:'ea7dae',runId:'pre-fix',hypothesisId:'D',location:'AppSidebar.tsx:NAV_ITEMS.map',message:'nav item render',data:{id:item.id,path:item.path,end:item.end,hasIcon:Boolean(Icon)},timestamp:Date.now()})}).catch(()=>{});
+            // #endregion
 
             return (
               <NavLink

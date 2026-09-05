@@ -1,69 +1,89 @@
-import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { type AppLocale } from '../../../config/app';
 import { SEMANTIC_COLORS } from '../../../config/semanticColors';
 import { type PeriodOverview } from '../../../domain/budget/periodOverview';
+import { subtractAmounts } from '../../../domain/money/arithmetic';
 import { formatCurrencyAmount, formatCurrencyAmountFixed } from '../../../lib/format/formatDate';
 
 interface PeriodOverviewSummaryProps {
   overview: PeriodOverview;
   locale: AppLocale;
   hasBudget: boolean;
+  isPlannedAverage: boolean;
+  showDataModeControls: boolean;
 }
 
 const metricValueClass = 'text-2xl sm:text-3xl font-bold tabular-nums';
 const metricLabelClass = 'text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1';
+const metricHintClass = 'text-[10px] sm:text-xs text-slate-400 dark:text-slate-500 mt-0.5';
 
-export function PeriodOverviewSummary({ overview, locale, hasBudget }: PeriodOverviewSummaryProps) {
+export function PeriodOverviewSummary({
+  overview,
+  locale,
+  hasBudget,
+  isPlannedAverage,
+  showDataModeControls,
+}: PeriodOverviewSummaryProps) {
   const { t } = useTranslation();
-  const [isPlannedAverage, setIsPlannedAverage] = useState(false);
-  const { totalPlanned, averagePerDayUpToDate, plannedDailyAverage, leftToSpend, isOverspent } =
-    overview;
+  const {
+    periodBudget,
+    spent,
+    totalPlanned,
+    averagePerDayUpToDate,
+    plannedDailyAverage,
+    leftToSpend,
+  } = overview;
   const { expense, budget } = SEMANTIC_COLORS;
 
   const dailyAverageValue = isPlannedAverage ? plannedDailyAverage : averagePerDayUpToDate;
-  const dailyAverageLabel = isPlannedAverage
-    ? t('overview.dailyAveragePlanned')
-    : t('overview.dailyAverage');
+  const dailyAverageHint = isPlannedAverage
+    ? t('overview.includingFutureExpenses')
+    : t('overview.upToTodayBadge');
+
+  const displayTotal = isPlannedAverage ? totalPlanned : spent;
+  const totalLabel = isPlannedAverage ? t('overview.usedAndPlanned') : t('overview.used');
+
+  const remainingAmount = isPlannedAverage
+    ? leftToSpend
+    : subtractAmounts(periodBudget, spent);
+  const remainingIsOverspent = remainingAmount < 0;
 
   const rightValue = hasBudget
-    ? formatCurrencyAmount(Math.abs(leftToSpend), locale)
+    ? formatCurrencyAmount(Math.abs(remainingAmount), locale)
     : '—';
   const rightLabel = hasBudget
-    ? isOverspent
+    ? remainingIsOverspent
       ? t('overview.overspent')
       : t('overview.leftToSpend')
     : t('overview.noBudget');
 
   const rightValueColor = !hasBudget
     ? 'text-slate-400 dark:text-slate-500'
-    : isOverspent
+    : remainingIsOverspent
       ? expense.valueText
       : budget.valueText;
 
   return (
     <div className="mb-6">
-      <div className="flex justify-between items-end gap-4 px-1">
-        <div className="flex-1 min-w-0 text-start">
+      <div className="grid grid-cols-3 items-end gap-2 px-4 sm:px-6">
+        <div className="min-w-0 text-start">
           <p className={`${metricValueClass} ${expense.valueText}`}>
-            {formatCurrencyAmount(totalPlanned, locale)}
+            {formatCurrencyAmount(displayTotal, locale)}
           </p>
-          <p className={metricLabelClass}>{t('overview.usedAndPlanned')}</p>
+          <p className={metricLabelClass}>{totalLabel}</p>
         </div>
 
-        <button
-          type="button"
-          onClick={() => setIsPlannedAverage((prev) => !prev)}
-          aria-pressed={isPlannedAverage}
-          className="flex-1 min-w-0 text-center cursor-pointer transition-opacity hover:opacity-80 min-h-[44px]"
-        >
+        <div className="min-w-0 text-center">
           <p className={`${metricValueClass} ${expense.valueText}`}>
             {formatCurrencyAmountFixed(dailyAverageValue, locale)}
           </p>
-          <p className={metricLabelClass}>{dailyAverageLabel}</p>
-        </button>
+          <p className={metricLabelClass}>{t('overview.dailyAverage')}</p>
+          {showDataModeControls && (
+            <p className={metricHintClass}>({dailyAverageHint})</p>
+          )}
+        </div>
 
-        <div className="flex-1 min-w-0 text-end">
+        <div className="min-w-0 text-end">
           <p className={`${metricValueClass} ${rightValueColor}`}>{rightValue}</p>
           <p className={metricLabelClass}>{rightLabel}</p>
         </div>

@@ -11,6 +11,10 @@ function readEnv(key: keyof ImportMetaEnv): string {
   return value;
 }
 
+// #region agent log
+fetch('http://127.0.0.1:7787/ingest/85325ec4-61eb-48fe-9ac8-a4df78cb3f3d',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'ea7dae'},body:JSON.stringify({sessionId:'ea7dae',runId:'pre-fix',hypothesisId:'J',location:'env.ts:module',message:'env module evaluating',data:{hasApiKey:typeof import.meta.env.VITE_FIREBASE_API_KEY==='string'&&import.meta.env.VITE_FIREBASE_API_KEY.trim()!==''},timestamp:Date.now()})}).catch(()=>{});
+// #endregion
+
 export const env = {
   firebase: {
     apiKey: readEnv('VITE_FIREBASE_API_KEY'),

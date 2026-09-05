@@ -23,36 +23,19 @@ import { type SubBudgetRecord } from '../../../types/budget';
 import { type Expense } from '../../../types/expense';
 import { getCategoryUI } from '../../expenses/categoryUi';
 import { SettingsCategoryPanel } from '../../settings/components/SettingsCategoryPanel';
-import { useTheme } from '../../theme/hooks/useTheme';
+import {
+  BreakdownChartLegend,
+  type BreakdownLegendItem,
+} from './BreakdownChartLegend';
+import { OverviewDataModeToggle } from './OverviewDataModeToggle';
 
-const PIE_INNER_RADIUS_PERCENT = '40%';
-const PIE_OUTER_RADIUS_PERCENT = '54%';
-const CHART_VIEW_MARGIN = 48;
+const PIE_INNER_RADIUS_PERCENT = '48%';
+const PIE_OUTER_RADIUS_PERCENT = '72%';
+const CHART_VIEW_MARGIN = 24;
+const SELECTED_RADIUS_OFFSET = 12;
 
 const CHART_WRAPPER_CLASS =
-  'px-2 py-2 flex justify-center outline-none focus:outline-none select-none [&_svg]:outline-none [&_svg]:focus:outline-none [&_svg]:overflow-visible [&_*]:outline-none [&_*]:focus:outline-none';
-
-function selectedRadialOffset(outerRadius: number): number {
-  return Math.max(12, outerRadius * 0.12);
-}
-
-function labelGapFromOuterRadius(outerRadius: number): number {
-  return Math.max(36, outerRadius * 0.28);
-}
-
-function labelFontSizeFromOuterRadius(outerRadius: number): number {
-  return Math.max(11, Math.round(outerRadius * 0.095));
-}
-
-function radialLabelRotation(midAngle: number, radian: number): number {
-  const cosVal = Math.cos(radian);
-  return cosVal >= 0 ? -midAngle : -midAngle + 180;
-}
-
-const LABEL_FILL = {
-  light: '#1e293b',
-  dark: '#f1f5f9',
-} as const;
+  'outline-none focus:outline-none select-none [&_svg]:outline-none [&_svg]:focus:outline-none [&_svg]:overflow-visible [&_*]:outline-none [&_*]:focus:outline-none';
 
 interface PeriodCategoryBreakdownChartProps {
   expenses: Expense[];
@@ -61,6 +44,9 @@ interface PeriodCategoryBreakdownChartProps {
   subCategories: SubCategoryRecord[];
   subBudgets: SubBudgetRecord[];
   isMaster: boolean;
+  isPlannedAverage: boolean;
+  onSelectMode: (isPlannedAverage: boolean) => void;
+  showDataModeControls: boolean;
 }
 
 interface BreakdownPresentation {
@@ -98,6 +84,14 @@ function filterBySelection(
   return items.filter((item) =>
     selectedSegments.includes(buildSegmentKey(item.slice.kind, item.slice.id)),
   );
+}
+
+function toLegendItem(item: BreakdownPresentation): BreakdownLegendItem {
+  return {
+    segmentKey: buildSegmentKey(item.slice.kind, item.slice.id),
+    label: item.label,
+    fill: item.fill,
+  };
 }
 
 function BreakdownListRow({ item, locale }: { item: BreakdownPresentation; locale: AppLocale }) {
@@ -143,12 +137,10 @@ function InteractiveBreakdownPie({
   chartData,
   selectedSegments,
   onToggleSegment,
-  labelFill,
 }: {
   chartData: ChartDatum[];
   selectedSegments: string[];
   onToggleSegment: (segmentKey: string) => void;
-  labelFill: string;
 }) {
   const renderShape = (props: PieSectorDataItem) => {
     const {
@@ -164,55 +156,25 @@ function InteractiveBreakdownPie({
     const datum = payload as ChartDatum;
 
     const isSelected = selectedSegments.includes(datum.segmentKey);
-    const midAngle = (startAngle + endAngle) / 2;
-    const radian = (Math.PI / 180) * -midAngle;
-    const baseOuter = outerRadius;
-    const popOutOffset = isSelected ? selectedRadialOffset(baseOuter) : 0;
-    const translateX = popOutOffset * Math.cos(radian);
-    const translateY = popOutOffset * Math.sin(radian);
-
-    const labelRadius = baseOuter + labelGapFromOuterRadius(baseOuter) + popOutOffset;
-    const labelX = cx + labelRadius * Math.cos(radian);
-    const labelY = cy + labelRadius * Math.sin(radian);
-    const textRotation = radialLabelRotation(midAngle, radian);
-    const labelFontSize = labelFontSizeFromOuterRadius(baseOuter);
+    const explodedInner = isSelected ? innerRadius + SELECTED_RADIUS_OFFSET : innerRadius;
+    const explodedOuter = isSelected ? outerRadius + SELECTED_RADIUS_OFFSET : outerRadius;
 
     return (
       <g>
-        <g
-          style={{
-            transition: 'transform 0.2s ease',
-            transform: `translate(${translateX}px, ${translateY}px)`,
-          }}
-        >
-          <Sector
-            cx={cx}
-            cy={cy}
-            innerRadius={innerRadius}
-            outerRadius={outerRadius}
-            startAngle={startAngle}
-            endAngle={endAngle}
-            fill={fill}
-            stroke="none"
-            tabIndex={-1}
-            style={{ cursor: 'pointer', outline: 'none' }}
-            onMouseDown={(event) => event.preventDefault()}
-            onClick={() => onToggleSegment(datum.segmentKey)}
-          />
-        </g>
-        <text
-          x={labelX}
-          y={labelY}
-          fill={labelFill}
-          textAnchor="middle"
-          dominantBaseline="central"
-          fontSize={labelFontSize}
-          fontWeight={600}
-          transform={`rotate(${textRotation}, ${labelX}, ${labelY})`}
-          style={{ pointerEvents: 'none' }}
-        >
-          {datum.name}
-        </text>
+        <Sector
+          cx={cx}
+          cy={cy}
+          innerRadius={explodedInner}
+          outerRadius={explodedOuter}
+          startAngle={startAngle}
+          endAngle={endAngle}
+          fill={fill}
+          stroke="none"
+          tabIndex={-1}
+          style={{ cursor: 'pointer', outline: 'none' }}
+          onMouseDown={(event) => event.preventDefault()}
+          onClick={() => onToggleSegment(datum.segmentKey)}
+        />
       </g>
     );
   };
@@ -239,40 +201,96 @@ function BreakdownDoughnutChart({
   locale,
   selectedSegments,
   onToggleSegment,
-  labelFill,
 }: {
   chartData: ChartDatum[];
   total: number;
   locale: AppLocale;
   selectedSegments: string[];
   onToggleSegment: (segmentKey: string) => void;
-  labelFill: string;
 }) {
   return (
-    <div className={CHART_WRAPPER_CLASS}>
-      <div className="relative mx-auto w-[88%] max-w-[320px] aspect-square overflow-visible">
-        <ResponsiveContainer width="100%" height="100%" className="overflow-visible">
-          <PieChart
-            margin={{
-              top: CHART_VIEW_MARGIN,
-              right: CHART_VIEW_MARGIN,
-              bottom: CHART_VIEW_MARGIN,
-              left: CHART_VIEW_MARGIN,
-            }}
-            style={{ overflow: 'visible' }}
-          >
-            <InteractiveBreakdownPie
+    <div
+      className={`relative aspect-square w-full max-h-full overflow-visible ${CHART_WRAPPER_CLASS}`}
+    >
+      <ResponsiveContainer width="100%" height="100%" className="overflow-visible">
+        <PieChart
+          margin={{
+            top: CHART_VIEW_MARGIN,
+            right: CHART_VIEW_MARGIN,
+            bottom: CHART_VIEW_MARGIN,
+            left: CHART_VIEW_MARGIN,
+          }}
+          style={{ overflow: 'visible' }}
+        >
+          <InteractiveBreakdownPie
+            chartData={chartData}
+            selectedSegments={selectedSegments}
+            onToggleSegment={onToggleSegment}
+          />
+        </PieChart>
+      </ResponsiveContainer>
+      <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+        <p className="text-base font-bold tabular-nums text-slate-800 dark:text-slate-100 text-center px-2">
+          {formatCurrencyAmount(total, locale)}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function BreakdownGraphicCard({
+  chartData,
+  total,
+  locale,
+  budgetItems,
+  categoryItems,
+  selectedSegments,
+  onToggleSegment,
+  isPlannedAverage,
+  onSelectMode,
+  showDataModeControls,
+}: {
+  chartData: ChartDatum[];
+  total: number;
+  locale: AppLocale;
+  budgetItems: BreakdownLegendItem[];
+  categoryItems: BreakdownLegendItem[];
+  selectedSegments: string[];
+  onToggleSegment: (segmentKey: string) => void;
+  isPlannedAverage: boolean;
+  onSelectMode: (isPlannedAverage: boolean) => void;
+  showDataModeControls: boolean;
+}) {
+  return (
+    <div className="overflow-visible rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800">
+      <div className="grid grid-cols-[minmax(0,42%)_1fr] items-stretch gap-3 p-3">
+        <div className="flex h-full min-h-0 flex-col items-center">
+          <div className="relative aspect-square w-full max-w-[168px] shrink-0 overflow-visible">
+            <BreakdownDoughnutChart
               chartData={chartData}
+              total={total}
+              locale={locale}
               selectedSegments={selectedSegments}
               onToggleSegment={onToggleSegment}
-              labelFill={labelFill}
             />
-          </PieChart>
-        </ResponsiveContainer>
-        <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-          <p className="text-base font-bold tabular-nums text-slate-800 dark:text-slate-100 text-center px-2">
-            {formatCurrencyAmount(total, locale)}
-          </p>
+          </div>
+          {showDataModeControls && (
+            <div className="mt-auto pt-2">
+              <OverviewDataModeToggle
+                isPlannedAverage={isPlannedAverage}
+                onSelectMode={onSelectMode}
+              />
+            </div>
+          )}
+        </div>
+        <div className="min-w-0 overflow-visible">
+          <BreakdownChartLegend
+            className="w-full"
+            budgetItems={budgetItems}
+            categoryItems={categoryItems}
+            selectedSegments={selectedSegments}
+            onToggleSegment={onToggleSegment}
+          />
         </div>
       </div>
     </div>
@@ -286,14 +304,14 @@ export function PeriodCategoryBreakdownChart({
   subCategories,
   subBudgets,
   isMaster,
+  isPlannedAverage,
+  onSelectMode,
+  showDataModeControls,
 }: PeriodCategoryBreakdownChartProps) {
   const { t } = useTranslation();
-  const { theme } = useTheme();
   const [budgetsOpen, setBudgetsOpen] = useState(true);
   const [categoriesOpen, setCategoriesOpen] = useState(true);
   const [selectedSegments, setSelectedSegments] = useState<string[]>([]);
-
-  const labelFill = LABEL_FILL[theme];
 
   const slices = useMemo(
     () =>
@@ -376,6 +394,16 @@ export function PeriodCategoryBreakdownChart({
     [presentations],
   );
 
+  const budgetLegendItems = useMemo(
+    () => budgetPresentations.map(toLegendItem),
+    [budgetPresentations],
+  );
+
+  const categoryLegendItems = useMemo(
+    () => categoryPresentations.map(toLegendItem),
+    [categoryPresentations],
+  );
+
   const filteredPresentations = useMemo(
     () => filterBySelection(presentations, selectedSegments),
     [presentations, selectedSegments],
@@ -410,19 +438,23 @@ export function PeriodCategoryBreakdownChart({
     );
   }
 
-  const chartProps = {
+  const graphicCardProps = {
     chartData,
     total,
     locale,
+    budgetItems: budgetLegendItems,
+    categoryItems: categoryLegendItems,
     selectedSegments,
     onToggleSegment: toggleSegment,
-    labelFill,
+    isPlannedAverage,
+    onSelectMode,
+    showDataModeControls,
   };
 
   if (!isMaster) {
     return (
       <div className="space-y-4">
-        <BreakdownDoughnutChart {...chartProps} />
+        <BreakdownGraphicCard {...graphicCardProps} />
 
         {filteredPresentations.length > 0 && (
           <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
@@ -443,7 +475,7 @@ export function PeriodCategoryBreakdownChart({
 
   return (
     <div className="space-y-4">
-      <BreakdownDoughnutChart {...chartProps} />
+      <BreakdownGraphicCard {...graphicCardProps} />
 
       {filteredBudgetPresentations.length > 0 && (
         <SettingsCategoryPanel

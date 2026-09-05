@@ -1,5 +1,4 @@
 import {
-  createContext,
   useCallback,
   useEffect,
   useMemo,
@@ -13,16 +12,7 @@ import { syncRecurringExpenses } from '../../services/recurrence/recurringExpens
 import { syncScheduledOneTimeExpenses } from '../../services/expenses/scheduledExpenseSyncService';
 import { useAuthSession } from '../../features/auth/hooks/useAuthSession';
 import { useTodayIso } from '../../lib/hooks/useTodayIso';
-
-export interface ExpensesContextValue {
-  expenses: Expense[];
-  loadError: boolean;
-  createExpense: (expense: Expense) => Promise<void>;
-  reload: () => Promise<void>;
-  replaceExpenses: (next: Expense[]) => void;
-}
-
-export const ExpensesContext = createContext<ExpensesContextValue | null>(null);
+import { ExpensesContext } from './expensesContext';
 
 interface ExpensesProviderProps {
   children: ReactNode;

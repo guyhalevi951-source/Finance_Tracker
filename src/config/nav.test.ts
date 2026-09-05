@@ -6,7 +6,12 @@ describe('nav', () => {
     expect(NAV_ITEMS[0]?.id).toBe('expenses');
   });
 
-  it('includes only Expenses and Budget in the primary nav list', () => {
-    expect(NAV_ITEMS.map((item) => item.id)).toEqual(['expenses', 'budget']);
+  it('lists Expenses, Charts, then Budget in the primary nav', () => {
+    expect(NAV_ITEMS.map((item) => item.id)).toEqual(['expenses', 'charts', 'budget']);
+  });
+
+  it('matches Charts only on the overview path', () => {
+    const charts = NAV_ITEMS.find((item) => item.id === 'charts');
+    expect(charts?.end).toBe(true);
   });
 });
