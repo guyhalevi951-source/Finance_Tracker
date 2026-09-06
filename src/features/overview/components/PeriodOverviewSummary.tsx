@@ -2,7 +2,6 @@ import { useTranslation } from 'react-i18next';
 import { type AppLocale } from '../../../config/app';
 import { SEMANTIC_COLORS } from '../../../config/semanticColors';
 import { type PeriodOverview } from '../../../domain/budget/periodOverview';
-import { subtractAmounts } from '../../../domain/money/arithmetic';
 import { formatCurrencyAmount, formatCurrencyAmountFixed } from '../../../lib/format/formatDate';
 
 interface PeriodOverviewSummaryProps {
@@ -26,12 +25,12 @@ export function PeriodOverviewSummary({
 }: PeriodOverviewSummaryProps) {
   const { t } = useTranslation();
   const {
-    periodBudget,
     spent,
     totalPlanned,
     averagePerDayUpToDate,
     plannedDailyAverage,
     leftToSpend,
+    isOverspent,
   } = overview;
   const { expense, budget } = SEMANTIC_COLORS;
 
@@ -43,23 +42,18 @@ export function PeriodOverviewSummary({
   const displayTotal = isPlannedAverage ? totalPlanned : spent;
   const totalLabel = isPlannedAverage ? t('overview.usedAndPlanned') : t('overview.used');
 
-  const remainingAmount = isPlannedAverage
-    ? leftToSpend
-    : subtractAmounts(periodBudget, spent);
-  const remainingIsOverspent = remainingAmount < 0;
-
   const rightValue = hasBudget
-    ? formatCurrencyAmount(Math.abs(remainingAmount), locale)
+    ? formatCurrencyAmount(Math.abs(leftToSpend), locale)
     : '—';
   const rightLabel = hasBudget
-    ? remainingIsOverspent
+    ? isOverspent
       ? t('overview.overspent')
       : t('overview.leftToSpend')
     : t('overview.noBudget');
 
   const rightValueColor = !hasBudget
     ? 'text-slate-400 dark:text-slate-500'
-    : remainingIsOverspent
+    : isOverspent
       ? expense.valueText
       : budget.valueText;
 

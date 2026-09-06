@@ -13,13 +13,7 @@ interface I18nProviderProps {
  * text direction.
  */
 export function I18nProvider({ children }: I18nProviderProps) {
-  // #region agent log
-  fetch('http://127.0.0.1:7787/ingest/85325ec4-61eb-48fe-9ac8-a4df78cb3f3d',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'ea7dae'},body:JSON.stringify({sessionId:'ea7dae',runId:'pre-fix',hypothesisId:'G',location:'I18nProvider.tsx:beforeUseTranslation',message:'I18nProvider entered',data:{},timestamp:Date.now()})}).catch(()=>{});
-  // #endregion
   const { i18n } = useTranslation();
-  // #region agent log
-  fetch('http://127.0.0.1:7787/ingest/85325ec4-61eb-48fe-9ac8-a4df78cb3f3d',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'ea7dae'},body:JSON.stringify({sessionId:'ea7dae',runId:'pre-fix',hypothesisId:'G',location:'I18nProvider.tsx:afterUseTranslation',message:'useTranslation resolved',data:{language:i18n.language},timestamp:Date.now()})}).catch(()=>{});
-  // #endregion
 
   useEffect(() => {
     const locale = i18n.language;

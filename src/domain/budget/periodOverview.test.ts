@@ -218,7 +218,10 @@ describe('computeOverviewForPeriodBudget plannedDailyAverage', () => {
       plannedDailyAverageDivisor: 'rangeInclusive',
     });
 
+    expect(overview.spent).toBe(100);
+    expect(overview.futurePlanned).toBe(50);
     expect(overview.totalPlanned).toBe(150);
+    expect(overview.leftToSpend).toBe(650);
     expect(overview.plannedDailyAverage).toBeCloseTo(37.5, 2);
   });
 

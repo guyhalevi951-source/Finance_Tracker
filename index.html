@@ -20,36 +20,6 @@
   </head>
   <body>
     <div id="root"></div>
-    <script>
-      (function () {
-        function send(payload) {
-          try {
-            fetch('http://127.0.0.1:7787/ingest/85325ec4-61eb-48fe-9ac8-a4df78cb3f3d', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': 'ea7dae' },
-              body: JSON.stringify(Object.assign({ sessionId: 'ea7dae', timestamp: Date.now() }, payload)),
-            }).catch(function () {});
-          } catch (e) {}
-          try {
-            var n = document.getElementById('agent-debug-overlay');
-            if (!n) {
-              n = document.createElement('pre');
-              n.id = 'agent-debug-overlay';
-              n.setAttribute('style', 'position:fixed;z-index:2147483647;left:0;bottom:0;max-height:30vh;overflow:auto;background:#111;color:#0f0;font:11px/1.3 monospace;padding:8px;margin:0;width:100%;box-sizing:border-box;white-space:pre-wrap;pointer-events:none;');
-              document.body.appendChild(n);
-            }
-            n.textContent += JSON.stringify(payload) + '\n';
-          } catch (e2) {}
-        }
-        window.addEventListener('error', function (event) {
-          send({ runId: 'pre-fix', hypothesisId: 'A', location: 'index.html:error', message: 'window error', data: { msg: String(event.message), filename: event.filename, lineno: event.lineno } });
-        });
-        window.addEventListener('unhandledrejection', function (event) {
-          send({ runId: 'pre-fix', hypothesisId: 'A', location: 'index.html:rejection', message: 'unhandled rejection', data: { reason: String(event.reason) } });
-        });
-        send({ runId: 'pre-fix', hypothesisId: 'F', location: 'index.html:inline', message: 'html inline boot', data: {} });
-      })();
-    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
