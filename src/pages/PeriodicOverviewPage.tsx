@@ -13,13 +13,12 @@ import { ExpenseFilterToolbar } from '../features/expenses/components/ExpenseFil
 import { useExpenseTimeFilter } from '../features/expenses/hooks/useExpenseTimeFilter';
 import { usePeriodOverview } from '../features/overview/hooks/usePeriodOverview';
 import { usePeriodBreakdownExpenses } from '../features/overview/hooks/usePeriodBreakdownExpenses';
-import { PeriodOverviewSummary } from '../features/overview/components/PeriodOverviewSummary';
-import { PeriodExpenseBarChart } from '../features/overview/components/PeriodExpenseBarChart';
-import { PeriodCategoryBreakdownChart } from '../features/overview/components/PeriodCategoryBreakdownChart';
-import { OverviewGraphicViewToggle } from '../features/overview/components/OverviewGraphicViewToggle';
+import {
+  OverviewGraphicViewToggle,
+  type OverviewViewMode,
+} from '../features/overview/components/OverviewGraphicViewToggle';
+import { PeriodOverviewDashboard } from '../features/overview/components/PeriodOverviewDashboard';
 import { AddExpenseLauncher } from '../features/expenses/components/AddExpenseLauncher';
-
-export type OverviewViewMode = 'daily' | 'category';
 
 export function PeriodicOverviewPage() {
   const { t, i18n } = useTranslation();
@@ -48,12 +47,11 @@ export function PeriodicOverviewPage() {
     { activeBudgetId, subBudget, subBudgets },
   );
 
-  const hideDataModeControls = isSubBudgetOnFinalDay(
+  const showDataModeControls = !isSubBudgetOnFinalDay(
     isMaster,
     subBudget?.endDate ?? null,
     timeFilter.todayIso,
   );
-  const showDataModeControls = !hideDataModeControls;
 
   const breakdownExpenses = usePeriodBreakdownExpenses(
     expenses,
@@ -100,36 +98,21 @@ export function PeriodicOverviewPage() {
         />
       )}
 
-      <PeriodOverviewSummary
+      <PeriodOverviewDashboard
         overview={overview}
         locale={locale}
         hasBudget={hasBudget}
         isPlannedAverage={isPlannedAverage}
         showDataModeControls={showDataModeControls}
+        viewMode={viewMode}
+        todayIso={timeFilter.todayIso}
+        breakdownExpenses={breakdownExpenses}
+        mainCategories={mainCategories}
+        subCategories={subCategories}
+        subBudgets={subBudgets}
+        isMaster={isMaster}
+        onSelectMode={setIsPlannedAverage}
       />
-
-      {viewMode === 'daily' ? (
-        <PeriodExpenseBarChart
-          overview={overview}
-          locale={locale}
-          todayIso={timeFilter.todayIso}
-          isPlannedAverage={isPlannedAverage}
-          onSelectMode={setIsPlannedAverage}
-          showDataModeControls={showDataModeControls}
-        />
-      ) : (
-        <PeriodCategoryBreakdownChart
-          expenses={breakdownExpenses}
-          locale={locale}
-          mainCategories={mainCategories}
-          subCategories={subCategories}
-          subBudgets={subBudgets}
-          isMaster={isMaster}
-          isPlannedAverage={isPlannedAverage}
-          onSelectMode={setIsPlannedAverage}
-          showDataModeControls={showDataModeControls}
-        />
-      )}
 
       <AddExpenseLauncher
         locale={locale}

@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { BarChart3, PieChart } from 'lucide-react';
 import { OVERVIEW_TOGGLE_BUTTON_CLASS, OVERVIEW_TOGGLE_FRAME_CLASS } from './overviewToggleButton';
 
-type OverviewViewMode = 'daily' | 'category';
+export type OverviewViewMode = 'daily' | 'category';
 
 interface OverviewGraphicViewToggleProps {
   viewMode: OverviewViewMode;

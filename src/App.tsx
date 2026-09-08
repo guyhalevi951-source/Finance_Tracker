@@ -8,6 +8,7 @@ import { ROUTES } from './config/routes';
 import { PeriodicOverviewPage } from './pages/PeriodicOverviewPage';
 import { BudgetSettingsPage } from './pages/BudgetSettingsPage';
 import { BudgetHistoryPage } from './pages/BudgetHistoryPage.tsx';
+import { BudgetHistoryChartsPage } from './pages/BudgetHistoryChartsPage.tsx';
 import { BudgetHistoryDetailPage } from './pages/BudgetHistoryDetailPage.tsx';
 import { ExpensesPage } from './pages/ExpensesPage';
 import { ExpenseDetailPage } from './pages/ExpenseDetailPage';
@@ -30,6 +31,7 @@ function App() {
             <Route path={ROUTES.overview} element={<PeriodicOverviewPage />} />
             <Route path={ROUTES.budget} element={<BudgetSettingsPage />} />
             <Route path={ROUTES.budgetHistory} element={<BudgetHistoryPage />} />
+            <Route path={ROUTES.budgetHistoryCharts} element={<BudgetHistoryChartsPage />} />
             <Route path={ROUTES.budgetHistoryDetail} element={<BudgetHistoryDetailPage />} />
             <Route path={ROUTES.expenses} element={<ExpensesPage />} />
             <Route path={ROUTES.expenseDetail} element={<ExpenseDetailPage />} />

@@ -2,6 +2,7 @@ export const ROUTES = {
   overview: '/',
   budget: '/budget',
   budgetHistory: '/budget/history',
+  budgetHistoryCharts: '/budget/history/:id/charts',
   budgetHistoryDetail: '/budget/history/:id',
   expenses: '/expenses',
   expenseDetail: '/expenses/:id',
@@ -21,6 +22,10 @@ export function expenseDetailPath(id: string): string {
 
 export function budgetHistoryDetailPath(id: string): string {
   return `/budget/history/${id}`;
+}
+
+export function budgetHistoryChartsPath(id: string): string {
+  return `/budget/history/${id}/charts`;
 }
 
 export function categoryEditPath(id: string): string {

@@ -170,7 +170,8 @@
       "totalSpent": "Total spent",
       "remaining": "Remaining",
       "readOnly": "This is a read-only archive view",
-      "delete": "Delete from history"
+      "delete": "Delete from history",
+      "back": "Go Back"
     },
     "card": {
       "monthlyBudget": "Monthly Budget",
