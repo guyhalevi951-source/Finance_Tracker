@@ -168,7 +168,7 @@ export function MasterBudgetListRow({
 
     <div
 
-      className={`grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-start gap-x-3 gap-y-2 ${BUDGET_LIST_ROW_LAYOUT} border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/40`}
+      className={`grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-start gap-x-3 gap-y-2 ${BUDGET_LIST_ROW_LAYOUT} rounded-lg bg-slate-50 dark:bg-slate-900/40`}
 
     >
 

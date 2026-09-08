@@ -18,16 +18,16 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { GripHorizontal, Pencil, Trash2 } from 'lucide-react';
+import { CalendarRange, GripHorizontal, Pencil, Pin, Trash2, User, Users } from 'lucide-react';
 import { type AppLocale } from '../../../config/app';
 import { SEMANTIC_COLORS } from '../../../config/semanticColors';
 import { MASTER_BUDGET_ID } from '../../../domain/budget/constants';
 import { resolveBudgetLabel } from '../../../domain/budget/resolveBudgetLabel';
 import { formatCurrencyAmount, formatExpenseDateNumeric } from '../../../lib/format/formatDate';
 import { type SubBudgetRecord } from '../../../types/budget';
+import { ACCORDION_EMPTY_CONTENT_CLASS, AppAccordion } from '../../../components/accordion';
 import { BudgetOverviewButton } from './BudgetOverviewButton';
 import { DeleteSubBudgetConfirmModal } from './DeleteSubBudgetConfirmModal';
-import { SettingsCategoryPanel } from '../../settings/components/SettingsCategoryPanel';
 import {
   BUDGET_ACTION_CLUSTER_WIDTH_CLASS,
   BUDGET_LIST_ROW_LAYOUT,
@@ -70,7 +70,7 @@ function SortableSubBudgetRow({ budget, locale, onEdit, onDeleteRequest, onOpenO
     <li
       ref={setNodeRef}
       style={style}
-      className={`flex justify-between items-start gap-3 ${BUDGET_LIST_ROW_LAYOUT} bg-white dark:bg-slate-800 ${
+      className={`flex justify-between items-start gap-3 ${BUDGET_LIST_ROW_LAYOUT} ${
         isDragging ? 'opacity-80 shadow-lg z-10 relative' : ''
       }`}
     >
@@ -136,7 +136,12 @@ export function SubBudgetList({
 }: SubBudgetListProps) {
   const { t } = useTranslation();
   const [deleteTarget, setDeleteTarget] = useState<SubBudgetRecord | null>(null);
-  const [personalBudgetsOpen, setPersonalBudgetsOpen] = useState(false);
+  const [fixedOpen, setFixedOpen] = useState(false);
+  const [temporaryOpen, setTemporaryOpen] = useState(false);
+  const [fixedPersonalOpen, setFixedPersonalOpen] = useState(false);
+  const [fixedSharedOpen, setFixedSharedOpen] = useState(false);
+  const [temporaryPersonalOpen, setTemporaryPersonalOpen] = useState(false);
+  const [temporarySharedOpen, setTemporarySharedOpen] = useState(false);
 
   const ids = useMemo(() => subBudgets.map((budget) => budget.id), [subBudgets]);
 
@@ -157,40 +162,91 @@ export function SubBudgetList({
 
   return (
     <>
-      <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
-        <MasterBudgetListRow
-          locale={locale}
-          {...masterBudget}
-          onOpenOverview={() => onOpenOverview(MASTER_BUDGET_ID)}
-        />
-      </div>
-
-      <div className="mt-6">
-        <SettingsCategoryPanel
-          title={t('budget.personalBudgets')}
-          open={personalBudgetsOpen}
-          onToggle={() => setPersonalBudgetsOpen((prev) => !prev)}
-          depth={0}
+      <div className="space-y-4">
+        <AppAccordion
+          title={t('budget.groups.fixed.title')}
+          subtitle={t('budget.groups.fixed.subtitle')}
+          icon={Pin}
+          open={fixedOpen}
+          onToggle={() => setFixedOpen((prev) => !prev)}
+          variant="parent"
         >
-          {subBudgets.length > 0 && (
-            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-              <SortableContext items={ids} strategy={verticalListSortingStrategy}>
-                <ul className="divide-y divide-slate-200 dark:divide-slate-700">
-                  {subBudgets.map((budget) => (
-                    <SortableSubBudgetRow
-                      key={budget.id}
-                      budget={budget}
-                      locale={locale}
-                      onEdit={() => onEdit(budget)}
-                      onDeleteRequest={() => setDeleteTarget(budget)}
-                      onOpenOverview={() => onOpenOverview(budget.id)}
-                    />
-                  ))}
-                </ul>
-              </SortableContext>
-            </DndContext>
-          )}
-        </SettingsCategoryPanel>
+          <AppAccordion
+            title={t('budget.groups.personal.title')}
+            subtitle={t('budget.groups.personal.subtitle')}
+            icon={User}
+            open={fixedPersonalOpen}
+            onToggle={() => setFixedPersonalOpen((prev) => !prev)}
+            variant="nested"
+          >
+            <MasterBudgetListRow
+              locale={locale}
+              {...masterBudget}
+              onOpenOverview={() => onOpenOverview(MASTER_BUDGET_ID)}
+            />
+          </AppAccordion>
+
+          <AppAccordion
+            title={t('budget.groups.shared.title')}
+            subtitle={t('budget.groups.shared.subtitle')}
+            icon={Users}
+            open={fixedSharedOpen}
+            onToggle={() => setFixedSharedOpen((prev) => !prev)}
+            variant="nested"
+          >
+            <p className={ACCORDION_EMPTY_CONTENT_CLASS}>{t('budget.list.empty')}</p>
+          </AppAccordion>
+        </AppAccordion>
+
+        <AppAccordion
+          title={t('budget.groups.temporary.title')}
+          subtitle={t('budget.groups.temporary.subtitle')}
+          icon={CalendarRange}
+          open={temporaryOpen}
+          onToggle={() => setTemporaryOpen((prev) => !prev)}
+          variant="parent"
+        >
+          <AppAccordion
+            title={t('budget.groups.personal.title')}
+            subtitle={t('budget.groups.personal.subtitle')}
+            icon={User}
+            open={temporaryPersonalOpen}
+            onToggle={() => setTemporaryPersonalOpen((prev) => !prev)}
+            variant="nested"
+          >
+            {subBudgets.length === 0 ? (
+              <p className={ACCORDION_EMPTY_CONTENT_CLASS}>{t('budget.list.empty')}</p>
+            ) : (
+              <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                <SortableContext items={ids} strategy={verticalListSortingStrategy}>
+                  <ul className="divide-y divide-slate-200 dark:divide-slate-600/70">
+                    {subBudgets.map((budget) => (
+                      <SortableSubBudgetRow
+                        key={budget.id}
+                        budget={budget}
+                        locale={locale}
+                        onEdit={() => onEdit(budget)}
+                        onDeleteRequest={() => setDeleteTarget(budget)}
+                        onOpenOverview={() => onOpenOverview(budget.id)}
+                      />
+                    ))}
+                  </ul>
+                </SortableContext>
+              </DndContext>
+            )}
+          </AppAccordion>
+
+          <AppAccordion
+            title={t('budget.groups.shared.title')}
+            subtitle={t('budget.groups.shared.subtitle')}
+            icon={Users}
+            open={temporarySharedOpen}
+            onToggle={() => setTemporarySharedOpen((prev) => !prev)}
+            variant="nested"
+          >
+            <p className={ACCORDION_EMPTY_CONTENT_CLASS}>{t('budget.list.empty')}</p>
+          </AppAccordion>
+        </AppAccordion>
       </div>
 
       <DeleteSubBudgetConfirmModal

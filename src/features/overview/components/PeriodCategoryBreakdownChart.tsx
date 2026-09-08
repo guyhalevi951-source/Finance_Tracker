@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Wallet, type LucideIcon } from 'lucide-react';
+import { LayoutGrid, Wallet, type LucideIcon } from 'lucide-react';
 import { Pie, PieChart, ResponsiveContainer, Sector } from 'recharts';
 import type { PieSectorDataItem } from 'recharts/types/polar/Pie';
 import { type AppLocale } from '../../../config/app';
@@ -22,7 +22,7 @@ import { type MainCategoryRecord, type SubCategoryRecord } from '../../../types/
 import { type SubBudgetRecord } from '../../../types/budget';
 import { type Expense } from '../../../types/expense';
 import { getCategoryUI } from '../../expenses/categoryUi';
-import { SettingsCategoryPanel } from '../../settings/components/SettingsCategoryPanel';
+import { AppAccordion } from '../../../components/accordion';
 import {
   BreakdownChartLegend,
   type BreakdownLegendItem,
@@ -478,11 +478,13 @@ export function PeriodCategoryBreakdownChart({
       <BreakdownGraphicCard {...graphicCardProps} />
 
       {filteredBudgetPresentations.length > 0 && (
-        <SettingsCategoryPanel
+        <AppAccordion
           title={t('overview.breakdownBudgets')}
+          subtitle={t('overview.breakdownBudgetsSubtitle')}
+          icon={Wallet}
           open={budgetsOpen}
           onToggle={() => setBudgetsOpen((prev) => !prev)}
-          depth={0}
+          variant="parent"
         >
           <ul className="divide-y divide-slate-200 dark:divide-slate-700">
             {filteredBudgetPresentations.map((item) => (
@@ -493,15 +495,17 @@ export function PeriodCategoryBreakdownChart({
               />
             ))}
           </ul>
-        </SettingsCategoryPanel>
+        </AppAccordion>
       )}
 
       {filteredCategoryPresentations.length > 0 && (
-        <SettingsCategoryPanel
+        <AppAccordion
           title={t('overview.breakdownCategories')}
+          subtitle={t('overview.breakdownCategoriesSubtitle')}
+          icon={LayoutGrid}
           open={categoriesOpen}
           onToggle={() => setCategoriesOpen((prev) => !prev)}
-          depth={0}
+          variant="parent"
         >
           <ul className="divide-y divide-slate-200 dark:divide-slate-700">
             {filteredCategoryPresentations.map((item) => (
@@ -512,7 +516,7 @@ export function PeriodCategoryBreakdownChart({
               />
             ))}
           </ul>
-        </SettingsCategoryPanel>
+        </AppAccordion>
       )}
     </div>
   );
