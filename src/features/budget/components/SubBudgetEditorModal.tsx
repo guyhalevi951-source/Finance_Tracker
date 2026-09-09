@@ -10,6 +10,42 @@ import { useTodayIso } from '../../../lib/hooks/useTodayIso';
 import { preventNumberInputScroll } from '../../../lib/input/preventNumberInputScroll';
 import { createBilingualText } from '../../../services/translation/createBilingualText';
 import { type SubBudgetInput, type SubBudgetRecord } from '../../../types/budget';
+import { BUDGET_CHECKBOX_CLASS } from './MasterBudgetListRow';
+
+const FORM_LABEL_CLASS = 'block text-sm font-medium text-slate-600 dark:text-slate-300 mb-2';
+const FORM_FIELD_CLASS =
+  'w-full px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100';
+const DATE_TRIGGER_CLASS =
+  'w-full px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-start min-h-[48px]';
+
+function BudgetFormCheckbox({
+  checked,
+  disabled,
+  label,
+  onChange,
+}: {
+  checked: boolean;
+  disabled?: boolean;
+  label: string;
+  onChange: (checked: boolean) => void;
+}) {
+  return (
+    <label
+      className={`flex items-center gap-3 min-h-[44px] select-none ${
+        disabled ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'
+      }`}
+    >
+      <input
+        type="checkbox"
+        checked={checked}
+        disabled={disabled}
+        onChange={(e) => onChange(e.target.checked)}
+        className={BUDGET_CHECKBOX_CLASS}
+      />
+      <span className="text-sm text-slate-700 dark:text-slate-200">{label}</span>
+    </label>
+  );
+}
 
 interface SubBudgetEditorModalProps {
   open: boolean;
@@ -34,21 +70,27 @@ export function SubBudgetEditorModal({
   const [totalAmount, setTotalAmount] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
+  const [includeInMonthlyBudget, setIncludeInMonthlyBudget] = useState(true);
+  const [noTimeLimit, setNoTimeLimit] = useState(false);
   const [startPickerOpen, setStartPickerOpen] = useState(false);
   const [endPickerOpen, setEndPickerOpen] = useState(false);
   const [errorKey, setErrorKey] = useState<string | null>(null);
 
   useEffect(() => {
     if (!open) return;
+    const today = toIsoDate(new Date());
     if (editingBudget) {
       setName(editingBudget.name[locale] || editingBudget.name.en);
       setTotalAmount(String(editingBudget.totalAmount));
-      setStartDate(editingBudget.startDate);
-      setEndDate(editingBudget.endDate);
+      setIncludeInMonthlyBudget(editingBudget.includeInMonthlyBudget);
+      setNoTimeLimit(editingBudget.kind === 'fixed');
+      setStartDate(editingBudget.kind === 'temporary' ? editingBudget.startDate : today);
+      setEndDate(editingBudget.kind === 'temporary' ? editingBudget.endDate : today);
     } else {
-      const today = toIsoDate(new Date());
       setName('');
       setTotalAmount('');
+      setIncludeInMonthlyBudget(true);
+      setNoTimeLimit(false);
       setStartDate(today);
       setEndDate(today);
     }
@@ -57,8 +99,14 @@ export function SubBudgetEditorModal({
 
   if (!open) return null;
 
+  // Fixed vs temporary is locked once a budget exists.
+  const isKindLocked = editingBudget !== null;
+
   const handleSubmit = async () => {
-    const parsed = parseSubBudgetInput({ name, totalAmount, startDate, endDate }, todayIso);
+    const parsed = parseSubBudgetInput(
+      { name, totalAmount, startDate, endDate, noTimeLimit, includeInMonthlyBudget },
+      todayIso,
+    );
     if (!parsed.ok) {
       setErrorKey(`budget.validation.${parsed.error}`);
       return;
@@ -105,64 +153,72 @@ export function SubBudgetEditorModal({
 
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-2">
-              {t('budget.form.name')}
-            </label>
+            <label className={FORM_LABEL_CLASS}>{t('budget.form.name')}</label>
             <input
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100"
+              className={FORM_FIELD_CLASS}
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-2">
-              {t('budget.form.totalAmount')}
-            </label>
+            <label className={FORM_LABEL_CLASS}>{t('budget.form.totalAmount')}</label>
             <input
               type="number"
               value={totalAmount}
               onChange={(e) => setTotalAmount(e.target.value)}
               onWheel={preventNumberInputScroll}
               min="0"
-              className="w-full px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100"
+              className={FORM_FIELD_CLASS}
             />
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-2">
-              {t('budget.form.startDate')}
-            </label>
-            <button
-              type="button"
-              onClick={() => setStartPickerOpen(true)}
-              className={`w-full px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-start min-h-[48px] ${
-                startDate
-                  ? 'text-slate-900 dark:text-white'
-                  : 'text-slate-400 dark:text-slate-400'
-              }`}
-            >
-              {startDate ? formatExpenseDateNumeric(startDate, locale) : t('budget.form.selectDate')}
-            </button>
+          <div className="space-y-1">
+            <BudgetFormCheckbox
+              checked={includeInMonthlyBudget}
+              label={t('budget.form.includeInMonthlyBudget')}
+              onChange={setIncludeInMonthlyBudget}
+            />
+            <BudgetFormCheckbox
+              checked={noTimeLimit}
+              disabled={isKindLocked}
+              label={t('budget.form.noTimeLimit')}
+              onChange={setNoTimeLimit}
+            />
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-2">
-              {t('budget.form.endDate')}
-            </label>
-            <button
-              type="button"
-              onClick={() => setEndPickerOpen(true)}
-              className={`w-full px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-start min-h-[48px] ${
-                endDate
-                  ? 'text-slate-900 dark:text-white'
-                  : 'text-slate-400 dark:text-slate-400'
-              }`}
-            >
-              {endDate ? formatExpenseDateNumeric(endDate, locale) : t('budget.form.selectDate')}
-            </button>
-          </div>
+          {!noTimeLimit && (
+            <>
+              <div>
+                <label className={FORM_LABEL_CLASS}>{t('budget.form.startDate')}</label>
+                <button
+                  type="button"
+                  onClick={() => setStartPickerOpen(true)}
+                  className={`${DATE_TRIGGER_CLASS} ${
+                    startDate ? 'text-slate-900 dark:text-white' : 'text-slate-400 dark:text-slate-400'
+                  }`}
+                >
+                  {startDate
+                    ? formatExpenseDateNumeric(startDate, locale)
+                    : t('budget.form.selectDate')}
+                </button>
+              </div>
+
+              <div>
+                <label className={FORM_LABEL_CLASS}>{t('budget.form.endDate')}</label>
+                <button
+                  type="button"
+                  onClick={() => setEndPickerOpen(true)}
+                  className={`${DATE_TRIGGER_CLASS} ${
+                    endDate ? 'text-slate-900 dark:text-white' : 'text-slate-400 dark:text-slate-400'
+                  }`}
+                >
+                  {endDate ? formatExpenseDateNumeric(endDate, locale) : t('budget.form.selectDate')}
+                </button>
+              </div>
+            </>
+          )}
         </div>
 
         <div className="flex gap-3 mt-6">

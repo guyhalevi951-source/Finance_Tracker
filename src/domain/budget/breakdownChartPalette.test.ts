@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   assignBreakdownChartSliceColors,
   BREAKDOWN_CHART_COLOR_PALETTE,
+  EMPTY_BREAKDOWN_RING_COLOR,
   resolveBreakdownChartSliceColor,
 } from './breakdownChartPalette';
 
@@ -57,5 +58,12 @@ describe('resolveBreakdownChartSliceColor', () => {
     expect(resolveBreakdownChartSliceColor(map, 'category', 'missing')).toBe(
       BREAKDOWN_CHART_COLOR_PALETTE[0],
     );
+  });
+});
+
+describe('EMPTY_BREAKDOWN_RING_COLOR', () => {
+  it('is a distinct slate hex for the empty Graphic View ring', () => {
+    expect(EMPTY_BREAKDOWN_RING_COLOR).toMatch(/^#[0-9A-Fa-f]{6}$/);
+    expect(BREAKDOWN_CHART_COLOR_PALETTE).not.toContain(EMPTY_BREAKDOWN_RING_COLOR);
   });
 });

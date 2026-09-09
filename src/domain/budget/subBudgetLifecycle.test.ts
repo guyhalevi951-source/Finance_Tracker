@@ -10,17 +10,41 @@ import {
 
 const budget: SubBudgetRecord = {
   id: 'b1',
+  kind: 'temporary',
   name: { en: 'Vacation', he: 'חופשה' },
   totalAmount: 5000,
+  includeInMonthlyBudget: true,
   startDate: '2026-08-01',
   endDate: '2026-08-31',
   sortOrder: 0,
   createdAt: '2026-07-01T00:00:00.000Z',
 };
 
+const fixedBudget: SubBudgetRecord = {
+  id: 'fixed-1',
+  kind: 'fixed',
+  name: { en: 'Groceries', he: 'מכולת' },
+  totalAmount: 1500,
+  includeInMonthlyBudget: true,
+  monthOverrides: {},
+  sortOrder: 2,
+  createdAt: '2020-01-01T00:00:00.000Z',
+};
+
 describe('subBudgetLifecycle', () => {
   it('archives when endDate is before today', () => {
     expect(isSubBudgetArchived(budget, '2026-09-01')).toBe(true);
+  });
+
+  it('never archives fixed budgets and excludes them from history', () => {
+    expect(isSubBudgetArchived(fixedBudget, '2099-12-31')).toBe(false);
+    expect(listActiveSubBudgets([fixedBudget, budget], '2099-12-31').map((b) => b.id)).toEqual([
+      'fixed-1',
+    ]);
+    expect(listArchivedSubBudgets([fixedBudget, budget], '2099-12-31').map((b) => b.id)).toEqual([
+      'b1',
+    ]);
+    expect(purgeArchivedSubBudget([fixedBudget], 'fixed-1', '2099-12-31')).toEqual([fixedBudget]);
   });
 
   it('stays active on endDate boundary', () => {

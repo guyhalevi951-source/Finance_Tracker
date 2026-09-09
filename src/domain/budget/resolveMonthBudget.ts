@@ -2,7 +2,8 @@ import { type BudgetStore } from '../../types/budget';
 import { getMonthBudgetEntry } from './budgetStorePolicy';
 import { previousMonthKey } from './monthKey';
 
-export type MonthBudgetSource = 'explicit' | 'inherited' | 'none';
+/** `default` is only produced by fixed sub-budgets falling back to their `totalAmount`. */
+export type MonthBudgetSource = 'explicit' | 'inherited' | 'default' | 'none';
 
 export interface ResolvedMonthBudget {
   amount: number;

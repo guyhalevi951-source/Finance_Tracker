@@ -19,7 +19,7 @@ export function usePeriodBreakdownExpenses(
   return useMemo(
     () =>
       filterPeriodBreakdownExpenses({
-        expenses: filterExpensesByBudget(expenses, activeBudgetId),
+        expenses: filterExpensesByBudget(expenses, activeBudgetId, subBudgets),
         range,
         todayIso,
         subBudgets,

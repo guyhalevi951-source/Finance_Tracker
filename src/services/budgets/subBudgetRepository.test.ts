@@ -24,10 +24,23 @@ beforeEach(() => localStorageMock.clear());
 
 const sample: SubBudgetRecord = {
   id: 'sub1',
+  kind: 'temporary',
   name: { en: 'Vacation', he: 'חופשה' },
   totalAmount: 3000,
+  includeInMonthlyBudget: true,
   startDate: '2026-08-01',
   endDate: '2026-08-31',
+  sortOrder: 0,
+  createdAt: '2026-07-01T00:00:00.000Z',
+};
+
+const fixedSample: SubBudgetRecord = {
+  id: 'fixed1',
+  kind: 'fixed',
+  name: { en: 'Groceries', he: 'מכולת' },
+  totalAmount: 1500,
+  includeInMonthlyBudget: false,
+  monthOverrides: { '2026-09': { amount: 1200, carryOverToNext: true } },
   sortOrder: 0,
   createdAt: '2026-07-01T00:00:00.000Z',
 };
@@ -38,6 +51,34 @@ describe('subBudgetRepository guest', () => {
     const loaded = await loadSubBudgets(null);
     expect(loaded).toHaveLength(1);
     expect(loaded[0]).toEqual(sample);
+  });
+
+  it('round-trips a fixed, isolated budget with month overrides', async () => {
+    await saveSubBudget(null, fixedSample);
+    const loaded = await loadSubBudgets(null);
+    expect(loaded).toHaveLength(1);
+    expect(loaded[0]).toEqual(fixedSample);
+  });
+
+  it('defaults legacy records to temporary and linked', async () => {
+    const legacy = {
+      id: 'legacy',
+      name: { en: 'Old', he: 'ישן' },
+      totalAmount: 100,
+      startDate: '2026-08-01',
+      endDate: '2026-08-31',
+      sortOrder: 0,
+      createdAt: '2026-07-01T00:00:00.000Z',
+    };
+    localStorageMock.setItem('subBudgets', JSON.stringify([legacy]));
+    const loaded = await loadSubBudgets(null);
+    expect(loaded[0]).toEqual({ ...legacy, kind: 'temporary', includeInMonthlyBudget: true });
+  });
+
+  it('drops fixed records with corrupted month overrides', async () => {
+    const corrupted = { ...fixedSample, monthOverrides: { 'not-a-month': { amount: 1 } } };
+    localStorageMock.setItem('subBudgets', JSON.stringify([corrupted]));
+    expect(await loadSubBudgets(null)).toHaveLength(0);
   });
 
   it('persists reordered sortOrder', async () => {

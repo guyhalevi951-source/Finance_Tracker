@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   DndContext,
@@ -23,11 +23,13 @@ import { type AppLocale } from '../../../config/app';
 import { SEMANTIC_COLORS } from '../../../config/semanticColors';
 import { MASTER_BUDGET_ID } from '../../../domain/budget/constants';
 import { resolveBudgetLabel } from '../../../domain/budget/resolveBudgetLabel';
+import { partitionSubBudgetsByKind } from '../../../domain/budget/subBudgetKind';
 import { formatCurrencyAmount, formatExpenseDateNumeric } from '../../../lib/format/formatDate';
-import { type SubBudgetRecord } from '../../../types/budget';
+import { type SubBudgetRecord, type TemporarySubBudgetRecord } from '../../../types/budget';
 import { ACCORDION_EMPTY_CONTENT_CLASS, AppAccordion } from '../../../components/accordion';
 import { BudgetOverviewButton } from './BudgetOverviewButton';
 import { DeleteSubBudgetConfirmModal } from './DeleteSubBudgetConfirmModal';
+import { FixedBudgetListRow } from './FixedBudgetListRow';
 import {
   BUDGET_ACTION_CLUSTER_WIDTH_CLASS,
   BUDGET_LIST_ROW_LAYOUT,
@@ -38,7 +40,7 @@ import {
 interface SubBudgetListProps {
   locale: AppLocale;
   subBudgets: SubBudgetRecord[];
-  masterBudget: Omit<MasterBudgetListRowProps, 'locale'>;
+  masterBudget: Omit<MasterBudgetListRowProps, 'locale' | 'onOpenOverview' | 'title' | 'trailingActions'>;
   onReorder: (orderedIds: string[]) => void;
   onEdit: (budget: SubBudgetRecord) => void;
   onDelete: (id: string, deleteExpenses: boolean) => Promise<void>;
@@ -47,11 +49,44 @@ interface SubBudgetListProps {
 }
 
 interface SortableRowProps {
-  budget: SubBudgetRecord;
+  budget: TemporarySubBudgetRecord;
   locale: AppLocale;
   onEdit: () => void;
   onDeleteRequest: () => void;
   onOpenOverview: () => void;
+}
+
+interface SortableBudgetGroupProps {
+  ids: string[];
+  listClassName: string;
+  onReorder: (orderedIds: string[]) => void;
+  children: ReactNode;
+}
+
+/** One drag-and-drop group per kind so fixed and temporary budgets reorder independently. */
+function SortableBudgetGroup({ ids, listClassName, onReorder, children }: SortableBudgetGroupProps) {
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 150, tolerance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const oldIndex = ids.indexOf(String(active.id));
+    const newIndex = ids.indexOf(String(over.id));
+    if (oldIndex < 0 || newIndex < 0) return;
+    onReorder(arrayMove(ids, oldIndex, newIndex));
+  };
+
+  return (
+    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+      <SortableContext items={ids} strategy={verticalListSortingStrategy}>
+        <ul className={listClassName}>{children}</ul>
+      </SortableContext>
+    </DndContext>
+  );
 }
 
 function SortableSubBudgetRow({ budget, locale, onEdit, onDeleteRequest, onOpenOverview }: SortableRowProps) {
@@ -143,22 +178,15 @@ export function SubBudgetList({
   const [temporaryPersonalOpen, setTemporaryPersonalOpen] = useState(false);
   const [temporarySharedOpen, setTemporarySharedOpen] = useState(false);
 
-  const ids = useMemo(() => subBudgets.map((budget) => budget.id), [subBudgets]);
-
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
-    useSensor(TouchSensor, { activationConstraint: { delay: 150, tolerance: 5 } }),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  const { fixed: fixedBudgets, temporary: temporaryBudgets } = useMemo(
+    () => partitionSubBudgetsByKind(subBudgets),
+    [subBudgets],
   );
-
-  const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event;
-    if (!over || active.id === over.id) return;
-    const oldIndex = ids.indexOf(String(active.id));
-    const newIndex = ids.indexOf(String(over.id));
-    if (oldIndex < 0 || newIndex < 0) return;
-    onReorder(arrayMove(ids, oldIndex, newIndex));
-  };
+  const fixedIds = useMemo(() => fixedBudgets.map((budget) => budget.id), [fixedBudgets]);
+  const temporaryIds = useMemo(
+    () => temporaryBudgets.map((budget) => budget.id),
+    [temporaryBudgets],
+  );
 
   return (
     <>
@@ -184,6 +212,20 @@ export function SubBudgetList({
               {...masterBudget}
               onOpenOverview={() => onOpenOverview(MASTER_BUDGET_ID)}
             />
+            {fixedBudgets.length > 0 && (
+              <SortableBudgetGroup ids={fixedIds} listClassName="mt-2 space-y-2" onReorder={onReorder}>
+                {fixedBudgets.map((budget) => (
+                  <FixedBudgetListRow
+                    key={budget.id}
+                    budget={budget}
+                    locale={locale}
+                    onEdit={() => onEdit(budget)}
+                    onDeleteRequest={() => setDeleteTarget(budget)}
+                    onOpenOverview={() => onOpenOverview(budget.id)}
+                  />
+                ))}
+              </SortableBudgetGroup>
+            )}
           </AppAccordion>
 
           <AppAccordion
@@ -214,25 +256,25 @@ export function SubBudgetList({
             onToggle={() => setTemporaryPersonalOpen((prev) => !prev)}
             variant="nested"
           >
-            {subBudgets.length === 0 ? (
+            {temporaryBudgets.length === 0 ? (
               <p className={ACCORDION_EMPTY_CONTENT_CLASS}>{t('budget.list.empty')}</p>
             ) : (
-              <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-                <SortableContext items={ids} strategy={verticalListSortingStrategy}>
-                  <ul className="divide-y divide-slate-200 dark:divide-slate-600/70">
-                    {subBudgets.map((budget) => (
-                      <SortableSubBudgetRow
-                        key={budget.id}
-                        budget={budget}
-                        locale={locale}
-                        onEdit={() => onEdit(budget)}
-                        onDeleteRequest={() => setDeleteTarget(budget)}
-                        onOpenOverview={() => onOpenOverview(budget.id)}
-                      />
-                    ))}
-                  </ul>
-                </SortableContext>
-              </DndContext>
+              <SortableBudgetGroup
+                ids={temporaryIds}
+                listClassName="divide-y divide-slate-200 dark:divide-slate-600/70"
+                onReorder={onReorder}
+              >
+                {temporaryBudgets.map((budget) => (
+                  <SortableSubBudgetRow
+                    key={budget.id}
+                    budget={budget}
+                    locale={locale}
+                    onEdit={() => onEdit(budget)}
+                    onDeleteRequest={() => setDeleteTarget(budget)}
+                    onOpenOverview={() => onOpenOverview(budget.id)}
+                  />
+                ))}
+              </SortableBudgetGroup>
             )}
           </AppAccordion>
 

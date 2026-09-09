@@ -1,6 +1,6 @@
 import { findArchivedSubBudget } from '../../../domain/budget/subBudgetLifecycle';
 import { filterExpensesByBudget } from '../../../domain/budget/filterExpensesByBudget';
-import { type SubBudgetRecord } from '../../../types/budget';
+import { type SubBudgetRecord, type TemporarySubBudgetRecord } from '../../../types/budget';
 import { useBudgets } from '../../budget/hooks/useBudgets';
 import { useExpenses } from '../../expenses/hooks/useExpenses';
 import { useTodayIso } from '../../../lib/hooks/useTodayIso';
@@ -13,7 +13,7 @@ import { type Expense } from '../../../types/expense';
 const PLACEHOLDER_RANGE: DateRange = { startIso: '1970-01-01', endIso: '1970-01-01' };
 
 export interface UseHistoricalPeriodOverviewReturn {
-  budget: SubBudgetRecord | null;
+  budget: TemporarySubBudgetRecord | null;
   notFound: boolean;
   overview: PeriodOverview;
   hasBudget: boolean;
@@ -35,7 +35,7 @@ export function useHistoricalPeriodOverview(
   const budget =
     budgetId === undefined ? null : findArchivedSubBudget(subBudgets, budgetId, todayIso);
 
-  const scopedExpenses = budget ? filterExpensesByBudget(expenses, budget.id) : [];
+  const scopedExpenses = budget ? filterExpensesByBudget(expenses, budget.id, subBudgets) : [];
   const range = budget
     ? { startIso: budget.startDate, endIso: budget.endDate }
     : PLACEHOLDER_RANGE;

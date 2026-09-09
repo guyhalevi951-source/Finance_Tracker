@@ -29,7 +29,13 @@ import {
   loadActiveBudgetId,
   saveActiveBudgetId,
 } from '../../services/storage/activeBudgetStorage';
-import { type SubBudgetInput, type SubBudgetRecord } from '../../types/budget';
+import { isFixedSubBudget, isTemporarySubBudget } from '../../domain/budget/subBudgetKind';
+import {
+  type BudgetStore,
+  type SubBudgetInput,
+  type SubBudgetRecord,
+  type TemporarySubBudgetRecord,
+} from '../../types/budget';
 import { useAuthSession } from '../../features/auth/hooks/useAuthSession';
 import { useTodayIso } from '../../lib/hooks/useTodayIso';
 import { useExpenses } from '../../features/expenses/hooks/useExpenses';
@@ -37,7 +43,8 @@ import { useExpenses } from '../../features/expenses/hooks/useExpenses';
 export interface BudgetsContextValue {
   subBudgets: SubBudgetRecord[];
   activeSubBudgets: SubBudgetRecord[];
-  archivedSubBudgets: SubBudgetRecord[];
+  /** Only temporary budgets archive; fixed budgets are open-ended. */
+  archivedSubBudgets: TemporarySubBudgetRecord[];
   activeBudgetId: string;
   activeBudget: SubBudgetRecord | { id: typeof MASTER_BUDGET_ID };
   isMaster: boolean;
@@ -46,6 +53,7 @@ export interface BudgetsContextValue {
   setActiveBudgetId: (budgetId: string) => void;
   addSubBudget: (input: SubBudgetInput) => Promise<void>;
   updateSubBudget: (id: string, input: SubBudgetInput) => Promise<void>;
+  updateFixedBudgetMonthOverrides: (id: string, monthOverrides: BudgetStore) => Promise<void>;
   deleteSubBudgetAction: (id: string, deleteExpenses: boolean) => Promise<void>;
   deleteArchivedSubBudgetAction: (id: string) => Promise<void>;
   reorderSubBudgetsAction: (orderedIds: string[]) => Promise<void>;
@@ -126,15 +134,18 @@ export function BudgetsProvider({ children }: BudgetsProviderProps) {
   const addSubBudget = useCallback(
     async (input: SubBudgetInput) => {
       setActionError(null);
-      const budget: SubBudgetRecord = {
+      const base = {
         id: generateSubBudgetId(),
         name: input.name,
         totalAmount: input.totalAmount,
-        startDate: input.startDate,
-        endDate: input.endDate,
+        includeInMonthlyBudget: input.includeInMonthlyBudget,
         sortOrder: subBudgets.length,
         createdAt: new Date().toISOString(),
       };
+      const budget: SubBudgetRecord =
+        input.kind === 'fixed'
+          ? { ...base, kind: 'fixed', monthOverrides: {} }
+          : { ...base, kind: 'temporary', startDate: input.startDate, endDate: input.endDate };
       try {
         await saveSubBudget(userId, budget);
         await reload();
@@ -150,16 +161,23 @@ export function BudgetsProvider({ children }: BudgetsProviderProps) {
       setActionError(null);
       const existing = subBudgets.find((budget) => budget.id === id);
       if (!existing) return;
-      const updated: SubBudgetRecord = {
-        ...existing,
+      // Kind is locked after creation; only the shared fields (and dates for temporary) change.
+      const shared = {
         name: input.name,
         totalAmount: input.totalAmount,
-        startDate: input.startDate,
-        endDate: input.endDate,
+        includeInMonthlyBudget: input.includeInMonthlyBudget,
       };
+      const updated: SubBudgetRecord =
+        isTemporarySubBudget(existing) && input.kind === 'temporary'
+          ? { ...existing, ...shared, startDate: input.startDate, endDate: input.endDate }
+          : { ...existing, ...shared };
       try {
         await saveSubBudget(userId, updated);
-        if (input.endDate !== existing.endDate) {
+        if (
+          isTemporarySubBudget(existing) &&
+          input.kind === 'temporary' &&
+          input.endDate !== existing.endDate
+        ) {
           const cappedExpenses = capExpensesRecurrenceToSubBudgetEnd(expenses, id, input.endDate);
           await applyExpenseBatch(userId, cappedExpenses);
           await reloadExpenses();
@@ -170,6 +188,23 @@ export function BudgetsProvider({ children }: BudgetsProviderProps) {
       }
     },
     [userId, subBudgets, expenses, reload, reloadExpenses],
+  );
+
+  const updateFixedBudgetMonthOverrides = useCallback(
+    async (id: string, monthOverrides: BudgetStore) => {
+      setActionError(null);
+      const existing = subBudgets.find((budget) => budget.id === id);
+      if (!existing || !isFixedSubBudget(existing)) return;
+      const updated: SubBudgetRecord = { ...existing, monthOverrides };
+      setSubBudgets((prev) => prev.map((budget) => (budget.id === id ? updated : budget)));
+      try {
+        await saveSubBudget(userId, updated);
+      } catch {
+        setActionError('saveFailed');
+        await reload();
+      }
+    },
+    [userId, subBudgets, reload],
   );
 
   const deleteSubBudgetAction = useCallback(
@@ -245,6 +280,7 @@ export function BudgetsProvider({ children }: BudgetsProviderProps) {
       setActiveBudgetId,
       addSubBudget,
       updateSubBudget,
+      updateFixedBudgetMonthOverrides,
       deleteSubBudgetAction,
       deleteArchivedSubBudgetAction,
       reorderSubBudgetsAction,
@@ -262,6 +298,7 @@ export function BudgetsProvider({ children }: BudgetsProviderProps) {
       setActiveBudgetId,
       addSubBudget,
       updateSubBudget,
+      updateFixedBudgetMonthOverrides,
       deleteSubBudgetAction,
       deleteArchivedSubBudgetAction,
       reorderSubBudgetsAction,

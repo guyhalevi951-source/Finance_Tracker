@@ -1,7 +1,9 @@
-import { type SubBudgetRecord } from '../../types/budget';
+import { type SubBudgetRecord, type TemporarySubBudgetRecord } from '../../types/budget';
+import { isTemporarySubBudget } from './subBudgetKind';
 
+/** Fixed budgets are open-ended and never archive; temporary budgets archive after `endDate`. */
 export function isSubBudgetArchived(budget: SubBudgetRecord, todayIso: string): boolean {
-  return budget.endDate < todayIso;
+  return isTemporarySubBudget(budget) && budget.endDate < todayIso;
 }
 
 export function canPurgeFromHistory(budget: SubBudgetRecord, todayIso: string): boolean {
@@ -20,8 +22,9 @@ export function listActiveSubBudgets(
 export function listArchivedSubBudgets(
   budgets: SubBudgetRecord[],
   todayIso: string,
-): SubBudgetRecord[] {
+): TemporarySubBudgetRecord[] {
   return budgets
+    .filter(isTemporarySubBudget)
     .filter(
       (budget) => isSubBudgetArchived(budget, todayIso) && !budget.purgedFromHistory,
     )
@@ -32,7 +35,7 @@ export function findArchivedSubBudget(
   budgets: SubBudgetRecord[],
   id: string,
   todayIso: string,
-): SubBudgetRecord | null {
+): TemporarySubBudgetRecord | null {
   return listArchivedSubBudgets(budgets, todayIso).find((budget) => budget.id === id) ?? null;
 }
 

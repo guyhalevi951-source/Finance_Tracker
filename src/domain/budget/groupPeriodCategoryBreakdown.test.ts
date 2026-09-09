@@ -23,8 +23,10 @@ function makeExpense(overrides: Partial<Expense>): Expense {
 
 const subBudgetA: SubBudgetRecord = {
   id: 'sub-a',
+  kind: 'temporary',
   name: { en: 'Trip', he: 'טיול' },
   totalAmount: 500,
+  includeInMonthlyBudget: true,
   startDate: '2026-07-01',
   endDate: '2026-07-31',
   sortOrder: 0,

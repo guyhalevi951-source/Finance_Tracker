@@ -160,6 +160,8 @@
       "startDate": "תאריך התחלה",
       "endDate": "תאריך סיום",
       "selectDate": "בחר תאריך",
+      "includeInMonthlyBudget": "האם לכלול את ההוצאות בתקציב החודשי",
+      "noTimeLimit": "בלי מגבלת זמן",
       "save": "שמור",
       "cancel": "ביטול"
     },
@@ -212,6 +214,8 @@
     "monthlyTitle": "סקירה חודשית",
     "graphicView": "הצגה גרפית",
     "dailyView": "הצגה יומית",
+    "monthlyView": "הצגה חודשית",
+    "weeklyView": "הצגה שבועית",
     "subBudgetTag": "(תקציב)",
     "breakdownBudgets": "תקציבים",
     "breakdownBudgetsSubtitle": "הוצאות לפי תקציב.",

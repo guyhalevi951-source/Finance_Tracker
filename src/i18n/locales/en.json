@@ -160,6 +160,8 @@
       "startDate": "Start date",
       "endDate": "End date",
       "selectDate": "Select date",
+      "includeInMonthlyBudget": "Include expenses in the Monthly Budget",
+      "noTimeLimit": "No time limit",
       "save": "Save",
       "cancel": "Cancel"
     },
@@ -212,6 +214,8 @@
     "monthlyTitle": "Monthly Overview",
     "graphicView": "Graphic View",
     "dailyView": "Daily view",
+    "monthlyView": "Monthly View",
+    "weeklyView": "Weekly View",
     "subBudgetTag": "(Budget)",
     "breakdownBudgets": "Budgets",
     "breakdownBudgetsSubtitle": "Spending grouped by budget.",

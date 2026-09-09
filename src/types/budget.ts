@@ -10,21 +10,52 @@ export interface MonthBudgetEntry {
 /** Indexed by month key `YYYY-MM` */
 export type BudgetStore = Record<string, MonthBudgetEntry>;
 
-export interface SubBudgetRecord {
+/**
+ * `temporary` = date-bounded budget that archives after its end date.
+ * `fixed` = open-ended budget that navigates month-by-month like the master monthly budget.
+ */
+export type SubBudgetKind = 'temporary' | 'fixed';
+
+interface SubBudgetBase {
   id: string;
   name: BilingualText;
   totalAmount: number;
-  startDate: string;
-  endDate: string;
   sortOrder: number;
   createdAt: string;
+  /** When false, this budget's expenses are isolated from the master monthly ledger. */
+  includeInMonthlyBudget: boolean;
   /** When true, budget is hidden from History UI but kept for expense tag resolution */
   purgedFromHistory?: boolean;
 }
 
-export interface SubBudgetInput {
-  name: BilingualText;
-  totalAmount: number;
+export interface TemporarySubBudgetRecord extends SubBudgetBase {
+  kind: 'temporary';
   startDate: string;
   endDate: string;
 }
+
+export interface FixedSubBudgetRecord extends SubBudgetBase {
+  kind: 'fixed';
+  /** Per-month overrides of `totalAmount` (the default monthly amount), with carry-over flags. */
+  monthOverrides: BudgetStore;
+}
+
+export type SubBudgetRecord = TemporarySubBudgetRecord | FixedSubBudgetRecord;
+
+interface SubBudgetInputBase {
+  name: BilingualText;
+  totalAmount: number;
+  includeInMonthlyBudget: boolean;
+}
+
+export interface TemporarySubBudgetInput extends SubBudgetInputBase {
+  kind: 'temporary';
+  startDate: string;
+  endDate: string;
+}
+
+export interface FixedSubBudgetInput extends SubBudgetInputBase {
+  kind: 'fixed';
+}
+
+export type SubBudgetInput = TemporarySubBudgetInput | FixedSubBudgetInput;

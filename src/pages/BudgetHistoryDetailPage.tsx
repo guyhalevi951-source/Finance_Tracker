@@ -7,6 +7,7 @@ import { useAppHeader } from '../app/hooks/useAppHeader';
 import { computeOverviewForPeriodBudget } from '../domain/budget/periodOverview';
 import { filterExpensesByBudget } from '../domain/budget/filterExpensesByBudget';
 import { resolveBudgetLabel } from '../domain/budget/resolveBudgetLabel';
+import { isTemporarySubBudget } from '../domain/budget/subBudgetKind';
 import { BudgetHistoryBackButton } from '../features/budget/components/BudgetHistoryBackButton';
 import { useBudgets } from '../features/budget/hooks/useBudgets';
 import { useExpenses } from '../features/expenses/hooks/useExpenses';
@@ -23,11 +24,12 @@ export function BudgetHistoryDetailPage() {
   const { subBudgets, deleteArchivedSubBudgetAction } = useBudgets();
   const { expenses } = useExpenses();
 
-  const budget = subBudgets.find((item) => item.id === id);
+  // History only ever holds temporary budgets; fixed budgets never archive.
+  const budget = subBudgets.filter(isTemporarySubBudget).find((item) => item.id === id);
 
   const overview = useMemo(() => {
     if (!budget) return null;
-    const scoped = filterExpensesByBudget(expenses, budget.id);
+    const scoped = filterExpensesByBudget(expenses, budget.id, subBudgets);
     const range = { startIso: budget.startDate, endIso: budget.endDate };
     return computeOverviewForPeriodBudget({
       periodBudget: budget.totalAmount,
@@ -35,7 +37,7 @@ export function BudgetHistoryDetailPage() {
       range,
       todayIso,
     });
-  }, [budget, expenses, todayIso]);
+  }, [budget, expenses, subBudgets, todayIso]);
 
   useAppHeader({
     title: budget ? resolveBudgetLabel(budget, locale, t) : t('budget.history.title'),

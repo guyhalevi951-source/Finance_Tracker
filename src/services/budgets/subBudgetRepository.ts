@@ -9,7 +9,8 @@ import {
 } from 'firebase/firestore';
 import { FIRESTORE_COLLECTIONS } from '../../config/firebase/collections';
 import { db } from '../firebase';
-import { type SubBudgetRecord } from '../../types/budget';
+import { parseBudgetStoreValue } from '../../domain/budget/parseBudgetStore';
+import { type BudgetStore, type SubBudgetRecord } from '../../types/budget';
 
 const GUEST_SUB_BUDGETS_KEY = 'subBudgets';
 
@@ -23,6 +24,16 @@ function parseLabels(v: unknown): { en: string; he: string } | null {
   return { en: v.en, he: v.he };
 }
 
+function parseMonthOverrides(v: unknown): BudgetStore | null {
+  if (v === undefined) return {};
+  const parsed = parseBudgetStoreValue(v);
+  return parsed.ok ? parsed.value : null;
+}
+
+/**
+ * Legacy documents (pre-kind) are date-bounded and linked to the monthly budget,
+ * so missing `kind` => 'temporary' and missing `includeInMonthlyBudget` => true.
+ */
 function parseSubBudget(v: unknown, fallbackSortOrder: number): SubBudgetRecord | null {
   if (!isRecord(v)) return null;
   const labels = parseLabels(v.name);
@@ -30,23 +41,31 @@ function parseSubBudget(v: unknown, fallbackSortOrder: number): SubBudgetRecord 
     typeof v.id !== 'string' ||
     !labels ||
     typeof v.totalAmount !== 'number' ||
-    typeof v.startDate !== 'string' ||
-    typeof v.endDate !== 'string' ||
     typeof v.createdAt !== 'string'
   ) {
     return null;
   }
 
-  return {
+  const base = {
     id: v.id,
     name: labels,
     totalAmount: v.totalAmount,
-    startDate: v.startDate,
-    endDate: v.endDate,
+    includeInMonthlyBudget: v.includeInMonthlyBudget !== false,
     sortOrder: typeof v.sortOrder === 'number' ? v.sortOrder : fallbackSortOrder,
     createdAt: v.createdAt,
     ...(v.purgedFromHistory === true ? { purgedFromHistory: true } : {}),
   };
+
+  if (v.kind === 'fixed') {
+    const monthOverrides = parseMonthOverrides(v.monthOverrides);
+    if (monthOverrides === null) return null;
+    return { ...base, kind: 'fixed', monthOverrides };
+  }
+
+  if (v.kind !== undefined && v.kind !== 'temporary') return null;
+  if (typeof v.startDate !== 'string' || typeof v.endDate !== 'string') return null;
+
+  return { ...base, kind: 'temporary', startDate: v.startDate, endDate: v.endDate };
 }
 
 function loadGuestSubBudgets(): SubBudgetRecord[] {

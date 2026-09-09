@@ -2,6 +2,7 @@ import { type Expense } from '../../types/expense';
 import { type SubBudgetRecord } from '../../types/budget';
 import { finalizeRecurrenceSchedule } from '../recurrence/finalizeRecurrenceSchedule';
 import { earliestEndDate } from '../recurrence/earliestEndDate';
+import { isTemporarySubBudget } from './subBudgetKind';
 import { isDateWithinSubBudget } from './validateSubBudget';
 
 export interface SubBudgetWindow {
@@ -9,13 +10,14 @@ export interface SubBudgetWindow {
   endDate: string;
 }
 
+/** Fixed budgets are open-ended and have no window (no date limits, no recurrence cap). */
 export function resolveSubBudgetWindow(
   subBudgets: SubBudgetRecord[],
   budgetId: string | undefined,
 ): SubBudgetWindow | null {
   if (!budgetId) return null;
   const budget = subBudgets.find((item) => item.id === budgetId);
-  if (!budget) return null;
+  if (!budget || !isTemporarySubBudget(budget)) return null;
   return { startDate: budget.startDate, endDate: budget.endDate };
 }
 

@@ -9,7 +9,7 @@ export function resolveBudgetLabel(
   locale: AppLocale,
   t: TFunction,
 ): string {
-  if (budget.id === MASTER_BUDGET_ID) {
+  if (!('name' in budget) || budget.id === MASTER_BUDGET_ID) {
     return t('budget.monthlyBudgetTitle');
   }
   return resolveBilingualText(budget.name, locale);

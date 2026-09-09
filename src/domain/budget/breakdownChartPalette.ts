@@ -1,6 +1,11 @@
 import { type CategoryBreakdownSliceKind } from './groupPeriodCategoryBreakdown';
 
 /**
+ * Neutral ring fill when Graphic View has no expenses in the selected period.
+ */
+export const EMPTY_BREAKDOWN_RING_COLOR = '#94A3B8';
+
+/**
  * Premium vibrant hex palette for Graphic View doughnut slices (dark-theme friendly).
  */
 export const BREAKDOWN_CHART_COLOR_PALETTE = [

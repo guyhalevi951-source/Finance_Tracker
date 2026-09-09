@@ -14,6 +14,9 @@ export interface SubBudgetFormInput {
   totalAmount: string;
   startDate: string;
   endDate: string;
+  /** Checked = fixed (open-ended) budget; dates are ignored. */
+  noTimeLimit: boolean;
+  includeInMonthlyBudget: boolean;
 }
 
 export function parseSubBudgetInput(
@@ -29,6 +32,17 @@ export function parseSubBudgetInput(
     return err('AMOUNT_INVALID');
   }
 
+  const name = { en: input.name.trim(), he: input.name.trim() };
+
+  if (input.noTimeLimit) {
+    return ok({
+      kind: 'fixed',
+      name,
+      totalAmount,
+      includeInMonthlyBudget: input.includeInMonthlyBudget,
+    });
+  }
+
   if (!input.startDate || !input.endDate) {
     return err('DATE_REQUIRED');
   }
@@ -42,8 +56,10 @@ export function parseSubBudgetInput(
   }
 
   return ok({
-    name: { en: input.name.trim(), he: input.name.trim() },
+    kind: 'temporary',
+    name,
     totalAmount,
+    includeInMonthlyBudget: input.includeInMonthlyBudget,
     startDate: input.startDate,
     endDate: input.endDate,
   });

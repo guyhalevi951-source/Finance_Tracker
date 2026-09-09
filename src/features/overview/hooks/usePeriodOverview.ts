@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { MASTER_BUDGET_ID } from '../../../domain/budget/constants';
+import { resolveFixedBudgetMonthAmount } from '../../../domain/budget/fixedBudgetMonth';
 import { monthKeyFromRangeStart } from '../../../domain/budget/monthKey';
 import {
   computeOverviewForPeriodBudget,
@@ -7,6 +8,7 @@ import {
   type PeriodOverview,
 } from '../../../domain/budget/periodOverview';
 import { resolveMonthBudget } from '../../../domain/budget/resolveMonthBudget';
+import { isTemporarySubBudget } from '../../../domain/budget/subBudgetKind';
 import { type DateRange } from '../../../domain/expenses/periods';
 import { loadBudgetStore } from '../../../services/storage/budgetLocalStorage';
 import { type BudgetStore, type SubBudgetRecord } from '../../../types/budget';
@@ -36,6 +38,9 @@ export function usePeriodOverview(
   const [loadError, setLoadError] = useState<string | null>(null);
   const { activeBudgetId, subBudget, subBudgets = [] } = options;
   const isMaster = activeBudgetId === MASTER_BUDGET_ID;
+  // Temporary budgets span a fixed window; master and fixed budgets follow the selected month.
+  const temporaryBudget = !isMaster && subBudget && isTemporarySubBudget(subBudget) ? subBudget : null;
+  const fixedBudget = !isMaster && subBudget && !isTemporarySubBudget(subBudget) ? subBudget : null;
 
   useEffect(() => {
     const budgetResult = loadBudgetStore();
@@ -48,20 +53,21 @@ export function usePeriodOverview(
   }, []);
 
   const effectiveRange = useMemo<DateRange>(() => {
-    if (isMaster || !subBudget) return range;
-    return { startIso: subBudget.startDate, endIso: subBudget.endDate };
-  }, [isMaster, subBudget, range]);
+    if (!temporaryBudget) return range;
+    return { startIso: temporaryBudget.startDate, endIso: temporaryBudget.endDate };
+  }, [temporaryBudget, range]);
 
   const monthlyBudget = useMemo(() => {
-    if (!isMaster && subBudget) return subBudget.totalAmount;
+    if (temporaryBudget) return temporaryBudget.totalAmount;
     const monthKey = monthKeyFromRangeStart(range.startIso);
+    if (fixedBudget) return resolveFixedBudgetMonthAmount(fixedBudget, monthKey).amount;
     return resolveMonthBudget(store, monthKey).amount;
-  }, [isMaster, subBudget, range.startIso, store]);
+  }, [temporaryBudget, fixedBudget, range.startIso, store]);
 
   const overview = useMemo(() => {
-    if (!isMaster && subBudget) {
+    if (temporaryBudget) {
       return computeOverviewForPeriodBudget({
-        periodBudget: subBudget.totalAmount,
+        periodBudget: temporaryBudget.totalAmount,
         expenses,
         range: effectiveRange,
         todayIso,
@@ -75,7 +81,7 @@ export function usePeriodOverview(
       todayIso,
       subBudgets,
     });
-  }, [isMaster, subBudget, monthlyBudget, expenses, range, effectiveRange, todayIso, subBudgets]);
+  }, [temporaryBudget, monthlyBudget, expenses, range, effectiveRange, todayIso, subBudgets]);
 
   return {
     overview,

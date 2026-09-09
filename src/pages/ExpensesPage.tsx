@@ -27,6 +27,7 @@ import { AddExpenseLauncher } from '../features/expenses/components/AddExpenseLa
 import { resolveBilingualText } from '../domain/i18n/resolveBilingualText';
 import { buildBudgetScopedTitle } from '../domain/budget/buildBudgetScopedTitle';
 import { resolveBudgetLabel } from '../domain/budget/resolveBudgetLabel';
+import { resolveSubBudgetWindow } from '../domain/budget/subBudgetExpenseWindow';
 import { useBudgets } from '../features/budget/hooks/useBudgets';
 import { type Expense } from '../types/expense';
 
@@ -63,14 +64,11 @@ export function ExpensesPage() {
     batch.displayExpenses,
     timeFilter.range,
     activeBudgetId,
+    subBudgets,
     timeFilter.todayIso,
   );
 
-  const subBudget =
-    !isMaster && 'name' in activeBudget ? activeBudget : null;
-  const subBudgetWindow = subBudget
-    ? { startDate: subBudget.startDate, endDate: subBudget.endDate }
-    : null;
+  const subBudgetWindow = resolveSubBudgetWindow(subBudgets, isMaster ? undefined : activeBudget.id);
 
   const categoryOptions = subCategories.map((c) => ({
     id: c.id,

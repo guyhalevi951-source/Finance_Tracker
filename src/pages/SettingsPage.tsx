@@ -18,6 +18,7 @@ import { resolveBilingualText } from '../domain/i18n/resolveBilingualText';
 import { buildBudgetScopedTitle } from '../domain/budget/buildBudgetScopedTitle';
 import { filterExpensesByBudget } from '../domain/budget/filterExpensesByBudget';
 import { resolveBudgetLabel } from '../domain/budget/resolveBudgetLabel';
+import { resolveSubBudgetWindow } from '../domain/budget/subBudgetExpenseWindow';
 import { useBudgets } from '../features/budget/hooks/useBudgets';
 
 export function SettingsPage() {
@@ -26,14 +27,13 @@ export function SettingsPage() {
   const { userId } = useAuthSession();
   const { subCategories } = useCategories(userId);
   const { expenses, reload } = useExpenses();
-  const { activeBudgetId, activeBudget, isMaster } = useBudgets();
+  const { activeBudgetId, activeBudget, isMaster, subBudgets } = useBudgets();
 
-  const subBudget =
-    !isMaster && 'name' in activeBudget ? activeBudget : null;
+  const subBudgetWindow = resolveSubBudgetWindow(subBudgets, isMaster ? undefined : activeBudget.id);
 
   const scopedExpenses = useMemo(
-    () => filterExpensesByBudget(expenses, activeBudgetId),
-    [expenses, activeBudgetId],
+    () => filterExpensesByBudget(expenses, activeBudgetId, subBudgets),
+    [expenses, activeBudgetId, subBudgets],
   );
 
   const recurringSettings = useRecurringExpensesSettings({
@@ -123,7 +123,7 @@ export function SettingsPage() {
           onClose={scheduledSettings.closeEdit}
           hideRecurrenceField
           allowFutureDate
-          maxSelectableDate={subBudget?.endDate}
+          maxSelectableDate={subBudgetWindow?.endDate}
           modalTitleKey="profile.settings.oneTime.editTitle"
         />
       )}

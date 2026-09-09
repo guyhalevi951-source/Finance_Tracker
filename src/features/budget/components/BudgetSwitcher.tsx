@@ -4,6 +4,7 @@ import { ChevronDown, Plus } from 'lucide-react';
 import { type AppLocale } from '../../../config/app';
 import { MASTER_BUDGET_ID } from '../../../domain/budget/constants';
 import { resolveBudgetLabel } from '../../../domain/budget/resolveBudgetLabel';
+import { listBudgetsForSwitcher } from '../../../domain/budget/subBudgetKind';
 import { useBudgets } from '../hooks/useBudgets';
 import { useSubBudgetEditor } from '../hooks/useSubBudgetEditor';
 
@@ -28,9 +29,10 @@ export function BudgetSwitcher() {
     return () => document.removeEventListener('mousedown', handleClick);
   }, [open]);
 
+  // Flat list: master, then fixed budgets, then temporary budgets (each in accordion order).
   const options = [
     { id: MASTER_BUDGET_ID, label: t('budget.monthlyBudgetTitle') },
-    ...activeSubBudgets.map((budget) => ({
+    ...listBudgetsForSwitcher(activeSubBudgets).map((budget) => ({
       id: budget.id,
       label: resolveBudgetLabel(budget, locale, t),
     })),

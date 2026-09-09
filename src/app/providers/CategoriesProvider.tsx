@@ -102,7 +102,7 @@ interface CategoriesProviderProps {
 
 export function CategoriesProvider({ children }: CategoriesProviderProps) {
   const { userId } = useAuthSession();
-  const { activeBudgetId: profileId } = useBudgets();
+  const { activeBudgetId: profileId, subBudgets } = useBudgets();
   const [mainCategories, setMainCategories] = useState<MainCategoryRecord[]>([]);
   const [subCategories, setSubCategories] = useState<SubCategoryRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -320,7 +320,7 @@ export function CategoriesProvider({ children }: CategoriesProviderProps) {
       setIsResettingCategories(true);
       setMainCategoryActionError(null);
       try {
-        const scopedExpenses = filterExpensesByBudget(liveExpenses, profileId);
+        const scopedExpenses = filterExpensesByBudget(liveExpenses, profileId, subBudgets);
         const { catalog, expenses: restoredExpenses } =
           await resetCategoriesToDefaultsWithExpenseRestore(userId, profileId, scopedExpenses);
         applyCatalog(catalog);
@@ -332,7 +332,7 @@ export function CategoriesProvider({ children }: CategoriesProviderProps) {
         setIsResettingCategories(false);
       }
     },
-    [userId, profileId, applyCatalog],
+    [userId, profileId, subBudgets, applyCatalog],
   );
 
   const addSubCategory = useCallback(
@@ -437,7 +437,7 @@ export function CategoriesProvider({ children }: CategoriesProviderProps) {
       setIsSavingSubCategory(true);
 
       try {
-        const scopedExpenses = filterExpensesByBudget(liveExpenses, profileId);
+        const scopedExpenses = filterExpensesByBudget(liveExpenses, profileId, subBudgets);
         const result = await deleteSubCategoryWithExpenseReassignment(
           userId,
           profileId,
@@ -458,7 +458,7 @@ export function CategoriesProvider({ children }: CategoriesProviderProps) {
         setIsSavingSubCategory(false);
       }
     },
-    [userId, profileId, subCategories, reload],
+    [userId, profileId, subBudgets, subCategories, reload],
   );
 
   const reorderSubCategoriesAction = useCallback(

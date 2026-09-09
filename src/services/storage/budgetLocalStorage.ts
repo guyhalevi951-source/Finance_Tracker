@@ -1,24 +1,15 @@
 import { toMonthKey } from '../../domain/budget/monthKey';
-import { type BudgetStore, type MonthBudgetEntry } from '../../types/budget';
+import {
+  parseBudgetStoreValue,
+  type ParseBudgetStoreError,
+} from '../../domain/budget/parseBudgetStore';
+import { type BudgetStore } from '../../types/budget';
 import { Result, err, ok } from '../../types/result';
 
 const BUDGET_STORE_KEY = 'monthlyBudgetStore';
 const LEGACY_BUDGET_KEY = 'monthlyBudget';
 
-export type LoadBudgetStoreError = 'CORRUPTED_STORE' | 'INVALID_ENTRY';
-
-function isValidEntry(value: unknown): value is MonthBudgetEntry {
-  if (typeof value !== 'object' || value === null) {
-    return false;
-  }
-
-  const entry = value as Record<string, unknown>;
-  const amountValid =
-    entry.amount === null || (typeof entry.amount === 'number' && !Number.isNaN(entry.amount) && entry.amount >= 0);
-  const carryValid = typeof entry.carryOverToNext === 'boolean';
-
-  return amountValid && carryValid;
-}
+export type LoadBudgetStoreError = ParseBudgetStoreError;
 
 function parseBudgetStore(raw: string): Result<BudgetStore, LoadBudgetStoreError> {
   let parsed: unknown;
@@ -28,19 +19,7 @@ function parseBudgetStore(raw: string): Result<BudgetStore, LoadBudgetStoreError
     return err('CORRUPTED_STORE');
   }
 
-  if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
-    return err('CORRUPTED_STORE');
-  }
-
-  const store: BudgetStore = {};
-  for (const [key, value] of Object.entries(parsed)) {
-    if (!/^\d{4}-\d{2}$/.test(key) || !isValidEntry(value)) {
-      return err('INVALID_ENTRY');
-    }
-    store[key] = value;
-  }
-
-  return ok(store);
+  return parseBudgetStoreValue(parsed);
 }
 
 function migrateLegacyBudget(store: BudgetStore): BudgetStore {

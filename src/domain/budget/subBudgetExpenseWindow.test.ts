@@ -11,11 +11,24 @@ import {
 
 const subBudget: SubBudgetRecord = {
   id: 'b1',
+  kind: 'temporary',
   name: { en: 'Trip', he: 'טיול' },
   totalAmount: 1000,
+  includeInMonthlyBudget: true,
   startDate: '2026-08-01',
   endDate: '2026-08-31',
   sortOrder: 0,
+  createdAt: '2026-07-01T00:00:00.000Z',
+};
+
+const fixedBudget: SubBudgetRecord = {
+  id: 'f1',
+  kind: 'fixed',
+  name: { en: 'Groceries', he: 'מכולת' },
+  totalAmount: 1000,
+  includeInMonthlyBudget: true,
+  monthOverrides: {},
+  sortOrder: 1,
   createdAt: '2026-07-01T00:00:00.000Z',
 };
 
@@ -37,6 +50,11 @@ describe('subBudgetExpenseWindow', () => {
       endDate: '2026-08-31',
     });
     expect(resolveSubBudgetEndDate([subBudget], 'b1')).toBe('2026-08-31');
+  });
+
+  it('has no window for fixed budgets', () => {
+    expect(resolveSubBudgetWindow([subBudget, fixedBudget], 'f1')).toBeNull();
+    expect(resolveSubBudgetEndDate([subBudget, fixedBudget], 'f1')).toBeUndefined();
   });
 
   it('caps recurrence end date on expense', () => {

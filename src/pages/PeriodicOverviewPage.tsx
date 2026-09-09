@@ -5,6 +5,8 @@ import { useAppHeader } from '../app/hooks/useAppHeader';
 import { filterExpensesByBudget } from '../domain/budget/filterExpensesByBudget';
 import { isSubBudgetOnFinalDay } from '../domain/budget/isSubBudgetOnFinalDay';
 import { resolveBudgetLabel } from '../domain/budget/resolveBudgetLabel';
+import { resolveSubBudgetWindow } from '../domain/budget/subBudgetExpenseWindow';
+import { isFixedSubBudget } from '../domain/budget/subBudgetKind';
 import { useAuthSession } from '../features/auth/hooks/useAuthSession';
 import { useBudgets } from '../features/budget/hooks/useBudgets';
 import { useCategories } from '../features/categories/hooks/useCategories';
@@ -17,6 +19,7 @@ import {
   OverviewGraphicViewToggle,
   type OverviewViewMode,
 } from '../features/overview/components/OverviewGraphicViewToggle';
+import { OverviewTimeframeToggle } from '../features/overview/components/OverviewTimeframeToggle';
 import { PeriodOverviewDashboard } from '../features/overview/components/PeriodOverviewDashboard';
 import { AddExpenseLauncher } from '../features/expenses/components/AddExpenseLauncher';
 
@@ -34,11 +37,11 @@ export function PeriodicOverviewPage() {
   const subBudget =
     !isMaster && 'name' in activeBudget ? activeBudget : null;
 
-  const subBudgetWindow = subBudget
-    ? { startDate: subBudget.startDate, endDate: subBudget.endDate }
-    : null;
+  const subBudgetWindow = resolveSubBudgetWindow(subBudgets, subBudget?.id);
+  // Master and fixed budgets navigate month-by-month; temporary budgets show their whole window.
+  const showTimeToolbar = isMaster || (subBudget !== null && isFixedSubBudget(subBudget));
 
-  const scopedExpenses = filterExpensesByBudget(expenses, activeBudgetId);
+  const scopedExpenses = filterExpensesByBudget(expenses, activeBudgetId, subBudgets);
 
   const { overview, hasBudget, effectiveRange, loadError: budgetLoadError } = usePeriodOverview(
     scopedExpenses,
@@ -49,7 +52,7 @@ export function PeriodicOverviewPage() {
 
   const showDataModeControls = !isSubBudgetOnFinalDay(
     isMaster,
-    subBudget?.endDate ?? null,
+    subBudgetWindow?.endDate ?? null,
     timeFilter.todayIso,
   );
 
@@ -89,12 +92,18 @@ export function PeriodicOverviewPage() {
         </div>
       )}
 
-      {isMaster && (
+      {showTimeToolbar && (
         <ExpenseFilterToolbar
           locale={locale}
           showViewModeToggle={false}
           showGranularityToggle={false}
           {...timeFilter}
+          extraControls={
+            <OverviewTimeframeToggle
+              granularity={timeFilter.granularity}
+              onSelectTimeframe={timeFilter.setGranularity}
+            />
+          }
         />
       )}
 

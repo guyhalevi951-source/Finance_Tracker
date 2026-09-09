@@ -6,6 +6,7 @@ import type { PieSectorDataItem } from 'recharts/types/polar/Pie';
 import { type AppLocale } from '../../../config/app';
 import {
   assignBreakdownChartSliceColors,
+  EMPTY_BREAKDOWN_RING_COLOR,
   resolveBreakdownChartSliceColor,
 } from '../../../domain/budget/breakdownChartPalette';
 import { resolveMainCategoryLabel } from '../../../domain/categories/resolveCategoryLabel';
@@ -33,6 +34,8 @@ const PIE_INNER_RADIUS_PERCENT = '48%';
 const PIE_OUTER_RADIUS_PERCENT = '72%';
 const CHART_VIEW_MARGIN = 24;
 const SELECTED_RADIUS_OFFSET = 12;
+const EMPTY_RING_SEGMENT_KEY = 'empty-ring';
+const EMPTY_RING_VALUE = 1;
 
 const CHART_WRAPPER_CLASS =
   'outline-none focus:outline-none select-none [&_svg]:outline-none [&_svg]:focus:outline-none [&_svg]:overflow-visible [&_*]:outline-none [&_*]:focus:outline-none';
@@ -137,10 +140,12 @@ function InteractiveBreakdownPie({
   chartData,
   selectedSegments,
   onToggleSegment,
+  interactive,
 }: {
   chartData: ChartDatum[];
   selectedSegments: string[];
   onToggleSegment: (segmentKey: string) => void;
+  interactive: boolean;
 }) {
   const renderShape = (props: PieSectorDataItem) => {
     const {
@@ -155,7 +160,7 @@ function InteractiveBreakdownPie({
     } = props;
     const datum = payload as ChartDatum;
 
-    const isSelected = selectedSegments.includes(datum.segmentKey);
+    const isSelected = interactive && selectedSegments.includes(datum.segmentKey);
     const explodedInner = isSelected ? innerRadius + SELECTED_RADIUS_OFFSET : innerRadius;
     const explodedOuter = isSelected ? outerRadius + SELECTED_RADIUS_OFFSET : outerRadius;
 
@@ -171,9 +176,9 @@ function InteractiveBreakdownPie({
           fill={fill}
           stroke="none"
           tabIndex={-1}
-          style={{ cursor: 'pointer', outline: 'none' }}
+          style={{ cursor: interactive ? 'pointer' : 'default', outline: 'none' }}
           onMouseDown={(event) => event.preventDefault()}
-          onClick={() => onToggleSegment(datum.segmentKey)}
+          onClick={interactive ? () => onToggleSegment(datum.segmentKey) : undefined}
         />
       </g>
     );
@@ -201,12 +206,14 @@ function BreakdownDoughnutChart({
   locale,
   selectedSegments,
   onToggleSegment,
+  emptyLabel,
 }: {
   chartData: ChartDatum[];
   total: number;
   locale: AppLocale;
   selectedSegments: string[];
   onToggleSegment: (segmentKey: string) => void;
+  emptyLabel: string | null;
 }) {
   return (
     <div
@@ -226,13 +233,20 @@ function BreakdownDoughnutChart({
             chartData={chartData}
             selectedSegments={selectedSegments}
             onToggleSegment={onToggleSegment}
+            interactive={emptyLabel === null}
           />
         </PieChart>
       </ResponsiveContainer>
       <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-        <p className="text-base font-bold tabular-nums text-slate-800 dark:text-slate-100 text-center px-2">
-          {formatCurrencyAmount(total, locale)}
-        </p>
+        {emptyLabel ? (
+          <p className="max-w-[5.5rem] text-center text-[11px] leading-snug text-slate-500 dark:text-slate-400 px-2">
+            {emptyLabel}
+          </p>
+        ) : (
+          <p className="text-base font-bold tabular-nums text-slate-800 dark:text-slate-100 text-center px-2">
+            {formatCurrencyAmount(total, locale)}
+          </p>
+        )}
       </div>
     </div>
   );
@@ -249,6 +263,7 @@ function BreakdownGraphicCard({
   isPlannedAverage,
   onSelectMode,
   showDataModeControls,
+  emptyLabel,
 }: {
   chartData: ChartDatum[];
   total: number;
@@ -260,7 +275,10 @@ function BreakdownGraphicCard({
   isPlannedAverage: boolean;
   onSelectMode: (isPlannedAverage: boolean) => void;
   showDataModeControls: boolean;
+  emptyLabel: string | null;
 }) {
+  const isEmpty = emptyLabel !== null;
+
   return (
     <div className="overflow-visible rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800">
       <div className="grid grid-cols-[minmax(0,42%)_1fr] items-stretch gap-3 p-3">
@@ -272,6 +290,7 @@ function BreakdownGraphicCard({
               locale={locale}
               selectedSegments={selectedSegments}
               onToggleSegment={onToggleSegment}
+              emptyLabel={emptyLabel}
             />
           </div>
           {showDataModeControls && (
@@ -283,15 +302,17 @@ function BreakdownGraphicCard({
             </div>
           )}
         </div>
-        <div className="min-w-0 overflow-visible">
-          <BreakdownChartLegend
-            className="w-full"
-            budgetItems={budgetItems}
-            categoryItems={categoryItems}
-            selectedSegments={selectedSegments}
-            onToggleSegment={onToggleSegment}
-          />
-        </div>
+        {!isEmpty && (
+          <div className="min-w-0 overflow-visible">
+            <BreakdownChartLegend
+              className="w-full"
+              budgetItems={budgetItems}
+              categoryItems={categoryItems}
+              selectedSegments={selectedSegments}
+              onToggleSegment={onToggleSegment}
+            />
+          </div>
+        )}
       </div>
     </div>
   );
@@ -420,6 +441,21 @@ export function PeriodCategoryBreakdownChart({
   );
 
   const chartData = useMemo<ChartDatum[]>(() => {
+    if (presentations.length === 0) {
+      const emptySlice = {
+        id: 'empty',
+        kind: 'category' as const,
+        segmentKey: EMPTY_RING_SEGMENT_KEY,
+        name: t('overview.breakdownEmpty'),
+        value: EMPTY_RING_VALUE,
+        fill: EMPTY_BREAKDOWN_RING_COLOR,
+      };
+      return [
+        emptySlice,
+        { ...emptySlice, id: 'empty-2', segmentKey: `${EMPTY_RING_SEGMENT_KEY}-2` },
+      ];
+    }
+
     return presentations.map((item) => ({
       id: item.slice.id,
       kind: item.slice.kind,
@@ -428,15 +464,10 @@ export function PeriodCategoryBreakdownChart({
       value: item.slice.total,
       fill: item.fill,
     }));
-  }, [presentations]);
+  }, [presentations, t]);
 
-  if (slices.length === 0) {
-    return (
-      <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 p-6 text-center text-sm text-slate-500 dark:text-slate-400">
-        {t('overview.breakdownEmpty')}
-      </div>
-    );
-  }
+  const isEmpty = slices.length === 0;
+  const emptyLabel = isEmpty ? t('overview.breakdownEmpty') : null;
 
   const graphicCardProps = {
     chartData,
@@ -449,6 +480,7 @@ export function PeriodCategoryBreakdownChart({
     isPlannedAverage,
     onSelectMode,
     showDataModeControls,
+    emptyLabel,
   };
 
   if (!isMaster) {
@@ -456,7 +488,7 @@ export function PeriodCategoryBreakdownChart({
       <div className="space-y-4">
         <BreakdownGraphicCard {...graphicCardProps} />
 
-        {filteredPresentations.length > 0 && (
+        {!isEmpty && filteredPresentations.length > 0 && (
           <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
             <ul className="divide-y divide-slate-200 dark:divide-slate-700">
               {filteredPresentations.map((item) => (

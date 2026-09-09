@@ -1,3 +1,4 @@
+import { type ReactNode } from 'react';
 import { type AppLocale } from '../../../config/app';
 import { type UseExpenseTimeFilterReturn } from '../hooks/useExpenseTimeFilter';
 import { ExpenseTimeFilterBar } from './ExpenseTimeFilterBar';
@@ -7,6 +8,7 @@ interface ExpenseFilterToolbarProps extends UseExpenseTimeFilterReturn {
   locale: AppLocale;
   showViewModeToggle?: boolean;
   showGranularityToggle?: boolean;
+  extraControls?: ReactNode;
   viewMode?: ExpensesViewMode;
   onViewModeChange?: (mode: ExpensesViewMode) => void;
 }
@@ -15,6 +17,7 @@ export function ExpenseFilterToolbar({
   locale,
   showViewModeToggle = true,
   showGranularityToggle = true,
+  extraControls,
   viewMode = 'date',
   onViewModeChange,
   ...timeFilter
@@ -27,6 +30,7 @@ export function ExpenseFilterToolbar({
       <ExpenseTimeFilterBar
         locale={locale}
         showGranularityToggle={showGranularityToggle}
+        extraControls={extraControls}
         {...timeFilter}
       />
     </>
