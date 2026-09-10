@@ -1,18 +1,12 @@
-import {
-  collection,
-  doc,
-  getDocs,
-  setDoc,
-  deleteDoc,
-  writeBatch,
-  type Firestore,
-} from 'firebase/firestore';
-import { FIRESTORE_COLLECTIONS } from '../../config/firebase/collections';
-import { db } from '../firebase';
+import { GUEST_FINANCE_STORAGE_KEYS } from '../../config/storage/guestKeys';
+import { SUPABASE_TABLES } from '../../config/supabase/tables';
 import { parseBudgetStoreValue } from '../../domain/budget/parseBudgetStore';
 import { type BudgetStore, type SubBudgetRecord } from '../../types/budget';
+import { supabase } from '../supabase/client';
+import { throwIfPostgrestError } from '../supabase/errors';
+import { subBudgetRowToRaw, subBudgetToRow, type SubBudgetRow } from './subBudgetRowMapper';
 
-const GUEST_SUB_BUDGETS_KEY = 'subBudgets';
+const GUEST_SUB_BUDGETS_KEY = GUEST_FINANCE_STORAGE_KEYS.subBudgets;
 
 function isRecord(v: unknown): v is Record<string, unknown> {
   return typeof v === 'object' && v !== null;
@@ -87,19 +81,19 @@ function saveGuestSubBudgets(budgets: SubBudgetRecord[]): void {
   localStorage.setItem(GUEST_SUB_BUDGETS_KEY, JSON.stringify(budgets));
 }
 
-function userSubBudgetsRef(firestoreDb: Firestore, userId: string) {
-  return collection(
-    firestoreDb,
-    FIRESTORE_COLLECTIONS.users,
-    userId,
-    FIRESTORE_COLLECTIONS.budgets,
-  );
+export function clearGuestSubBudgets(): void {
+  localStorage.removeItem(GUEST_SUB_BUDGETS_KEY);
 }
 
 async function loadAuthSubBudgets(userId: string): Promise<SubBudgetRecord[]> {
-  const snap = await getDocs(userSubBudgetsRef(db, userId));
-  return snap.docs
-    .map((d, index) => parseSubBudget(d.data(), index))
+  const { data, error } = await supabase
+    .from(SUPABASE_TABLES.budgets)
+    .select('*')
+    .eq('user_id', userId);
+  throwIfPostgrestError(error, 'LOAD_SUB_BUDGETS_FAILED');
+
+  return (data as SubBudgetRow[])
+    .map((row, index) => parseSubBudget(subBudgetRowToRaw(row), index))
     .filter((item): item is SubBudgetRecord => item !== null)
     .sort((a, b) => a.sortOrder - b.sortOrder);
 }
@@ -114,8 +108,10 @@ export async function saveSubBudget(
   budget: SubBudgetRecord,
 ): Promise<void> {
   if (userId) {
-    const ref = doc(userSubBudgetsRef(db, userId), budget.id);
-    await setDoc(ref, budget);
+    const { error } = await supabase
+      .from(SUPABASE_TABLES.budgets)
+      .upsert(subBudgetToRow(userId, budget), { onConflict: 'user_id,id' });
+    throwIfPostgrestError(error, 'SAVE_SUB_BUDGET_FAILED');
     return;
   }
 
@@ -134,8 +130,12 @@ export async function deleteSubBudget(
   budgetId: string,
 ): Promise<void> {
   if (userId) {
-    const ref = doc(userSubBudgetsRef(db, userId), budgetId);
-    await deleteDoc(ref);
+    const { error } = await supabase
+      .from(SUPABASE_TABLES.budgets)
+      .delete()
+      .eq('user_id', userId)
+      .eq('id', budgetId);
+    throwIfPostgrestError(error, 'DELETE_SUB_BUDGET_FAILED');
     return;
   }
 
@@ -148,12 +148,12 @@ export async function saveSubBudgetsOrder(
   budgets: SubBudgetRecord[],
 ): Promise<void> {
   if (userId) {
-    const batch = writeBatch(db);
-    for (const budget of budgets) {
-      const ref = doc(userSubBudgetsRef(db, userId), budget.id);
-      batch.set(ref, budget);
-    }
-    await batch.commit();
+    const { error } = await supabase
+      .from(SUPABASE_TABLES.budgets)
+      .upsert(budgets.map((budget) => subBudgetToRow(userId, budget)), {
+        onConflict: 'user_id,id',
+      });
+    throwIfPostgrestError(error, 'SAVE_SUB_BUDGETS_FAILED');
     return;
   }
 

@@ -1,14 +1,6 @@
-import {
-  collection,
-  doc,
-  getDocs,
-  writeBatch,
-  setDoc,
-  deleteDoc,
-  type Firestore,
-} from 'firebase/firestore';
 import { type Expense, type RecurrencePendingBasicFields } from '../../types/expense';
-import { FIRESTORE_COLLECTIONS } from '../../config/firebase/collections';
+import { GUEST_FINANCE_STORAGE_KEYS } from '../../config/storage/guestKeys';
+import { SUPABASE_TABLES } from '../../config/supabase/tables';
 import { wrapLegacyText } from '../../domain/i18n/buildBilingualText';
 import { migrateCategoryId } from '../../domain/categories/constants';
 import {
@@ -18,9 +10,12 @@ import {
 import { parseExpenseDateToIso, isIsoDateString } from '../../domain/expenses/parseExpenseDate';
 import { validateRecurrenceRule } from '../../domain/recurrence/validateRecurrenceRule';
 import { RECURRENCE_TYPES, type RecurrenceRule } from '../../types/recurrenceRule';
-import { db } from '../firebase';
+import { resolveAuthAttachmentUrl } from '../attachments/expenseAttachmentService';
+import { supabase } from '../supabase/client';
+import { throwIfPostgrestError } from '../supabase/errors';
+import { expenseRowToRaw, expenseToRow, type ExpenseRow } from './expenseRowMapper';
 
-const GUEST_EXPENSES_KEY = 'expenses';
+const GUEST_EXPENSES_KEY = GUEST_FINANCE_STORAGE_KEYS.expenses;
 
 export type LoadExpensesError = 'NOT_FOUND' | 'CORRUPTED_EXPENSES' | 'INVALID_EXPENSES';
 
@@ -148,7 +143,9 @@ export function migrateExpense(raw: Record<string, unknown>): Expense {
     category: migrateCategoryId(raw.category as string),
     date: parseExpenseDateToIso(raw.date as string),
     paymentMethod: isPaymentMethodId(rawPaymentMethod) ? rawPaymentMethod : DEFAULT_PAYMENT_METHOD,
-    ...(typeof raw.attachmentUrl === 'string' ? { attachmentUrl: raw.attachmentUrl } : {}),
+    ...(typeof raw.attachmentUrl === 'string' && raw.attachmentUrl.length > 0
+      ? { attachmentUrl: raw.attachmentUrl }
+      : {}),
     ...(recurrenceRule ? { recurrenceRule } : {}),
     ...(recurrenceSeriesId ? { recurrenceSeriesId } : {}),
     ...(recurrenceEndDate ? { recurrenceEndDate } : {}),
@@ -184,45 +181,63 @@ function saveGuestExpenses(expenses: Expense[]): void {
   localStorage.setItem(GUEST_EXPENSES_KEY, JSON.stringify(expenses));
 }
 
-function userExpensesRef(firestoreDb: Firestore, userId: string) {
-  return collection(
-    firestoreDb,
-    FIRESTORE_COLLECTIONS.users,
-    userId,
-    FIRESTORE_COLLECTIONS.expenses,
-  );
+export function clearGuestExpenses(): void {
+  localStorage.removeItem(GUEST_EXPENSES_KEY);
 }
 
 async function loadAuthExpenses(userId: string): Promise<Expense[]> {
-  const snap = await getDocs(userExpensesRef(db, userId));
-  return snap.docs
-    .map((d) => migrateExpense(d.data() as Record<string, unknown>))
-    .sort((a, b) => b.date.localeCompare(a.date) || b.id.localeCompare(a.id));
+  const { data, error } = await supabase
+    .from(SUPABASE_TABLES.expenses)
+    .select('*')
+    .eq('user_id', userId);
+  throwIfPostgrestError(error, 'LOAD_EXPENSES_FAILED');
+
+  const expenses = await Promise.all(
+    (data as ExpenseRow[]).map(async (row) => {
+      const expense = migrateExpense(expenseRowToRaw(row));
+      if (!expense.attachmentUrl) return expense;
+      const attachmentUrl = await resolveAuthAttachmentUrl(
+        userId,
+        expense.id,
+        expense.attachmentUrl,
+      );
+      return attachmentUrl ? { ...expense, attachmentUrl } : expense;
+    }),
+  );
+
+  return expenses.sort((a, b) => b.date.localeCompare(a.date) || b.id.localeCompare(a.id));
 }
 
 async function applyAuthExpenseBatch(userId: string, nextExpenses: Expense[]): Promise<void> {
-  const snap = await getDocs(userExpensesRef(db, userId));
-  const existingIds = new Set(snap.docs.map((d) => d.id));
-  const nextIds = new Set(nextExpenses.map((e) => e.id));
+  const { data, error } = await supabase
+    .from(SUPABASE_TABLES.expenses)
+    .select('id')
+    .eq('user_id', userId);
+  throwIfPostgrestError(error, 'LOAD_EXPENSES_FAILED');
 
-  const batch = writeBatch(db);
+  const nextIds = new Set(nextExpenses.map((expense) => expense.id));
+  const toDelete = (data ?? [])
+    .map((row) => row.id as string)
+    .filter((id) => !nextIds.has(id));
 
-  for (const docSnap of snap.docs) {
-    if (!nextIds.has(docSnap.id)) {
-      batch.delete(docSnap.ref);
-    }
+  if (toDelete.length > 0) {
+    const { error: deleteError } = await supabase
+      .from(SUPABASE_TABLES.expenses)
+      .delete()
+      .eq('user_id', userId)
+      .in('id', toDelete);
+    throwIfPostgrestError(deleteError, 'SAVE_EXPENSES_FAILED');
   }
 
-  for (const expense of nextExpenses) {
-    const ref = doc(userExpensesRef(db, userId), expense.id);
-    batch.set(ref, expense);
-    existingIds.delete(expense.id);
-  }
+  if (nextExpenses.length === 0) return;
 
-  await batch.commit();
+  const { error: upsertError } = await supabase
+    .from(SUPABASE_TABLES.expenses)
+    .upsert(nextExpenses.map((expense) => expenseToRow(userId, expense)), {
+      onConflict: 'user_id,id',
+    });
+  throwIfPostgrestError(upsertError, 'SAVE_EXPENSES_FAILED');
 }
-
-// ── Public API ────────────────────────────────────────────────────────────────
 
 export async function loadExpenses(userId: string | null): Promise<Expense[]> {
   if (userId) return loadAuthExpenses(userId);
@@ -231,13 +246,15 @@ export async function loadExpenses(userId: string | null): Promise<Expense[]> {
 
 export async function saveExpense(userId: string | null, expense: Expense): Promise<void> {
   if (userId) {
-    const ref = doc(userExpensesRef(db, userId), expense.id);
-    await setDoc(ref, expense);
+    const { error } = await supabase
+      .from(SUPABASE_TABLES.expenses)
+      .upsert(expenseToRow(userId, expense), { onConflict: 'user_id,id' });
+    throwIfPostgrestError(error, 'SAVE_EXPENSE_FAILED');
     return;
   }
 
   const current = loadGuestExpenses();
-  saveGuestExpenses([expense, ...current.filter((e) => e.id !== expense.id)]);
+  saveGuestExpenses([expense, ...current.filter((item) => item.id !== expense.id)]);
 }
 
 export async function applyExpenseBatch(
@@ -269,11 +286,15 @@ export async function reassignExpensesCategory(
 
 export async function deleteExpense(userId: string | null, expenseId: string): Promise<void> {
   if (userId) {
-    const ref = doc(userExpensesRef(db, userId), expenseId);
-    await deleteDoc(ref);
+    const { error } = await supabase
+      .from(SUPABASE_TABLES.expenses)
+      .delete()
+      .eq('user_id', userId)
+      .eq('id', expenseId);
+    throwIfPostgrestError(error, 'DELETE_EXPENSE_FAILED');
     return;
   }
 
   const current = loadGuestExpenses();
-  saveGuestExpenses(current.filter((e) => e.id !== expenseId));
+  saveGuestExpenses(current.filter((expense) => expense.id !== expenseId));
 }

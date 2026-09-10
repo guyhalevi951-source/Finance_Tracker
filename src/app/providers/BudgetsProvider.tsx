@@ -106,7 +106,7 @@ export function BudgetsProvider({ children }: BudgetsProviderProps) {
       setSubBudgets(loaded);
       setLoadError(false);
 
-      const storedId = loadActiveBudgetId();
+      const storedId = await loadActiveBudgetId(userId);
       const activeIds = new Set(
         listActiveSubBudgets(loaded, todayIso).map((budget) => budget.id),
       );
@@ -115,7 +115,7 @@ export function BudgetsProvider({ children }: BudgetsProviderProps) {
         activeIds.has(storedId);
       const nextId = isValid ? storedId : MASTER_BUDGET_ID;
       setActiveBudgetIdState(nextId);
-      if (!isValid) saveActiveBudgetId(MASTER_BUDGET_ID);
+      if (!isValid) await saveActiveBudgetId(userId, MASTER_BUDGET_ID);
     } catch {
       setLoadError(true);
       setSubBudgets([]);
@@ -128,8 +128,8 @@ export function BudgetsProvider({ children }: BudgetsProviderProps) {
 
   const setActiveBudgetId = useCallback((budgetId: string) => {
     setActiveBudgetIdState(budgetId);
-    saveActiveBudgetId(budgetId);
-  }, []);
+    void saveActiveBudgetId(userId, budgetId);
+  }, [userId]);
 
   const addSubBudget = useCallback(
     async (input: SubBudgetInput) => {

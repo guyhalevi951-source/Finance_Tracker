@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { AuthProvider } from './app/providers/AuthProvider';
 import { ExpensesProvider } from './app/providers/ExpensesProvider';
 import { BudgetsProvider } from './app/providers/BudgetsProvider';
 import { SubBudgetEditorProvider } from './app/providers/SubBudgetEditorProvider';
@@ -22,6 +23,7 @@ import { SubCategoryEditorPage } from './pages/SubCategoryEditorPage';
 function App() {
   return (
     <BrowserRouter>
+      <AuthProvider>
       <ExpensesProvider>
         <BudgetsProvider>
           <SubBudgetEditorProvider>
@@ -49,6 +51,7 @@ function App() {
           </SubBudgetEditorProvider>
         </BudgetsProvider>
       </ExpensesProvider>
+      </AuthProvider>
     </BrowserRouter>
   );
 }

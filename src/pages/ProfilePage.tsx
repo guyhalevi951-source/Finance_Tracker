@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { useAppHeader } from '../app/hooks/useAppHeader';
+import { AuthPanel } from '../features/auth/components/AuthPanel';
 import { UserAvatar } from '../features/profile/components/UserAvatar';
 import { useAuthSession } from '../features/auth/hooks/useAuthSession';
 
@@ -23,6 +24,7 @@ export function ProfilePage() {
       {greeting !== null && (
         <p className="text-lg font-medium text-slate-700 dark:text-slate-200">{greeting}</p>
       )}
+      <AuthPanel />
     </div>
   );
 }

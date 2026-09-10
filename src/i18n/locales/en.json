@@ -60,6 +60,30 @@
     "defaultUserName": "User",
     "goToProfile": "Go to profile",
     "pageTitle": "Profile",
+    "auth": {
+      "email": "Email",
+      "password": "Password",
+      "signIn": "Sign in",
+      "signUp": "Create account",
+      "signOut": "Sign out",
+      "continueWithGoogle": "Continue with Google",
+      "or": "or",
+      "guestMode": "You are using the app as a guest. Sign in to save your data in the cloud.",
+      "loggedInAs": "Logged in as {{user}}",
+      "checkEmail": "Check your email to confirm your account, then sign in.",
+      "sessionLoading": "Loading account…",
+      "errors": {
+        "invalidCredentials": "Email or password is incorrect.",
+        "emailInUse": "An account with this email already exists.",
+        "weakPassword": "Choose a stronger password.",
+        "emailNotConfirmed": "Confirm your email before signing in.",
+        "googleFailed": "Google sign-in failed. Try again.",
+        "signOutFailed": "Could not sign out. Try again.",
+        "migrationFailed": "Could not move your guest data to this account. Try signing in again.",
+        "validation": "Enter both email and password.",
+        "generic": "Something went wrong. Try again."
+      }
+    },
     "settings": {
       "title": "Settings",
       "categories": {

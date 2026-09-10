@@ -60,6 +60,30 @@
     "defaultUserName": "משתמש",
     "goToProfile": "עבור לפרופיל",
     "pageTitle": "פרופיל",
+    "auth": {
+      "email": "אימייל",
+      "password": "סיסמה",
+      "signIn": "התחברות",
+      "signUp": "יצירת חשבון",
+      "signOut": "התנתקות",
+      "continueWithGoogle": "המשך עם Google",
+      "or": "או",
+      "guestMode": "אתם משתמשים באפליקציה כאורחים. התחברו כדי לשמור את הנתונים בענן.",
+      "loggedInAs": "מחוברים בתור {{user}}",
+      "checkEmail": "בדקו את האימייל לאישור החשבון, ואז התחברו.",
+      "sessionLoading": "טוען חשבון…",
+      "errors": {
+        "invalidCredentials": "אימייל או סיסמה שגויים.",
+        "emailInUse": "כבר קיים חשבון עם האימייל הזה.",
+        "weakPassword": "בחרו סיסמה חזקה יותר.",
+        "emailNotConfirmed": "אשרו את האימייל לפני ההתחברות.",
+        "googleFailed": "ההתחברות עם Google נכשלה. נסו שוב.",
+        "signOutFailed": "לא ניתן להתנתק. נסו שוב.",
+        "migrationFailed": "לא ניתן להעביר את נתוני האורח לחשבון הזה. נסו להתחבר שוב.",
+        "validation": "יש להזין אימייל וסיסמה.",
+        "generic": "משהו השתבש. נסו שוב."
+      }
+    },
     "settings": {
       "title": "הגדרות",
       "categories": {

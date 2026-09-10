@@ -1,3 +1,4 @@
+import { GUEST_FINANCE_STORAGE_KEYS } from '../../config/storage/guestKeys';
 import { toMonthKey } from '../../domain/budget/monthKey';
 import {
   parseBudgetStoreValue,
@@ -6,8 +7,8 @@ import {
 import { type BudgetStore } from '../../types/budget';
 import { Result, err, ok } from '../../types/result';
 
-const BUDGET_STORE_KEY = 'monthlyBudgetStore';
-const LEGACY_BUDGET_KEY = 'monthlyBudget';
+const BUDGET_STORE_KEY = GUEST_FINANCE_STORAGE_KEYS.monthlyBudgetStore;
+const LEGACY_BUDGET_KEY = GUEST_FINANCE_STORAGE_KEYS.monthlyBudgetLegacy;
 
 export type LoadBudgetStoreError = ParseBudgetStoreError;
 
@@ -71,4 +72,9 @@ export function loadBudgetStore(): Result<BudgetStore, LoadBudgetStoreError> {
 
 export function saveBudgetStore(store: BudgetStore): void {
   localStorage.setItem(BUDGET_STORE_KEY, JSON.stringify(store));
+}
+
+export function clearGuestBudgetStore(): void {
+  localStorage.removeItem(BUDGET_STORE_KEY);
+  localStorage.removeItem(LEGACY_BUDGET_KEY);
 }

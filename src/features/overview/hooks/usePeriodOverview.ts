@@ -11,9 +11,10 @@ import { hasBudgetLimit } from '../../../domain/budget/hasBudgetLimit';
 import { resolveMonthBudget } from '../../../domain/budget/resolveMonthBudget';
 import { isTemporarySubBudget } from '../../../domain/budget/subBudgetKind';
 import { type DateRange } from '../../../domain/expenses/periods';
-import { loadBudgetStore } from '../../../services/storage/budgetLocalStorage';
+import { loadBudgetStore } from '../../../services/budgets/monthlyBudgetRepository';
 import { type BudgetStore, type SubBudgetRecord } from '../../../types/budget';
 import { type Expense } from '../../../types/expense';
+import { useAuthSession } from '../../auth/hooks/useAuthSession';
 
 export interface UsePeriodOverviewOptions {
   activeBudgetId: string;
@@ -35,6 +36,7 @@ export function usePeriodOverview(
   todayIso: string,
   options: UsePeriodOverviewOptions,
 ): UsePeriodOverviewReturn {
+  const { userId } = useAuthSession();
   const [store, setStore] = useState<BudgetStore>({});
   const [loadError, setLoadError] = useState<string | null>(null);
   const { activeBudgetId, subBudget, subBudgets = [] } = options;
@@ -44,14 +46,21 @@ export function usePeriodOverview(
   const fixedBudget = !isMaster && subBudget && !isTemporarySubBudget(subBudget) ? subBudget : null;
 
   useEffect(() => {
-    const budgetResult = loadBudgetStore();
-    if (budgetResult.ok) {
-      setStore(budgetResult.value);
-    } else {
-      console.warn(`[usePeriodOverview] Could not load budget store: ${budgetResult.error}`);
-      setLoadError('budget');
-    }
-  }, []);
+    let cancelled = false;
+    void loadBudgetStore(userId).then((budgetResult) => {
+      if (cancelled) return;
+      if (budgetResult.ok) {
+        setStore(budgetResult.value);
+        setLoadError(null);
+      } else {
+        console.warn(`[usePeriodOverview] Could not load budget store: ${budgetResult.error}`);
+        setLoadError('budget');
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [userId]);
 
   const effectiveRange = useMemo<DateRange>(() => {
     if (!temporaryBudget) return range;

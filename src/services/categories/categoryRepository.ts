@@ -1,21 +1,15 @@
 import {
-  collection,
-  doc,
-  getDocs,
-  setDoc,
-  deleteDoc,
-  writeBatch,
-  type Firestore,
-} from 'firebase/firestore';
-import {
   type MainCategoryRecord,
   type SubCategoryRecord,
   type CategoryCatalog,
 } from '../../types/category';
 import { type BudgetProfileId } from '../../config/budgetProfile';
 import { MASTER_BUDGET_ID } from '../../domain/budget/constants';
-import { FIRESTORE_COLLECTIONS } from '../../config/firebase/collections';
-import { db } from '../firebase';
+import {
+  GUEST_CATEGORY_KEY_PREFIXES,
+  GUEST_LEGACY_CATEGORY_KEYS,
+} from '../../config/storage/guestKeys';
+import { SUPABASE_TABLES } from '../../config/supabase/tables';
 import { buildDefaultCategorySeed } from '../../domain/categories/seedDefaultCategories';
 import {
   DEFAULT_CATEGORY_ICON_KEY,
@@ -26,21 +20,29 @@ import { PROTECTED_MAIN_CATEGORY_ID } from '../../domain/categories/reassignSubC
 import { mergeSubCategoryRecords } from '../../domain/categories/mergeSubCategoryRecords';
 import { missingBuiltinSubsToRestore } from '../../domain/categories/deleteSubCategory';
 import { getFactoryDefaultCategoryCatalog } from '../../domain/categories/factoryCategoryCatalog';
+import { supabase } from '../supabase/client';
+import { throwIfPostgrestError } from '../supabase/errors';
+import {
+  categoryRowToRaw,
+  mainCategoryToRow,
+  subCategoryToRow,
+  type CategoryRow,
+} from './categoryRowMapper';
 
-const GUEST_SUB_STORAGE_KEY = 'customCategories';
-const GUEST_MAIN_STORAGE_KEY = 'mainCategories';
-const GUEST_DELETED_SUBS_KEY = 'deletedSubCategoryIds';
+const GUEST_SUB_STORAGE_KEY = GUEST_LEGACY_CATEGORY_KEYS[1];
+const GUEST_MAIN_STORAGE_KEY = GUEST_LEGACY_CATEGORY_KEYS[0];
+const GUEST_DELETED_SUBS_KEY = GUEST_LEGACY_CATEGORY_KEYS[2];
 
 function guestMainKey(profileId: BudgetProfileId): string {
-  return `${GUEST_MAIN_STORAGE_KEY}:${profileId}`;
+  return `${GUEST_CATEGORY_KEY_PREFIXES[0]}${profileId}`;
 }
 
 function guestSubKey(profileId: BudgetProfileId): string {
-  return `${GUEST_SUB_STORAGE_KEY}:${profileId}`;
+  return `${GUEST_CATEGORY_KEY_PREFIXES[1]}${profileId}`;
 }
 
 function guestDeletedSubsKey(profileId: BudgetProfileId): string {
-  return `${GUEST_DELETED_SUBS_KEY}:${profileId}`;
+  return `${GUEST_CATEGORY_KEY_PREFIXES[2]}${profileId}`;
 }
 
 function isRecord(v: unknown): v is Record<string, unknown> {
@@ -120,110 +122,67 @@ function saveGuestJson(key: string, value: unknown[]): void {
   localStorage.setItem(key, JSON.stringify(value));
 }
 
-function profileMainCategoriesRef(
-  firestoreDb: Firestore,
+export function listGuestCategoryProfileIds(): string[] {
+  const ids = new Set<string>();
+  for (let i = 0; i < localStorage.length; i += 1) {
+    const key = localStorage.key(i);
+    if (!key) continue;
+    for (const prefix of GUEST_CATEGORY_KEY_PREFIXES) {
+      if (key.startsWith(prefix) && key.length > prefix.length) {
+        ids.add(key.slice(prefix.length));
+      }
+    }
+  }
+  return [...ids];
+}
+
+export function clearAllGuestCategoryKeys(): void {
+  const toRemove = new Set<string>(GUEST_LEGACY_CATEGORY_KEYS);
+  for (let i = 0; i < localStorage.length; i += 1) {
+    const key = localStorage.key(i);
+    if (!key) continue;
+    if (GUEST_CATEGORY_KEY_PREFIXES.some((prefix) => key.startsWith(prefix))) {
+      toRemove.add(key);
+    }
+  }
+  for (const key of toRemove) {
+    localStorage.removeItem(key);
+  }
+}
+
+async function loadAuthCategoryRows(
   userId: string,
   profileId: BudgetProfileId,
-) {
-  return collection(
-    firestoreDb,
-    FIRESTORE_COLLECTIONS.users,
-    userId,
-    FIRESTORE_COLLECTIONS.budgetProfiles,
-    profileId,
-    FIRESTORE_COLLECTIONS.mainCategories,
-  );
-}
-
-function profileSubCategoriesRef(
-  firestoreDb: Firestore,
-  userId: string,
-  profileId: BudgetProfileId,
-) {
-  return collection(
-    firestoreDb,
-    FIRESTORE_COLLECTIONS.users,
-    userId,
-    FIRESTORE_COLLECTIONS.budgetProfiles,
-    profileId,
-    FIRESTORE_COLLECTIONS.categories,
-  );
-}
-
-function profileDeletedSubsRef(
-  firestoreDb: Firestore,
-  userId: string,
-  profileId: BudgetProfileId,
-) {
-  return collection(
-    firestoreDb,
-    FIRESTORE_COLLECTIONS.users,
-    userId,
-    FIRESTORE_COLLECTIONS.budgetProfiles,
-    profileId,
-    FIRESTORE_COLLECTIONS.deletedSubCategories,
-  );
-}
-
-function legacyMainCategoriesRef(firestoreDb: Firestore, userId: string) {
-  return collection(
-    firestoreDb,
-    FIRESTORE_COLLECTIONS.users,
-    userId,
-    FIRESTORE_COLLECTIONS.mainCategories,
-  );
-}
-
-function legacySubCategoriesRef(firestoreDb: Firestore, userId: string) {
-  return collection(
-    firestoreDb,
-    FIRESTORE_COLLECTIONS.users,
-    userId,
-    FIRESTORE_COLLECTIONS.categories,
-  );
-}
-
-function legacyDeletedSubsRef(firestoreDb: Firestore, userId: string) {
-  return collection(
-    firestoreDb,
-    FIRESTORE_COLLECTIONS.users,
-    userId,
-    FIRESTORE_COLLECTIONS.deletedSubCategories,
-  );
+): Promise<CategoryRow[]> {
+  const { data, error } = await supabase
+    .from(SUPABASE_TABLES.categories)
+    .select('*')
+    .eq('user_id', userId)
+    .eq('profile_id', profileId);
+  throwIfPostgrestError(error, 'LOAD_CATEGORIES_FAILED');
+  return (data ?? []) as CategoryRow[];
 }
 
 async function loadAuthMainCategories(
   userId: string,
   profileId: BudgetProfileId,
 ): Promise<MainCategoryRecord[]> {
-  const snap = await getDocs(profileMainCategoriesRef(db, userId, profileId));
-  return snap.docs
-    .map((d) => parseMainCategory(d.data()))
-    .filter((c): c is MainCategoryRecord => c !== null);
+  const rows = await loadAuthCategoryRows(userId, profileId);
+  return rows
+    .filter((row) => row.parent_id === null)
+    .map((row) => parseMainCategory(categoryRowToRaw(row)))
+    .filter((category): category is MainCategoryRecord => category !== null);
 }
 
 async function loadAuthSubCategories(
   userId: string,
   profileId: BudgetProfileId,
 ): Promise<SubCategoryRecord[]> {
-  const snap = await getDocs(profileSubCategoriesRef(db, userId, profileId));
-  return snap.docs
-    .map((d, index) => parseSubCategory(d.data(), index))
-    .filter((c): c is SubCategoryRecord => c !== null);
-}
-
-async function loadLegacyAuthMainCategories(userId: string): Promise<MainCategoryRecord[]> {
-  const snap = await getDocs(legacyMainCategoriesRef(db, userId));
-  return snap.docs
-    .map((d) => parseMainCategory(d.data()))
-    .filter((c): c is MainCategoryRecord => c !== null);
-}
-
-async function loadLegacyAuthSubCategories(userId: string): Promise<SubCategoryRecord[]> {
-  const snap = await getDocs(legacySubCategoriesRef(db, userId));
-  return snap.docs
-    .map((d, index) => parseSubCategory(d.data(), index))
-    .filter((c): c is SubCategoryRecord => c !== null);
+  const rows = await loadAuthCategoryRows(userId, profileId);
+  return rows
+    .filter((row) => row.parent_id !== null)
+    .map((row, index) => parseSubCategory(categoryRowToRaw(row), index))
+    .filter((category): category is SubCategoryRecord => category !== null);
 }
 
 async function saveAuthMainCategory(
@@ -231,8 +190,12 @@ async function saveAuthMainCategory(
   profileId: BudgetProfileId,
   category: MainCategoryRecord,
 ): Promise<void> {
-  const ref = doc(profileMainCategoriesRef(db, userId, profileId), category.id);
-  await setDoc(ref, category);
+  const { error } = await supabase
+    .from(SUPABASE_TABLES.categories)
+    .upsert(mainCategoryToRow(userId, profileId, category), {
+      onConflict: 'user_id,profile_id,id',
+    });
+  throwIfPostgrestError(error, 'SAVE_CATEGORY_FAILED');
 }
 
 async function saveAuthSubCategory(
@@ -240,50 +203,50 @@ async function saveAuthSubCategory(
   profileId: BudgetProfileId,
   category: SubCategoryRecord,
 ): Promise<void> {
-  const ref = doc(profileSubCategoriesRef(db, userId, profileId), category.id);
-  await setDoc(ref, category);
+  const { error } = await supabase
+    .from(SUPABASE_TABLES.categories)
+    .upsert(subCategoryToRow(userId, profileId, category), {
+      onConflict: 'user_id,profile_id,id',
+    });
+  throwIfPostgrestError(error, 'SAVE_CATEGORY_FAILED');
 }
 
-async function deleteAuthMainCategory(
+async function deleteAuthCategory(
   userId: string,
   profileId: BudgetProfileId,
   categoryId: string,
 ): Promise<void> {
-  const ref = doc(profileMainCategoriesRef(db, userId, profileId), categoryId);
-  await deleteDoc(ref);
-}
-
-async function deleteAuthSubCategory(
-  userId: string,
-  profileId: BudgetProfileId,
-  categoryId: string,
-): Promise<void> {
-  const ref = doc(profileSubCategoriesRef(db, userId, profileId), categoryId);
-  await deleteDoc(ref);
+  const { error } = await supabase
+    .from(SUPABASE_TABLES.categories)
+    .delete()
+    .eq('user_id', userId)
+    .eq('profile_id', profileId)
+    .eq('id', categoryId);
+  throwIfPostgrestError(error, 'DELETE_CATEGORY_FAILED');
 }
 
 function loadGuestMainCategories(profileId: BudgetProfileId): MainCategoryRecord[] {
   return loadGuestJson(guestMainKey(profileId))
     .map((item) => parseMainCategory(item))
-    .filter((c): c is MainCategoryRecord => c !== null);
+    .filter((category): category is MainCategoryRecord => category !== null);
 }
 
 function loadGuestSubCategories(profileId: BudgetProfileId): SubCategoryRecord[] {
   return loadGuestJson(guestSubKey(profileId))
     .map((item, index) => parseSubCategory(item, index))
-    .filter((c): c is SubCategoryRecord => c !== null);
+    .filter((category): category is SubCategoryRecord => category !== null);
 }
 
 function loadLegacyGuestMainCategories(): MainCategoryRecord[] {
   return loadGuestJson(GUEST_MAIN_STORAGE_KEY)
     .map((item) => parseMainCategory(item))
-    .filter((c): c is MainCategoryRecord => c !== null);
+    .filter((category): category is MainCategoryRecord => category !== null);
 }
 
 function loadLegacyGuestSubCategories(): SubCategoryRecord[] {
   return loadGuestJson(GUEST_SUB_STORAGE_KEY)
     .map((item, index) => parseSubCategory(item, index))
-    .filter((c): c is SubCategoryRecord => c !== null);
+    .filter((category): category is SubCategoryRecord => category !== null);
 }
 
 function saveGuestMainCategories(
@@ -322,43 +285,24 @@ function loadLegacyGuestDeletedSubIds(): string[] {
   }
 }
 
-async function loadLegacyDeletedSubCategoryIds(userId: string | null): Promise<string[]> {
-  if (userId) {
-    const snap = await getDocs(legacyDeletedSubsRef(db, userId));
-    return snap.docs.map((d) => d.id);
-  }
-  return loadLegacyGuestDeletedSubIds();
-}
-
 async function migrateLegacyToProfileIfNeeded(
   userId: string | null,
   profileId: BudgetProfileId,
 ): Promise<void> {
-  if (profileId !== MASTER_BUDGET_ID) return;
+  if (userId || profileId !== MASTER_BUDGET_ID) return;
 
-  const mains = userId
-    ? await loadAuthMainCategories(userId, profileId)
-    : loadGuestMainCategories(profileId);
-  const subs = userId
-    ? await loadAuthSubCategories(userId, profileId)
-    : loadGuestSubCategories(profileId);
-
+  const mains = loadGuestMainCategories(profileId);
+  const subs = loadGuestSubCategories(profileId);
   if (mains.length > 0 || subs.length > 0) return;
 
-  const legacyMains = userId
-    ? await loadLegacyAuthMainCategories(userId)
-    : loadLegacyGuestMainCategories();
-  const legacySubs = userId
-    ? await loadLegacyAuthSubCategories(userId)
-    : loadLegacyGuestSubCategories();
-
+  const legacyMains = loadLegacyGuestMainCategories();
+  const legacySubs = loadLegacyGuestSubCategories();
   if (legacyMains.length === 0 && legacySubs.length === 0) return;
 
-  await persistSeed(userId, profileId, { mains: legacyMains, subs: legacySubs });
+  await persistSeed(null, profileId, { mains: legacyMains, subs: legacySubs });
 
-  const legacyDeleted = await loadLegacyDeletedSubCategoryIds(userId);
-  for (const subId of legacyDeleted) {
-    await rememberDeletedSubCategory(userId, profileId, subId);
+  for (const subId of loadLegacyGuestDeletedSubIds()) {
+    await rememberDeletedSubCategory(null, profileId, subId);
   }
 }
 
@@ -367,8 +311,13 @@ export async function loadDeletedSubCategoryIds(
   profileId: BudgetProfileId,
 ): Promise<string[]> {
   if (userId) {
-    const snap = await getDocs(profileDeletedSubsRef(db, userId, profileId));
-    return snap.docs.map((d) => d.id);
+    const { data, error } = await supabase
+      .from(SUPABASE_TABLES.deletedSubcategories)
+      .select('category_id')
+      .eq('user_id', userId)
+      .eq('profile_id', profileId);
+    throwIfPostgrestError(error, 'LOAD_DELETED_SUBCATEGORIES_FAILED');
+    return (data ?? []).map((row) => row.category_id as string);
   }
   return loadGuestDeletedSubIds(profileId);
 }
@@ -379,7 +328,11 @@ export async function rememberDeletedSubCategory(
   subId: string,
 ): Promise<void> {
   if (userId) {
-    await setDoc(doc(profileDeletedSubsRef(db, userId, profileId), subId), { id: subId });
+    const { error } = await supabase.from(SUPABASE_TABLES.deletedSubcategories).upsert(
+      { user_id: userId, profile_id: profileId, category_id: subId },
+      { onConflict: 'user_id,profile_id,category_id' },
+    );
+    throwIfPostgrestError(error, 'SAVE_DELETED_SUBCATEGORY_FAILED');
     return;
   }
   const existing = loadGuestDeletedSubIds(profileId);
@@ -392,13 +345,12 @@ export async function clearDeletedSubCategoryIds(
   profileId: BudgetProfileId,
 ): Promise<void> {
   if (userId) {
-    const snap = await getDocs(profileDeletedSubsRef(db, userId, profileId));
-    if (snap.empty) return;
-    const batch = writeBatch(db);
-    for (const deleted of snap.docs) {
-      batch.delete(deleted.ref);
-    }
-    await batch.commit();
+    const { error } = await supabase
+      .from(SUPABASE_TABLES.deletedSubcategories)
+      .delete()
+      .eq('user_id', userId)
+      .eq('profile_id', profileId);
+    throwIfPostgrestError(error, 'CLEAR_DELETED_SUBCATEGORIES_FAILED');
     return;
   }
   localStorage.removeItem(guestDeletedSubsKey(profileId));
@@ -415,18 +367,20 @@ async function persistSeed(
   seed: CategorySeedBundle,
 ): Promise<void> {
   if (userId) {
-    const batch = writeBatch(db);
-    for (const main of seed.mains) {
-      batch.set(doc(profileMainCategoriesRef(db, userId, profileId), main.id), main);
-    }
-    for (const sub of seed.subs) {
-      batch.set(doc(profileSubCategoriesRef(db, userId, profileId), sub.id), sub);
-    }
-    await batch.commit();
-  } else {
-    saveGuestMainCategories(profileId, seed.mains);
-    saveGuestSubCategories(profileId, seed.subs);
+    const rows = [
+      ...seed.mains.map((main) => mainCategoryToRow(userId, profileId, main)),
+      ...seed.subs.map((sub) => subCategoryToRow(userId, profileId, sub)),
+    ];
+    if (rows.length === 0) return;
+    const { error } = await supabase
+      .from(SUPABASE_TABLES.categories)
+      .upsert(rows, { onConflict: 'user_id,profile_id,id' });
+    throwIfPostgrestError(error, 'SAVE_CATEGORY_FAILED');
+    return;
   }
+
+  saveGuestMainCategories(profileId, seed.mains);
+  saveGuestSubCategories(profileId, seed.subs);
 }
 
 export async function loadMainCategories(
@@ -453,8 +407,12 @@ export async function ensureDefaultCategoriesSeeded(
 ): Promise<CategoryCatalog> {
   await migrateLegacyToProfileIfNeeded(userId, profileId);
 
-  const mains = await loadMainCategories(userId, profileId);
-  const existingSubs = await loadSubCategories(userId, profileId);
+  const mains = userId
+    ? await loadAuthMainCategories(userId, profileId)
+    : loadGuestMainCategories(profileId);
+  const existingSubs = userId
+    ? await loadAuthSubCategories(userId, profileId)
+    : loadGuestSubCategories(profileId);
 
   if (mains.length > 0) {
     const seed = buildDefaultCategorySeed();
@@ -491,11 +449,13 @@ export async function saveMainCategory(
 ): Promise<void> {
   if (userId) {
     await saveAuthMainCategory(userId, profileId, category);
-  } else {
-    const existing = loadGuestMainCategories(profileId);
-    const updated = [...existing.filter((c) => c.id !== category.id), category];
-    saveGuestMainCategories(profileId, updated);
+    return;
   }
+  const existing = loadGuestMainCategories(profileId);
+  saveGuestMainCategories(
+    profileId,
+    [...existing.filter((item) => item.id !== category.id), category],
+  );
 }
 
 export async function saveMainCategoriesOrder(
@@ -504,14 +464,16 @@ export async function saveMainCategoriesOrder(
   categories: MainCategoryRecord[],
 ): Promise<void> {
   if (userId) {
-    const batch = writeBatch(db);
-    for (const category of categories) {
-      batch.set(doc(profileMainCategoriesRef(db, userId, profileId), category.id), category);
-    }
-    await batch.commit();
-  } else {
-    saveGuestMainCategories(profileId, categories);
+    const { error } = await supabase
+      .from(SUPABASE_TABLES.categories)
+      .upsert(
+        categories.map((category) => mainCategoryToRow(userId, profileId, category)),
+        { onConflict: 'user_id,profile_id,id' },
+      );
+    throwIfPostgrestError(error, 'SAVE_CATEGORY_FAILED');
+    return;
   }
+  saveGuestMainCategories(profileId, categories);
 }
 
 export async function deleteMainCategoryRecord(
@@ -520,11 +482,11 @@ export async function deleteMainCategoryRecord(
   categoryId: string,
 ): Promise<void> {
   if (userId) {
-    await deleteAuthMainCategory(userId, profileId, categoryId);
-  } else {
-    const existing = loadGuestMainCategories(profileId);
-    saveGuestMainCategories(profileId, existing.filter((c) => c.id !== categoryId));
+    await deleteAuthCategory(userId, profileId, categoryId);
+    return;
   }
+  const existing = loadGuestMainCategories(profileId);
+  saveGuestMainCategories(profileId, existing.filter((item) => item.id !== categoryId));
 }
 
 export async function saveSubCategory(
@@ -534,11 +496,13 @@ export async function saveSubCategory(
 ): Promise<void> {
   if (userId) {
     await saveAuthSubCategory(userId, profileId, category);
-  } else {
-    const existing = loadGuestSubCategories(profileId);
-    const updated = [...existing.filter((c) => c.id !== category.id), category];
-    saveGuestSubCategories(profileId, updated);
+    return;
   }
+  const existing = loadGuestSubCategories(profileId);
+  saveGuestSubCategories(
+    profileId,
+    [...existing.filter((item) => item.id !== category.id), category],
+  );
 }
 
 export async function saveSubCategories(
@@ -547,16 +511,17 @@ export async function saveSubCategories(
   categories: SubCategoryRecord[],
 ): Promise<void> {
   if (userId) {
-    const batch = writeBatch(db);
-    for (const category of categories) {
-      batch.set(doc(profileSubCategoriesRef(db, userId, profileId), category.id), category);
-    }
-    await batch.commit();
-  } else {
-    const existing = loadGuestSubCategories(profileId);
-    const merged = mergeSubCategoryRecords(existing, categories);
-    saveGuestSubCategories(profileId, merged);
+    const { error } = await supabase
+      .from(SUPABASE_TABLES.categories)
+      .upsert(
+        categories.map((category) => subCategoryToRow(userId, profileId, category)),
+        { onConflict: 'user_id,profile_id,id' },
+      );
+    throwIfPostgrestError(error, 'SAVE_CATEGORY_FAILED');
+    return;
   }
+  const existing = loadGuestSubCategories(profileId);
+  saveGuestSubCategories(profileId, mergeSubCategoryRecords(existing, categories));
 }
 
 export async function deleteSubCategory(
@@ -565,11 +530,11 @@ export async function deleteSubCategory(
   categoryId: string,
 ): Promise<void> {
   if (userId) {
-    await deleteAuthSubCategory(userId, profileId, categoryId);
-  } else {
-    const existing = loadGuestSubCategories(profileId);
-    saveGuestSubCategories(profileId, existing.filter((c) => c.id !== categoryId));
+    await deleteAuthCategory(userId, profileId, categoryId);
+    return;
   }
+  const existing = loadGuestSubCategories(profileId);
+  saveGuestSubCategories(profileId, existing.filter((item) => item.id !== categoryId));
 }
 
 export async function resetCategoriesToDefaults(
@@ -586,12 +551,12 @@ export async function resetCategoriesToDefaults(
 
     for (const main of existingMains) {
       if (!seedMainIds.has(main.id)) {
-        await deleteAuthMainCategory(userId, profileId, main.id);
+        await deleteAuthCategory(userId, profileId, main.id);
       }
     }
     for (const sub of existingSubs) {
       if (!seedSubIds.has(sub.id)) {
-        await deleteAuthSubCategory(userId, profileId, sub.id);
+        await deleteAuthCategory(userId, profileId, sub.id);
       }
     }
     await persistSeed(userId, profileId, {
