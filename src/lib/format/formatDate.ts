@@ -57,6 +57,14 @@ export function formatCurrencyAmount(amount: number, locale: AppLocale): string 
   return `₪${formatNumber(amount, locale)}`;
 }
 
+/** Formats a budget cap; `null` means no limit and renders as a dash. */
+export function formatOptionalCurrencyAmount(
+  amount: number | null,
+  locale: AppLocale,
+): string {
+  return amount == null ? '-' : formatCurrencyAmount(amount, locale);
+}
+
 export function formatCurrencyAmountFixed(
   amount: number,
   locale: AppLocale,

@@ -4,6 +4,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { type AppLocale } from '../config/app';
 import { ROUTES } from '../config/routes';
 import { useAppHeader } from '../app/hooks/useAppHeader';
+import { hasBudgetLimit } from '../domain/budget/hasBudgetLimit';
 import { computeOverviewForPeriodBudget } from '../domain/budget/periodOverview';
 import { filterExpensesByBudget } from '../domain/budget/filterExpensesByBudget';
 import { resolveBudgetLabel } from '../domain/budget/resolveBudgetLabel';
@@ -13,7 +14,7 @@ import { useBudgets } from '../features/budget/hooks/useBudgets';
 import { useExpenses } from '../features/expenses/hooks/useExpenses';
 import { useTodayIso } from '../lib/hooks/useTodayIso';
 import { SEMANTIC_COLORS } from '../config/semanticColors';
-import { formatCurrencyAmount, formatExpenseDateNumeric } from '../lib/format/formatDate';
+import { formatOptionalCurrencyAmount, formatCurrencyAmount, formatExpenseDateNumeric } from '../lib/format/formatDate';
 
 export function BudgetHistoryDetailPage() {
   const { t, i18n } = useTranslation();
@@ -65,6 +66,8 @@ export function BudgetHistoryDetailPage() {
     navigate(ROUTES.budgetHistory);
   };
 
+  const hasLimit = hasBudgetLimit(budget.totalAmount);
+
   return (
     <div>
       <BudgetHistoryBackButton onBack={handleBack} label={t('budget.history.back')} />
@@ -82,7 +85,7 @@ export function BudgetHistoryDetailPage() {
         <div>
           <p className="text-sm text-slate-500 dark:text-slate-400">{t('budget.history.originalAmount')}</p>
           <p className={`text-xl font-bold tabular-nums ${budgetColors.valueText}`}>
-            {formatCurrencyAmount(budget.totalAmount, locale)}
+            {formatOptionalCurrencyAmount(budget.totalAmount, locale)}
           </p>
         </div>
         <div>
@@ -97,11 +100,13 @@ export function BudgetHistoryDetailPage() {
         <p className="text-sm text-slate-500 dark:text-slate-400">{t('budget.history.remaining')}</p>
         <p
           className={`text-xl font-bold tabular-nums ${
-            overview.isOverspent ? expense.valueText : budgetColors.valueText
+            hasLimit && overview.isOverspent ? expense.valueText : budgetColors.valueText
           }`}
         >
-          {formatCurrencyAmount(Math.abs(overview.leftToSpend), locale)}
-          {overview.isOverspent ? ` (${t('overview.overspent')})` : ''}
+          {hasLimit
+            ? formatCurrencyAmount(Math.abs(overview.leftToSpend), locale)
+            : '-'}
+          {hasLimit && overview.isOverspent ? ` (${t('overview.overspent')})` : ''}
         </p>
       </div>
 

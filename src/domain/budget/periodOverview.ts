@@ -18,6 +18,7 @@ import {
   computeDailyExpenseBreakdown,
   type DailyExpenseBreakdown,
 } from './computeDailyExpenseBreakdown';
+import { hasBudgetLimit } from './hasBudgetLimit';
 
 export type { DailyExpenseBreakdown };
 
@@ -53,14 +54,17 @@ export function resolvePlannedDailyAverageDivisor(
   return Math.max(1, countDaysInRange(range));
 }
 
-export function computePeriodBudget(monthlyBudget: number, range: DateRange): number {
+export function computePeriodBudget(
+  monthlyBudget: number | null,
+  range: DateRange,
+): number {
   const startDate = isoDateToDate(range.startIso);
   const year = startDate.getFullYear();
   const month = startDate.getMonth();
   const daysInMonth = getMonthDayIsos(year, month).length;
   const daysInPeriod = countDaysInRange(range);
 
-  if (daysInMonth === 0 || daysInPeriod === 0 || monthlyBudget <= 0) {
+  if (daysInMonth === 0 || daysInPeriod === 0 || !hasBudgetLimit(monthlyBudget)) {
     return 0;
   }
 
@@ -83,7 +87,7 @@ export function computeOverviewForPeriodBudget({
   subBudgets = [],
   plannedDailyAverageDivisor = 'rangeInclusive',
 }: {
-  periodBudget: number;
+  periodBudget: number | null;
   expenses: Expense[];
   range: DateRange;
   todayIso: string;
@@ -94,8 +98,9 @@ export function computeOverviewForPeriodBudget({
   const spent = sumAmounts(dailyTotals.map((day) => day.actualExpenses));
   const futurePlanned = sumAmounts(dailyTotals.map((day) => day.futureExpenses));
   const totalPlanned = sumAmounts([spent, futurePlanned]);
-  const leftToSpend = subtractAmounts(periodBudget, totalPlanned);
-  const isOverspent = leftToSpend < 0;
+  const effectivePeriodBudget = hasBudgetLimit(periodBudget) ? periodBudget : 0;
+  const leftToSpend = subtractAmounts(effectivePeriodBudget, totalPlanned);
+  const isOverspent = hasBudgetLimit(periodBudget) && leftToSpend < 0;
   const daysInPeriod = countDaysInRange(range);
   const elapsedDays = countElapsedDaysInPeriod(range, todayIso);
   const remainingDays = countRemainingDays(range, todayIso);
@@ -108,7 +113,7 @@ export function computeOverviewForPeriodBudget({
     remainingDays > 0 ? divideAmount(leftToSpend, remainingDays) : 0;
 
   return {
-    periodBudget,
+    periodBudget: effectivePeriodBudget,
     spent,
     futurePlanned,
     totalPlanned,
@@ -132,7 +137,7 @@ export function computePeriodOverview({
   todayIso,
   subBudgets = [],
 }: {
-  monthlyBudget: number;
+  monthlyBudget: number | null;
   expenses: Expense[];
   range: DateRange;
   todayIso: string;

@@ -81,7 +81,7 @@ export function SubBudgetEditorModal({
     const today = toIsoDate(new Date());
     if (editingBudget) {
       setName(editingBudget.name[locale] || editingBudget.name.en);
-      setTotalAmount(String(editingBudget.totalAmount));
+      setTotalAmount(editingBudget.totalAmount == null ? '' : String(editingBudget.totalAmount));
       setIncludeInMonthlyBudget(editingBudget.includeInMonthlyBudget);
       setNoTimeLimit(editingBudget.kind === 'fixed');
       setStartDate(editingBudget.kind === 'temporary' ? editingBudget.startDate : today);
@@ -174,20 +174,6 @@ export function SubBudgetEditorModal({
             />
           </div>
 
-          <div className="space-y-1">
-            <BudgetFormCheckbox
-              checked={includeInMonthlyBudget}
-              label={t('budget.form.includeInMonthlyBudget')}
-              onChange={setIncludeInMonthlyBudget}
-            />
-            <BudgetFormCheckbox
-              checked={noTimeLimit}
-              disabled={isKindLocked}
-              label={t('budget.form.noTimeLimit')}
-              onChange={setNoTimeLimit}
-            />
-          </div>
-
           {!noTimeLimit && (
             <>
               <div>
@@ -219,6 +205,20 @@ export function SubBudgetEditorModal({
               </div>
             </>
           )}
+
+          <div className="space-y-1">
+            <BudgetFormCheckbox
+              checked={includeInMonthlyBudget}
+              label={t('budget.form.includeInMonthlyBudget')}
+              onChange={setIncludeInMonthlyBudget}
+            />
+            <BudgetFormCheckbox
+              checked={noTimeLimit}
+              disabled={isKindLocked}
+              label={t('budget.form.noTimeLimit')}
+              onChange={setNoTimeLimit}
+            />
+          </div>
         </div>
 
         <div className="flex gap-3 mt-6">

@@ -7,6 +7,7 @@ import {
   computePeriodOverview,
   type PeriodOverview,
 } from '../../../domain/budget/periodOverview';
+import { hasBudgetLimit } from '../../../domain/budget/hasBudgetLimit';
 import { resolveMonthBudget } from '../../../domain/budget/resolveMonthBudget';
 import { isTemporarySubBudget } from '../../../domain/budget/subBudgetKind';
 import { type DateRange } from '../../../domain/expenses/periods';
@@ -22,7 +23,7 @@ export interface UsePeriodOverviewOptions {
 
 export interface UsePeriodOverviewReturn {
   overview: PeriodOverview;
-  monthlyBudget: number;
+  monthlyBudget: number | null;
   hasBudget: boolean;
   effectiveRange: DateRange;
   loadError: string | null;
@@ -86,7 +87,7 @@ export function usePeriodOverview(
   return {
     overview,
     monthlyBudget,
-    hasBudget: monthlyBudget > 0,
+    hasBudget: hasBudgetLimit(monthlyBudget),
     effectiveRange,
     loadError,
   };

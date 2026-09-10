@@ -14,5 +14,8 @@ export function resolveFixedBudgetMonthAmount(
   if (resolved.source !== 'none') {
     return resolved;
   }
+  if (budget.totalAmount === null) {
+    return resolved;
+  }
   return { ...resolved, amount: budget.totalAmount, source: 'default' };
 }

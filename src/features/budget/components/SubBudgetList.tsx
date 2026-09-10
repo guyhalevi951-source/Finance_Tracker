@@ -24,7 +24,7 @@ import { SEMANTIC_COLORS } from '../../../config/semanticColors';
 import { MASTER_BUDGET_ID } from '../../../domain/budget/constants';
 import { resolveBudgetLabel } from '../../../domain/budget/resolveBudgetLabel';
 import { partitionSubBudgetsByKind } from '../../../domain/budget/subBudgetKind';
-import { formatCurrencyAmount, formatExpenseDateNumeric } from '../../../lib/format/formatDate';
+import { formatOptionalCurrencyAmount, formatExpenseDateNumeric } from '../../../lib/format/formatDate';
 import { type SubBudgetRecord, type TemporarySubBudgetRecord } from '../../../types/budget';
 import { ACCORDION_EMPTY_CONTENT_CLASS, AppAccordion } from '../../../components/accordion';
 import { BudgetOverviewButton } from './BudgetOverviewButton';
@@ -116,7 +116,7 @@ function SortableSubBudgetRow({ budget, locale, onEdit, onDeleteRequest, onOpenO
           {formatExpenseDateNumeric(budget.endDate, locale)}
         </p>
         <p className={`text-sm tabular-nums mt-1 ${SEMANTIC_COLORS.budget.valueText}`}>
-          {formatCurrencyAmount(budget.totalAmount, locale)}
+          {formatOptionalCurrencyAmount(budget.totalAmount, locale)}
         </p>
       </div>
 

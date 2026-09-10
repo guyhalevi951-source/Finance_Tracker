@@ -1,4 +1,5 @@
 import { sumAmounts, subtractAmounts } from '../money/arithmetic';
+import { hasBudgetLimit } from './hasBudgetLimit';
 
 export interface BudgetSummary {
   totalExpenses: number;
@@ -12,13 +13,13 @@ export interface BudgetSummary {
  * All arithmetic uses precision-safe minor-unit operations (no raw float addition).
  */
 export function computeBudgetSummary(
-  budget: number,
+  budget: number | null,
   expenseAmounts: number[],
 ): BudgetSummary {
   const totalExpenses = sumAmounts(expenseAmounts);
-  const budgetPercentage = budget > 0 ? (totalExpenses / budget) * 100 : 0;
-  const isOverBudget = budget > 0 && totalExpenses > budget;
-  const remaining = subtractAmounts(budget, totalExpenses);
+  const budgetPercentage = hasBudgetLimit(budget) ? (totalExpenses / budget) * 100 : 0;
+  const isOverBudget = hasBudgetLimit(budget) && totalExpenses > budget;
+  const remaining = hasBudgetLimit(budget) ? subtractAmounts(budget, totalExpenses) : 0;
 
   return { totalExpenses, budgetPercentage, isOverBudget, remaining };
 }

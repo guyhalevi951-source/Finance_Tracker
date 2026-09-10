@@ -34,6 +34,10 @@ describe('computePeriodBudget', () => {
     const dayRange = { startIso: '2026-07-17', endIso: '2026-07-17' };
     expect(computePeriodBudget(300, dayRange)).toBeCloseTo(9.68, 2);
   });
+
+  it('returns 0 when monthly budget has no limit', () => {
+    expect(computePeriodBudget(null, julyRange)).toBe(0);
+  });
 });
 
 describe('computePeriodOverview', () => {
@@ -74,6 +78,18 @@ describe('computePeriodOverview', () => {
 
     expect(overview.isOverspent).toBe(true);
     expect(overview.leftToSpend).toBe(-50);
+  });
+
+  it('does not flag overspent when the monthly budget has no limit', () => {
+    const overview = computePeriodOverview({
+      monthlyBudget: null,
+      expenses: [expense('a', '2026-07-05', 150)],
+      range: julyRange,
+      todayIso: '2026-07-10',
+    });
+
+    expect(overview.periodBudget).toBe(0);
+    expect(overview.isOverspent).toBe(false);
   });
 
   it('has zero remaining days when today is after the period', () => {
@@ -235,5 +251,17 @@ describe('computeOverviewForPeriodBudget plannedDailyAverage', () => {
     });
 
     expect(overview.plannedDailyAverage).toBe(200);
+  });
+
+  it('does not flag overspent when periodBudget is null', () => {
+    const overview = computeOverviewForPeriodBudget({
+      periodBudget: null,
+      expenses: [expense('a', '2026-09-04', 200)],
+      range: { startIso: '2026-09-04', endIso: '2026-09-04' },
+      todayIso: '2026-09-04',
+    });
+
+    expect(overview.periodBudget).toBe(0);
+    expect(overview.isOverspent).toBe(false);
   });
 });

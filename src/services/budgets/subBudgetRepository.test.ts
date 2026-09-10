@@ -46,6 +46,20 @@ const fixedSample: SubBudgetRecord = {
 };
 
 describe('subBudgetRepository guest', () => {
+  it('round-trips a sub-budget with no max amount', async () => {
+    const unlimited = { ...sample, id: 'unlimited1', totalAmount: null };
+    await saveSubBudget(null, unlimited);
+    const loaded = await loadSubBudgets(null);
+    expect(loaded).toHaveLength(1);
+    expect(loaded[0]).toEqual(unlimited);
+  });
+
+  it('drops records missing totalAmount', async () => {
+    const { totalAmount: _omitted, ...rest } = sample;
+    localStorageMock.setItem('subBudgets', JSON.stringify([rest]));
+    expect(await loadSubBudgets(null)).toHaveLength(0);
+  });
+
   it('round-trips a sub-budget', async () => {
     await saveSubBudget(null, sample);
     const loaded = await loadSubBudgets(null);

@@ -19,7 +19,8 @@ export type SubBudgetKind = 'temporary' | 'fixed';
 interface SubBudgetBase {
   id: string;
   name: BilingualText;
-  totalAmount: number;
+  /** null = no max-amount limit; display as dash and skip overspend/progress. */
+  totalAmount: number | null;
   sortOrder: number;
   createdAt: string;
   /** When false, this budget's expenses are isolated from the master monthly ledger. */
@@ -44,7 +45,8 @@ export type SubBudgetRecord = TemporarySubBudgetRecord | FixedSubBudgetRecord;
 
 interface SubBudgetInputBase {
   name: BilingualText;
-  totalAmount: number;
+  /** null = no max-amount limit. */
+  totalAmount: number | null;
   includeInMonthlyBudget: boolean;
 }
 

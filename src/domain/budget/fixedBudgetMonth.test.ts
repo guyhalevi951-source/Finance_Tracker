@@ -42,4 +42,22 @@ describe('resolveFixedBudgetMonthAmount', () => {
     });
     expect(resolveFixedBudgetMonthAmount(budget, '2026-10').amount).toBe(1500);
   });
+
+  it('stays source none when totalAmount is null and no override applies', () => {
+    const budget: FixedSubBudgetRecord = { ...base, totalAmount: null };
+    const resolved = resolveFixedBudgetMonthAmount(budget, '2026-09');
+    expect(resolved.amount).toBe(0);
+    expect(resolved.source).toBe('none');
+  });
+
+  it('uses an explicit month override when totalAmount is null', () => {
+    const budget: FixedSubBudgetRecord = {
+      ...base,
+      totalAmount: null,
+      monthOverrides: { '2026-09': { amount: 900, carryOverToNext: false } },
+    };
+    const resolved = resolveFixedBudgetMonthAmount(budget, '2026-09');
+    expect(resolved.amount).toBe(900);
+    expect(resolved.source).toBe('explicit');
+  });
 });

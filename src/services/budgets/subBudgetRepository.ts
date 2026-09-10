@@ -40,7 +40,7 @@ function parseSubBudget(v: unknown, fallbackSortOrder: number): SubBudgetRecord 
   if (
     typeof v.id !== 'string' ||
     !labels ||
-    typeof v.totalAmount !== 'number' ||
+    (typeof v.totalAmount !== 'number' && v.totalAmount !== null) ||
     typeof v.createdAt !== 'string'
   ) {
     return null;

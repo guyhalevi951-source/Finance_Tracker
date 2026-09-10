@@ -27,9 +27,14 @@ export function parseSubBudgetInput(
     return err('NAME_REQUIRED');
   }
 
-  const totalAmount = parseFloat(input.totalAmount);
-  if (isNaN(totalAmount) || totalAmount < 0) {
-    return err('AMOUNT_INVALID');
+  const trimmedAmount = input.totalAmount.trim();
+  let totalAmount: number | null = null;
+  if (trimmedAmount !== '') {
+    const parsedAmount = parseFloat(trimmedAmount);
+    if (isNaN(parsedAmount) || parsedAmount < 0) {
+      return err('AMOUNT_INVALID');
+    }
+    totalAmount = parsedAmount;
   }
 
   const name = { en: input.name.trim(), he: input.name.trim() };

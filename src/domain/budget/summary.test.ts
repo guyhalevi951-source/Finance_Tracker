@@ -25,6 +25,13 @@ describe('computeBudgetSummary', () => {
     expect(result.isOverBudget).toBe(false);
   });
 
+  it('returns 0 percentage and no over-budget when limit is null', () => {
+    const result = computeBudgetSummary(null, [100]);
+    expect(result.budgetPercentage).toBe(0);
+    expect(result.isOverBudget).toBe(false);
+    expect(result.remaining).toBe(0);
+  });
+
   it('handles empty expenses', () => {
     const result = computeBudgetSummary(500, []);
     expect(result.totalExpenses).toBe(0);

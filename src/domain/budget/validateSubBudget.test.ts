@@ -83,4 +83,22 @@ describe('parseSubBudgetInput', () => {
     expect(result.ok).toBe(false);
     if (!result.ok) expect(result.error).toBe('AMOUNT_INVALID');
   });
+
+  it('treats a blank amount as no limit', () => {
+    const result = parseSubBudgetInput({ ...temporaryForm, totalAmount: '' }, '2026-07-01');
+    expect(result.ok).toBe(true);
+    if (result.ok) expect(result.value.totalAmount).toBeNull();
+  });
+
+  it('treats a whitespace-only amount as no limit', () => {
+    const result = parseSubBudgetInput({ ...temporaryForm, totalAmount: '   ' }, '2026-07-01');
+    expect(result.ok).toBe(true);
+    if (result.ok) expect(result.value.totalAmount).toBeNull();
+  });
+
+  it('allows an explicit zero amount', () => {
+    const result = parseSubBudgetInput({ ...temporaryForm, totalAmount: '0' }, '2026-07-01');
+    expect(result.ok).toBe(true);
+    if (result.ok) expect(result.value.totalAmount).toBe(0);
+  });
 });
