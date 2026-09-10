@@ -2,6 +2,12 @@ import { useTranslation } from 'react-i18next';
 import { type AppLocale } from '../../../config/app';
 import { SEMANTIC_COLORS } from '../../../config/semanticColors';
 import { type PeriodOverview } from '../../../domain/budget/periodOverview';
+import { shouldShowOverviewBudgetRemainder } from '../../../domain/budget/shouldShowOverviewBudgetRemainder';
+import {
+  resolveFutureDailyAverageHintKind,
+  type FutureDailyAverageHintKind,
+} from '../../../domain/budget/resolveFutureDailyAverageHintKind';
+import { type TimeGranularity } from '../../../domain/expenses/periods';
 import { formatCurrencyAmount, formatCurrencyAmountFixed } from '../../../lib/format/formatDate';
 
 interface PeriodOverviewSummaryProps {
@@ -10,7 +16,15 @@ interface PeriodOverviewSummaryProps {
   hasBudget: boolean;
   isPlannedAverage: boolean;
   showDataModeControls: boolean;
+  granularity?: TimeGranularity;
+  timeframeSelectable?: boolean;
 }
+
+const FUTURE_DAILY_AVERAGE_HINT_KEYS: Record<FutureDailyAverageHintKind, string> = {
+  monthly: 'overview.dailyAverageMonthlyHint',
+  weekly: 'overview.dailyAverageWeeklyHint',
+  includingFuture: 'overview.includingFutureExpenses',
+};
 
 const metricValueClass = 'text-2xl sm:text-3xl font-bold tabular-nums';
 const metricLabelClass = 'text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1';
@@ -22,6 +36,8 @@ export function PeriodOverviewSummary({
   hasBudget,
   isPlannedAverage,
   showDataModeControls,
+  granularity = 'monthly',
+  timeframeSelectable = false,
 }: PeriodOverviewSummaryProps) {
   const { t } = useTranslation();
   const {
@@ -33,10 +49,11 @@ export function PeriodOverviewSummary({
     isOverspent,
   } = overview;
   const { expense, budget } = SEMANTIC_COLORS;
+  const showRemainder = shouldShowOverviewBudgetRemainder(granularity);
 
   const dailyAverageValue = isPlannedAverage ? plannedDailyAverage : averagePerDayUpToDate;
   const dailyAverageHint = isPlannedAverage
-    ? t('overview.includingFutureExpenses')
+    ? t(FUTURE_DAILY_AVERAGE_HINT_KEYS[resolveFutureDailyAverageHintKind(granularity, timeframeSelectable)])
     : t('overview.upToTodayBadge');
 
   const displayTotal = isPlannedAverage ? totalPlanned : spent;
@@ -59,8 +76,12 @@ export function PeriodOverviewSummary({
 
   return (
     <div className="mb-6">
-      <div className="grid grid-cols-3 items-end gap-2 px-4 sm:px-6">
-        <div className="min-w-0 text-start">
+      <div
+        className={`grid items-end gap-2 px-4 sm:px-6 ${
+          showRemainder ? 'grid-cols-3' : 'grid-cols-2'
+        }`}
+      >
+        <div className={`min-w-0 ${showRemainder ? 'text-start' : 'text-center'}`}>
           <p className={`${metricValueClass} ${expense.valueText}`}>
             {formatCurrencyAmount(displayTotal, locale)}
           </p>
@@ -77,10 +98,12 @@ export function PeriodOverviewSummary({
           )}
         </div>
 
-        <div className="min-w-0 text-end">
-          <p className={`${metricValueClass} ${rightValueColor}`}>{rightValue}</p>
-          <p className={metricLabelClass}>{rightLabel}</p>
-        </div>
+        {showRemainder && (
+          <div className="min-w-0 text-end">
+            <p className={`${metricValueClass} ${rightValueColor}`}>{rightValue}</p>
+            <p className={metricLabelClass}>{rightLabel}</p>
+          </div>
+        )}
       </div>
     </div>
   );

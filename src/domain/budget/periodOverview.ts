@@ -150,6 +150,6 @@ export function computePeriodOverview({
     range,
     todayIso,
     subBudgets,
-    plannedDailyAverageDivisor: 'calendarMonth',
+    plannedDailyAverageDivisor: 'rangeInclusive',
   });
 }

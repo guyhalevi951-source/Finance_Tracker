@@ -1,5 +1,6 @@
 import { type AppLocale } from '../../../config/app';
 import { type PeriodOverview } from '../../../domain/budget/periodOverview';
+import { type TimeGranularity } from '../../../domain/expenses/periods';
 import { type SubBudgetRecord } from '../../../types/budget';
 import { type MainCategoryRecord, type SubCategoryRecord } from '../../../types/category';
 import { type Expense } from '../../../types/expense';
@@ -15,6 +16,8 @@ interface PeriodOverviewDashboardProps {
   isPlannedAverage: boolean;
   showDataModeControls: boolean;
   viewMode: OverviewViewMode;
+  granularity?: TimeGranularity;
+  timeframeSelectable?: boolean;
   todayIso: string;
   breakdownExpenses: Expense[];
   mainCategories: MainCategoryRecord[];
@@ -31,6 +34,8 @@ export function PeriodOverviewDashboard({
   isPlannedAverage,
   showDataModeControls,
   viewMode,
+  granularity,
+  timeframeSelectable,
   todayIso,
   breakdownExpenses,
   mainCategories,
@@ -47,6 +52,8 @@ export function PeriodOverviewDashboard({
         hasBudget={hasBudget}
         isPlannedAverage={isPlannedAverage}
         showDataModeControls={showDataModeControls}
+        granularity={granularity}
+        timeframeSelectable={timeframeSelectable}
       />
 
       {viewMode === 'daily' ? (

@@ -234,6 +234,7 @@
     "dailyAveragePlanned": "ממוצע יומי מתוכנן",
     "dailyAverageUpToDate": "ממוצע יומי (עד כה)",
     "dailyAverageMonthlyHint": "חודשי",
+    "dailyAverageWeeklyHint": "שבועי",
     "dailyAverageInclusiveHint": "כולל",
     "upToTodayBadge": "עד היום",
     "includingFutureExpenses": "כולל הוצאות עתידיות",

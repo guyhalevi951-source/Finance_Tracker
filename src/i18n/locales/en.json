@@ -234,6 +234,7 @@
     "dailyAveragePlanned": "Planned daily average",
     "dailyAverageUpToDate": "Daily average (so far)",
     "dailyAverageMonthlyHint": "Monthly",
+    "dailyAverageWeeklyHint": "Weekly",
     "dailyAverageInclusiveHint": "Inclusive",
     "upToTodayBadge": "Up to today",
     "includingFutureExpenses": "Including future expenses",

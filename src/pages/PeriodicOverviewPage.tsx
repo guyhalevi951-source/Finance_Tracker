@@ -113,6 +113,8 @@ export function PeriodicOverviewPage() {
         hasBudget={hasBudget}
         isPlannedAverage={isPlannedAverage}
         showDataModeControls={showDataModeControls}
+        granularity={timeFilter.granularity}
+        timeframeSelectable={showTimeToolbar}
         viewMode={viewMode}
         todayIso={timeFilter.todayIso}
         breakdownExpenses={breakdownExpenses}

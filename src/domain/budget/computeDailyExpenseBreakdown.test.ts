@@ -133,6 +133,21 @@ describe('computeDailyExpenseBreakdown', () => {
     expect(breakdown.every((day) => day.total === 0)).toBe(true);
   });
 
+  it('scopes actual and future totals to the selected week only', () => {
+    const weekRange = { startIso: '2026-07-01', endIso: '2026-07-07' };
+    const expenses = [
+      makeExpense({ id: 'past', date: '2026-07-02', amount: 20 }),
+      makeExpense({ id: 'later-this-week', date: '2026-07-07', amount: 30, scheduled: true }),
+      makeExpense({ id: 'next-week', date: '2026-07-10', amount: 80, scheduled: true }),
+    ];
+    const breakdown = computeDailyExpenseBreakdown(expenses, weekRange, '2026-07-05');
+
+    expect(breakdown).toHaveLength(7);
+    expect(breakdown.find((day) => day.dateIso === '2026-07-02')?.actualExpenses).toBe(20);
+    expect(breakdown.find((day) => day.dateIso === '2026-07-07')?.futureExpenses).toBe(30);
+    expect(breakdown.some((day) => day.dateIso === '2026-07-10')).toBe(false);
+  });
+
   it('projects only up to remaining occurrence limit', () => {
     const template = makeExpense({
       id: 't1',

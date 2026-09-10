@@ -177,7 +177,7 @@ describe('computePeriodOverview', () => {
     expect(overview.averagePerDayUpToDate).toBe(0);
   });
 
-  it('uses full calendar month for plannedDailyAverage even on a weekly range', () => {
+  it('divides plannedDailyAverage by the selected week length', () => {
     const weekRange = { startIso: '2026-07-01', endIso: '2026-07-07' };
     const overview = computePeriodOverview({
       monthlyBudget: 300,
@@ -187,8 +187,40 @@ describe('computePeriodOverview', () => {
     });
 
     expect(overview.totalPlanned).toBe(50);
-    expect(overview.plannedDailyAverage).toBeCloseTo(50 / 31, 2);
+    expect(overview.plannedDailyAverage).toBeCloseTo(50 / 7, 2);
     expect(overview.averagePerDay).toBeCloseTo(50 / 7, 2);
+  });
+
+  it('excludes future expenses outside the selected week', () => {
+    const weekRange = { startIso: '2026-07-01', endIso: '2026-07-07' };
+    const overview = computePeriodOverview({
+      monthlyBudget: 300,
+      expenses: [
+        expense('in-week', '2026-07-06', 40),
+        { ...expense('next-week', '2026-07-10', 80), scheduled: true },
+      ],
+      range: weekRange,
+      todayIso: '2026-07-05',
+    });
+
+    expect(overview.futurePlanned).toBe(40);
+    expect(overview.dailyTotals).toHaveLength(7);
+    expect(overview.dailyTotals.some((day) => day.dateIso === '2026-07-10')).toBe(false);
+  });
+
+  it('computes up-to-now average from elapsed days in the selected week', () => {
+    const weekRange = { startIso: '2026-07-01', endIso: '2026-07-07' };
+    const overview = computePeriodOverview({
+      monthlyBudget: 300,
+      expenses: [expense('a', '2026-07-02', 40), expense('b', '2026-07-04', 20)],
+      range: weekRange,
+      todayIso: '2026-07-05',
+    });
+
+    expect(overview.spent).toBe(60);
+    expect(overview.elapsedDays).toBe(5);
+    expect(overview.averagePerDayUpToDate).toBe(12);
+    expect(overview.dailyTotals).toHaveLength(7);
   });
 });
 
