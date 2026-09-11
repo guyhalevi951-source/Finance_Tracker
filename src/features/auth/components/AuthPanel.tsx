@@ -1,15 +1,16 @@
 import { useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
-import { SEMANTIC_COLORS } from '../../../config/semanticColors';
 import { type AuthActionError } from '../../../types/auth';
+import {
+  AUTH_DIVIDER_LINE_CLASS,
+  AUTH_GOOGLE_BUTTON_CLASS,
+  AUTH_PRIMARY_BUTTON_CLASS,
+  AUTH_SIGNED_IN_SECONDARY_BUTTON_CLASS,
+} from '../authFormStyles';
 import { useAuthSession } from '../hooks/useAuthSession';
-
-const fieldClassName =
-  'w-full min-h-11 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-3 text-base text-slate-800 dark:text-slate-100';
-const primaryButtonClassName =
-  'w-full min-h-11 rounded-xl bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 font-medium';
-const secondaryButtonClassName =
-  'w-full min-h-11 rounded-xl border border-slate-300 dark:border-slate-600 text-slate-800 dark:text-slate-100 font-medium';
+import { AuthIconField } from './AuthIconField';
+import { AuthModeToggle, type AuthFormMode } from './AuthModeToggle';
+import { GoogleMark } from './GoogleMark';
 
 function errorMessageKey(error: AuthActionError): string {
   switch (error) {
@@ -47,6 +48,7 @@ export function AuthPanel() {
     signOut,
   } = useAuthSession();
 
+  const [mode, setMode] = useState<AuthFormMode>('signIn');
   const [emailValue, setEmailValue] = useState('');
   const [passwordValue, setPasswordValue] = useState('');
   const [migrateGuest, setMigrateGuest] = useState(true);
@@ -57,9 +59,9 @@ export function AuthPanel() {
   const [needsEmailConfirmation, setNeedsEmailConfirmation] = useState(false);
 
   const visibleError = actionError ?? migrationError;
+  const isBusy = busyAction !== null;
 
-  async function handleSignIn(event: FormEvent) {
-    event.preventDefault();
+  async function handleSignIn() {
     const emailInput = emailValue.trim();
     if (!emailInput || !passwordValue) {
       setActionError('VALIDATION');
@@ -88,6 +90,15 @@ export function AuthPanel() {
       setNeedsEmailConfirmation(result.value.needsEmailConfirmation);
     }
     setBusyAction(null);
+  }
+
+  async function handleSubmit(event: FormEvent) {
+    event.preventDefault();
+    if (mode === 'signIn') {
+      await handleSignIn();
+      return;
+    }
+    await handleSignUp();
   }
 
   async function handleGoogle() {
@@ -124,9 +135,9 @@ export function AuthPanel() {
         )}
         <button
           type="button"
-          className={secondaryButtonClassName}
+          className={AUTH_SIGNED_IN_SECONDARY_BUTTON_CLASS}
           onClick={() => void handleSignOut()}
-          disabled={busyAction !== null}
+          disabled={isBusy}
         >
           {t('profile.auth.signOut')}
         </button>
@@ -135,34 +146,34 @@ export function AuthPanel() {
   }
 
   return (
-    <form className="flex w-full flex-col gap-3" onSubmit={(event) => void handleSignIn(event)}>
+    <form className="flex w-full flex-col gap-3" onSubmit={(event) => void handleSubmit(event)}>
       <p className="text-sm text-slate-600 dark:text-slate-300 text-center">
         {t('profile.auth.guestMode')}
       </p>
-      <label className="flex flex-col gap-1">
-        <span className="text-sm font-medium text-slate-700 dark:text-slate-200">
-          {t('profile.auth.email')}
-        </span>
-        <input
-          type="email"
-          autoComplete="email"
-          value={emailValue}
-          onChange={(event) => setEmailValue(event.target.value)}
-          className={fieldClassName}
-        />
-      </label>
-      <label className="flex flex-col gap-1">
-        <span className="text-sm font-medium text-slate-700 dark:text-slate-200">
-          {t('profile.auth.password')}
-        </span>
-        <input
-          type="password"
-          autoComplete="current-password"
-          value={passwordValue}
-          onChange={(event) => setPasswordValue(event.target.value)}
-          className={fieldClassName}
-        />
-      </label>
+      <AuthModeToggle mode={mode} onModeChange={setMode} disabled={isBusy} />
+      <AuthIconField
+        type="email"
+        value={emailValue}
+        onChange={setEmailValue}
+        placeholder={t('profile.auth.email')}
+        ariaLabel={t('profile.auth.email')}
+        autoComplete="email"
+        disabled={isBusy}
+      />
+      <AuthIconField
+        type="password"
+        value={passwordValue}
+        onChange={setPasswordValue}
+        placeholder={t('profile.auth.password')}
+        ariaLabel={t('profile.auth.password')}
+        autoComplete={mode === 'signIn' ? 'current-password' : 'new-password'}
+        disabled={isBusy}
+      />
+      {mode === 'signUp' && (
+        <p className="text-center text-xs text-slate-500 dark:text-slate-400">
+          {t('profile.auth.passwordMinLengthHint')}
+        </p>
+      )}
       {visibleError && (
         <p className="text-sm text-red-600 dark:text-red-400" role="alert">
           {t(errorMessageKey(visibleError))}
@@ -173,7 +184,25 @@ export function AuthPanel() {
           {t('profile.auth.checkEmail')}
         </p>
       )}
-      <label className="flex items-center gap-3 min-h-11 cursor-pointer">
+      <button type="submit" className={AUTH_PRIMARY_BUTTON_CLASS} disabled={isBusy}>
+        {mode === 'signIn' ? t('profile.auth.signIn') : t('profile.auth.signUp')}
+      </button>
+      <div className="flex items-center gap-3">
+        <div className={AUTH_DIVIDER_LINE_CLASS} />
+        <span className="text-sm text-slate-400">{t('profile.auth.or')}</span>
+        <div className={AUTH_DIVIDER_LINE_CLASS} />
+      </div>
+      <button
+        type="button"
+        dir="ltr"
+        className={AUTH_GOOGLE_BUTTON_CLASS}
+        onClick={() => void handleGoogle()}
+        disabled={isBusy}
+      >
+        <GoogleMark />
+        {t('profile.auth.continueWithGoogle')}
+      </button>
+      <label className="flex min-h-11 cursor-pointer items-center gap-3">
         <input
           type="checkbox"
           checked={migrateGuest}
@@ -184,28 +213,6 @@ export function AuthPanel() {
           {t('profile.auth.transferGuestData')}
         </span>
       </label>
-      <button type="submit" className={primaryButtonClassName} disabled={busyAction !== null}>
-        {t('profile.auth.signIn')}
-      </button>
-      <button
-        type="button"
-        className={`${SEMANTIC_COLORS.interactive.text} min-h-11 font-medium`}
-        onClick={() => void handleSignUp()}
-        disabled={busyAction !== null}
-      >
-        {t('profile.auth.signUp')}
-      </button>
-      <p className="text-center text-xs uppercase tracking-wide text-slate-400">
-        {t('profile.auth.or')}
-      </p>
-      <button
-        type="button"
-        className={secondaryButtonClassName}
-        onClick={() => void handleGoogle()}
-        disabled={busyAction !== null}
-      >
-        {t('profile.auth.continueWithGoogle')}
-      </button>
     </form>
   );
 }
