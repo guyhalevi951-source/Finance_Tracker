@@ -2,6 +2,7 @@ import { GUEST_FINANCE_STORAGE_KEYS } from '../../config/storage/guestKeys';
 import {
   SUPABASE_STORAGE_BUCKETS,
   expenseAttachmentStoragePath,
+  resolveExpenseAttachmentContentType,
 } from '../../config/supabase/storage';
 import { supabase } from '../supabase/client';
 import { throwIfStorageError } from '../supabase/errors';
@@ -85,9 +86,10 @@ export async function uploadExpenseAttachment(
 
   if (userId) {
     const path = expenseAttachmentStoragePath(userId, expenseId);
+    const contentType = resolveExpenseAttachmentContentType(file.type);
     const { error } = await supabase.storage
       .from(SUPABASE_STORAGE_BUCKETS.expenseAttachments)
-      .upload(path, file, { contentType: file.type || 'application/octet-stream', upsert: true });
+      .upload(path, file, { contentType, upsert: true });
     throwIfStorageError(error, 'UPLOAD_FAILED');
     return createSignedAttachmentUrl(userId, expenseId);
   }
@@ -108,7 +110,7 @@ export async function uploadExpenseAttachmentFromDataUrl(
   if (!base64) {
     throw new Error('UPLOAD_FAILED');
   }
-  const mime = header.match(/data:(.*?);/)?.[1] ?? 'image/jpeg';
+  const mime = resolveExpenseAttachmentContentType(header.match(/data:(.*?);/)?.[1]);
   const bytes = Uint8Array.from(atob(base64), (char) => char.charCodeAt(0));
   const file = new File([bytes], expenseId, { type: mime });
   return uploadExpenseAttachment(userId, expenseId, file);

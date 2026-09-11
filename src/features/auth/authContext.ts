@@ -5,12 +5,17 @@ import { type Result } from '../../types/result';
 export interface AuthContextValue extends AuthSession {
   isLoading: boolean;
   migrationError: AuthActionError | null;
-  signInWithPassword: (email: string, password: string) => Promise<Result<void, AuthActionError>>;
+  signInWithPassword: (
+    email: string,
+    password: string,
+    migrateGuest: boolean,
+  ) => Promise<Result<void, AuthActionError>>;
   signUpWithPassword: (
     email: string,
     password: string,
+    migrateGuest: boolean,
   ) => Promise<Result<SignUpResult, AuthActionError>>;
-  signInWithGoogle: () => Promise<Result<void, AuthActionError>>;
+  signInWithGoogle: (migrateGuest: boolean) => Promise<Result<void, AuthActionError>>;
   signOut: () => Promise<Result<void, AuthActionError>>;
 }
 

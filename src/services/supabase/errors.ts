@@ -5,6 +5,7 @@ export function throwIfPostgrestError(
   code: string,
 ): void {
   if (error) {
+    console.error(`[supabase] ${code}:`, error.message);
     throw new Error(code);
   }
 }
@@ -14,6 +15,7 @@ export function throwIfStorageError(
   code: string,
 ): void {
   if (error) {
+    console.error(`[supabase-storage] ${code}:`, error.message);
     throw new Error(code);
   }
 }

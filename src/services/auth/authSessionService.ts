@@ -1,8 +1,9 @@
 import { type AuthChangeEvent, type AuthError, type User } from '@supabase/supabase-js';
+import { consumeMigrateGuestOnSignIn, setMigrateGuestOnSignIn } from '../../config/auth/migrateIntent';
 import { type AuthActionError, type AuthSession, type SignUpResult } from '../../types/auth';
 import { Result, err, ok } from '../../types/result';
 import { supabase } from '../supabase/client';
-import { hasGuestFinanceData, migrateGuestData } from './migrateGuestData';
+import { migrateGuestData } from './migrateGuestData';
 
 type AuthCallback = (session: AuthSession) => void;
 
@@ -53,14 +54,13 @@ export async function resolveAuthState(
   user: User | null,
 ): Promise<{ session: AuthSession; migrationError: AuthActionError | null }> {
   let migrationError: AuthActionError | null = null;
-  const shouldMigrate =
-    Boolean(user) &&
-    (event === 'SIGNED_IN' || (event === 'INITIAL_SESSION' && hasGuestFinanceData()));
+  const shouldMigrate = Boolean(user) && event === 'SIGNED_IN' && consumeMigrateGuestOnSignIn();
 
   if (user && shouldMigrate) {
     try {
       await migrateGuestData(user.id);
-    } catch {
+    } catch (error) {
+      console.error('[resolveAuthState] guest migration failed', error);
       migrationError = 'MIGRATION_FAILED';
     }
   }
@@ -106,7 +106,9 @@ export function getCurrentAuthSession(): AuthSession {
 export async function signInWithPassword(
   email: string,
   password: string,
+  migrateGuest: boolean,
 ): Promise<Result<void, AuthActionError>> {
+  setMigrateGuestOnSignIn(migrateGuest);
   const { error } = await supabase.auth.signInWithPassword({ email, password });
   if (error) return err(mapAuthError(error, 'SIGN_IN_FAILED'));
   return ok(undefined);
@@ -115,13 +117,18 @@ export async function signInWithPassword(
 export async function signUpWithPassword(
   email: string,
   password: string,
+  migrateGuest: boolean,
 ): Promise<Result<SignUpResult, AuthActionError>> {
+  setMigrateGuestOnSignIn(migrateGuest);
   const { data, error } = await supabase.auth.signUp({ email, password });
   if (error) return err(mapAuthError(error, 'SIGN_UP_FAILED'));
   return ok({ needsEmailConfirmation: Boolean(data.user) && !data.session });
 }
 
-export async function signInWithGoogle(): Promise<Result<void, AuthActionError>> {
+export async function signInWithGoogle(
+  migrateGuest: boolean,
+): Promise<Result<void, AuthActionError>> {
+  setMigrateGuestOnSignIn(migrateGuest);
   const { error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
     options: { redirectTo: window.location.origin },

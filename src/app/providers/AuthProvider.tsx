@@ -31,7 +31,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         void (async () => {
           const resolved = await resolveAuthState(event, user);
           setSession(resolved.session);
-          setMigrationError(resolved.migrationError);
+          setMigrationError(event === 'SIGNED_OUT' ? null : resolved.migrationError);
           setIsLoading(false);
         })();
       }, 0);
@@ -40,14 +40,19 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }, []);
 
   const signInWithPassword = useCallback(
-    (email: string, password: string) => signInWithPasswordService(email, password),
+    (email: string, password: string, migrateGuest: boolean) =>
+      signInWithPasswordService(email, password, migrateGuest),
     [],
   );
   const signUpWithPassword = useCallback(
-    (email: string, password: string) => signUpWithPasswordService(email, password),
+    (email: string, password: string, migrateGuest: boolean) =>
+      signUpWithPasswordService(email, password, migrateGuest),
     [],
   );
-  const signInWithGoogle = useCallback(() => signInWithGoogleService(), []);
+  const signInWithGoogle = useCallback(
+    (migrateGuest: boolean) => signInWithGoogleService(migrateGuest),
+    [],
+  );
   const signOut = useCallback(() => signOutService(), []);
 
   const value = useMemo<AuthContextValue>(

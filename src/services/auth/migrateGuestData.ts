@@ -5,20 +5,14 @@ import {
 } from '../../config/storage/guestKeys';
 import {
   peekGuestAttachments,
-  clearGuestAttachments,
   uploadExpenseAttachmentFromDataUrl,
 } from '../attachments/expenseAttachmentService';
 import {
   loadBudgetStore,
   saveBudgetStore,
 } from '../budgets/monthlyBudgetRepository';
+import { loadSubBudgets, saveSubBudget } from '../budgets/subBudgetRepository';
 import {
-  loadSubBudgets,
-  saveSubBudget,
-  clearGuestSubBudgets,
-} from '../budgets/subBudgetRepository';
-import {
-  clearAllGuestCategoryKeys,
   listGuestCategoryProfileIds,
   loadDeletedSubCategoryIds,
   loadMainCategories,
@@ -27,17 +21,12 @@ import {
   saveMainCategory,
   saveSubCategory,
 } from '../categories/categoryRepository';
-import {
-  clearGuestExpenses,
-  loadExpenses,
-  saveExpense,
-} from '../expenses/expenseRepository';
-import {
-  clearGuestActiveBudgetId,
-  loadActiveBudgetId,
-  saveActiveBudgetId,
-} from '../storage/activeBudgetStorage';
-import { clearGuestBudgetStore } from '../storage/budgetLocalStorage';
+import { loadExpenses, saveExpense } from '../expenses/expenseRepository';
+import { loadActiveBudgetId, saveActiveBudgetId } from '../storage/activeBudgetStorage';
+import { supabase } from '../supabase/client';
+import { type Expense } from '../../types/expense';
+
+let inFlight: Promise<void> | null = null;
 
 export function hasGuestFinanceData(): boolean {
   const keys = GUEST_FINANCE_STORAGE_KEYS;
@@ -56,8 +45,45 @@ export function hasGuestFinanceData(): boolean {
   return GUEST_LEGACY_CATEGORY_KEYS.some((key) => localStorage.getItem(key) !== null);
 }
 
-export async function migrateGuestData(userId: string): Promise<void> {
+async function assertSessionReady(userId: string): Promise<void> {
+  const { data, error } = await supabase.auth.getSession();
+  if (error) {
+    console.error('[migrateGuestData] getSession failed:', error.message);
+    throw new Error('MIGRATION_FAILED');
+  }
+  if (data.session?.user.id !== userId) {
+    console.error('[migrateGuestData] session user does not match migration target');
+    throw new Error('MIGRATION_FAILED');
+  }
+}
+
+async function copyExpenseWithOptionalAttachment(
+  userId: string,
+  expense: Expense,
+  attachments: Record<string, string>,
+): Promise<void> {
+  const dataUrl =
+    attachments[expense.id] ??
+    (expense.attachmentUrl?.startsWith('data:') ? expense.attachmentUrl : undefined);
+
+  if (!dataUrl) {
+    await saveExpense(userId, expense);
+    return;
+  }
+
+  try {
+    const uploadedUrl = await uploadExpenseAttachmentFromDataUrl(userId, expense.id, dataUrl);
+    await saveExpense(userId, { ...expense, attachmentUrl: uploadedUrl });
+  } catch (error) {
+    console.error('[migrateGuestData] attachment upload failed; saving expense without cloud file', error);
+    await saveExpense(userId, expense);
+  }
+}
+
+async function runMigrate(userId: string): Promise<void> {
   if (!hasGuestFinanceData()) return;
+
+  await assertSessionReady(userId);
 
   const budgets = await loadSubBudgets(null);
   for (const budget of budgets) {
@@ -67,23 +93,15 @@ export async function migrateGuestData(userId: string): Promise<void> {
   const attachments = peekGuestAttachments();
   const expenses = await loadExpenses(null);
   for (const expense of expenses) {
-    const dataUrl =
-      attachments[expense.id] ??
-      (expense.attachmentUrl?.startsWith('data:') ? expense.attachmentUrl : undefined);
-    const nextExpense = dataUrl
-      ? {
-          ...expense,
-          attachmentUrl: await uploadExpenseAttachmentFromDataUrl(userId, expense.id, dataUrl),
-        }
-      : expense;
-    await saveExpense(userId, nextExpense);
+    await copyExpenseWithOptionalAttachment(userId, expense, attachments);
   }
 
   const monthly = await loadBudgetStore(null);
-  if (!monthly.ok) {
-    throw new Error('MIGRATION_FAILED');
+  if (monthly.ok) {
+    await saveBudgetStore(userId, monthly.value);
+  } else {
+    console.error('[migrateGuestData] skipping monthly store:', monthly.error);
   }
-  await saveBudgetStore(userId, monthly.value);
 
   const profileIds = new Set<string>([
     MASTER_BUDGET_ID,
@@ -108,11 +126,13 @@ export async function migrateGuestData(userId: string): Promise<void> {
 
   const activeBudgetId = await loadActiveBudgetId(null);
   await saveActiveBudgetId(userId, activeBudgetId);
+}
 
-  clearGuestExpenses();
-  clearGuestSubBudgets();
-  clearGuestBudgetStore();
-  clearGuestAttachments();
-  clearGuestActiveBudgetId();
-  clearAllGuestCategoryKeys();
+/** Copies guest finance localStorage into the signed-in account. Does not clear guest keys. */
+export async function migrateGuestData(userId: string): Promise<void> {
+  if (inFlight) return inFlight;
+  inFlight = runMigrate(userId).finally(() => {
+    inFlight = null;
+  });
+  return inFlight;
 }

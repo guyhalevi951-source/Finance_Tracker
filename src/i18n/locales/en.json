@@ -68,6 +68,7 @@
       "signOut": "Sign out",
       "continueWithGoogle": "Continue with Google",
       "or": "or",
+      "transferGuestData": "Transfer guest data to this account",
       "guestMode": "You are using the app as a guest. Sign in to save your data in the cloud.",
       "loggedInAs": "Logged in as {{user}}",
       "checkEmail": "Check your email to confirm your account, then sign in.",

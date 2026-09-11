@@ -49,6 +49,7 @@ export function AuthPanel() {
 
   const [emailValue, setEmailValue] = useState('');
   const [passwordValue, setPasswordValue] = useState('');
+  const [migrateGuest, setMigrateGuest] = useState(true);
   const [busyAction, setBusyAction] = useState<'signIn' | 'signUp' | 'google' | 'signOut' | null>(
     null,
   );
@@ -67,7 +68,7 @@ export function AuthPanel() {
     setBusyAction('signIn');
     setActionError(null);
     setNeedsEmailConfirmation(false);
-    const result = await signInWithPassword(emailInput, passwordValue);
+    const result = await signInWithPassword(emailInput, passwordValue, migrateGuest);
     if (!result.ok) setActionError(result.error);
     setBusyAction(null);
   }
@@ -80,7 +81,7 @@ export function AuthPanel() {
     }
     setBusyAction('signUp');
     setActionError(null);
-    const result = await signUpWithPassword(emailInput, passwordValue);
+    const result = await signUpWithPassword(emailInput, passwordValue, migrateGuest);
     if (!result.ok) {
       setActionError(result.error);
     } else {
@@ -92,7 +93,7 @@ export function AuthPanel() {
   async function handleGoogle() {
     setBusyAction('google');
     setActionError(null);
-    const result = await signInWithGoogle();
+    const result = await signInWithGoogle(migrateGuest);
     if (!result.ok) setActionError(result.error);
     setBusyAction(null);
   }
@@ -172,6 +173,17 @@ export function AuthPanel() {
           {t('profile.auth.checkEmail')}
         </p>
       )}
+      <label className="flex items-center gap-3 min-h-11 cursor-pointer">
+        <input
+          type="checkbox"
+          checked={migrateGuest}
+          onChange={(event) => setMigrateGuest(event.target.checked)}
+          className="h-5 w-5 shrink-0 rounded border-slate-300 dark:border-slate-600"
+        />
+        <span className="text-sm text-slate-700 dark:text-slate-200">
+          {t('profile.auth.transferGuestData')}
+        </span>
+      </label>
       <button type="submit" className={primaryButtonClassName} disabled={busyAction !== null}>
         {t('profile.auth.signIn')}
       </button>
