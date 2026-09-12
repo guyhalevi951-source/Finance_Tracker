@@ -52,9 +52,8 @@ export function SettingsPage() {
 
   useAppHeader({
     title: buildBudgetScopedTitle(
-      resolveBudgetLabel(activeBudget, locale, t),
       t('nav.settings'),
-      isMaster,
+      resolveBudgetLabel(activeBudget, locale, t),
     ),
   });
 

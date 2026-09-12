@@ -1,10 +1,3 @@
-export function buildBudgetScopedTitle(
-  budgetLabel: string,
-  pageTitle: string,
-  isMaster: boolean,
-): string {
-  if (isMaster) {
-    return pageTitle;
-  }
-  return `${budgetLabel} - ${pageTitle}`;
+export function buildBudgetScopedTitle(pageTitle: string, budgetLabel: string): string {
+  return `${pageTitle} - ${budgetLabel}`;
 }

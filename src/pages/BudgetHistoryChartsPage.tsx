@@ -4,6 +4,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { type AppLocale } from '../config/app';
 import { ROUTES } from '../config/routes';
 import { useAppHeader } from '../app/hooks/useAppHeader';
+import { buildBudgetScopedTitle } from '../domain/budget/buildBudgetScopedTitle';
 import { resolveBudgetLabel } from '../domain/budget/resolveBudgetLabel';
 import { useAuthSession } from '../features/auth/hooks/useAuthSession';
 import { BudgetHistoryBackButton } from '../features/budget/components/BudgetHistoryBackButton';
@@ -34,7 +35,7 @@ export function BudgetHistoryChartsPage() {
   } = useHistoricalPeriodOverview(id);
 
   const pageTitle = budget
-    ? `${t('nav.charts')} - ${resolveBudgetLabel(budget, locale, t)}`
+    ? buildBudgetScopedTitle(t('nav.charts'), resolveBudgetLabel(budget, locale, t))
     : t('budget.history.title');
 
   const headerActions = useMemo(

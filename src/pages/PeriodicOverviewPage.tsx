@@ -4,6 +4,7 @@ import { type AppLocale } from '../config/app';
 import { useAppHeader } from '../app/hooks/useAppHeader';
 import { filterExpensesByBudget } from '../domain/budget/filterExpensesByBudget';
 import { isSubBudgetOnFinalDay } from '../domain/budget/isSubBudgetOnFinalDay';
+import { buildBudgetScopedTitle } from '../domain/budget/buildBudgetScopedTitle';
 import { resolveBudgetLabel } from '../domain/budget/resolveBudgetLabel';
 import { resolveSubBudgetWindow } from '../domain/budget/subBudgetExpenseWindow';
 import { isFixedSubBudget } from '../domain/budget/subBudgetKind';
@@ -67,10 +68,10 @@ export function PeriodicOverviewPage() {
 
   const loadError = budgetLoadError || expensesLoadError;
 
-  const budgetLabel = resolveBudgetLabel(activeBudget, locale, t);
-  const pageTitle = isMaster
-    ? t('overview.monthlyTitle')
-    : `${t('nav.charts')} - ${budgetLabel}`;
+  const pageTitle = buildBudgetScopedTitle(
+    t('nav.charts'),
+    resolveBudgetLabel(activeBudget, locale, t),
+  );
 
   const headerActions = useMemo(
     () => (

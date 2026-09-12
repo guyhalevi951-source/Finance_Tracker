@@ -29,6 +29,7 @@ import {
   type BreakdownLegendItem,
 } from './BreakdownChartLegend';
 import { OverviewDataModeToggle } from './OverviewDataModeToggle';
+import { sortSelectedBreakdownItems } from '../sortSelectedBreakdownItems';
 
 const PIE_INNER_RADIUS_PERCENT = '48%';
 const PIE_OUTER_RADIUS_PERCENT = '72%';
@@ -89,9 +90,13 @@ function filterBySelection(
   );
 }
 
+function presentationSegmentKey(item: BreakdownPresentation): string {
+  return buildSegmentKey(item.slice.kind, item.slice.id);
+}
+
 function toLegendItem(item: BreakdownPresentation): BreakdownLegendItem {
   return {
-    segmentKey: buildSegmentKey(item.slice.kind, item.slice.id),
+    segmentKey: presentationSegmentKey(item),
     label: item.label,
     fill: item.fill,
   };
@@ -195,6 +200,7 @@ function InteractiveBreakdownPie({
       outerRadius={PIE_OUTER_RADIUS_PERCENT}
       paddingAngle={0}
       stroke="none"
+      isAnimationActive={false}
       shape={renderShape}
     />
   );
@@ -416,27 +422,52 @@ export function PeriodCategoryBreakdownChart({
   );
 
   const budgetLegendItems = useMemo(
-    () => budgetPresentations.map(toLegendItem),
-    [budgetPresentations],
+    () =>
+      sortSelectedBreakdownItems(
+        budgetPresentations,
+        selectedSegments,
+        presentationSegmentKey,
+      ).map(toLegendItem),
+    [budgetPresentations, selectedSegments],
   );
 
   const categoryLegendItems = useMemo(
-    () => categoryPresentations.map(toLegendItem),
-    [categoryPresentations],
+    () =>
+      sortSelectedBreakdownItems(
+        categoryPresentations,
+        selectedSegments,
+        presentationSegmentKey,
+      ).map(toLegendItem),
+    [categoryPresentations, selectedSegments],
   );
 
   const filteredPresentations = useMemo(
-    () => filterBySelection(presentations, selectedSegments),
+    () =>
+      sortSelectedBreakdownItems(
+        filterBySelection(presentations, selectedSegments),
+        selectedSegments,
+        presentationSegmentKey,
+      ),
     [presentations, selectedSegments],
   );
 
   const filteredBudgetPresentations = useMemo(
-    () => filterBySelection(budgetPresentations, selectedSegments),
+    () =>
+      sortSelectedBreakdownItems(
+        filterBySelection(budgetPresentations, selectedSegments),
+        selectedSegments,
+        presentationSegmentKey,
+      ),
     [budgetPresentations, selectedSegments],
   );
 
   const filteredCategoryPresentations = useMemo(
-    () => filterBySelection(categoryPresentations, selectedSegments),
+    () =>
+      sortSelectedBreakdownItems(
+        filterBySelection(categoryPresentations, selectedSegments),
+        selectedSegments,
+        presentationSegmentKey,
+      ),
     [categoryPresentations, selectedSegments],
   );
 

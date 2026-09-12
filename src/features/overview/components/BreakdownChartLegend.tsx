@@ -149,8 +149,16 @@ export function BreakdownChartLegend({
   className = '',
 }: BreakdownChartLegendProps) {
   const { t } = useTranslation();
+  const selectionKey = selectedSegments.join('\0');
+  const [pageResetKey, setPageResetKey] = useState(selectionKey);
   const [budgetsCurrentPage, setBudgetsCurrentPage] = useState(0);
   const [categoriesCurrentPage, setCategoriesCurrentPage] = useState(0);
+
+  if (pageResetKey !== selectionKey) {
+    setPageResetKey(selectionKey);
+    setBudgetsCurrentPage(0);
+    setCategoriesCurrentPage(0);
+  }
 
   const clampedBudgetPage = useMemo(
     () => clampPage(budgetsCurrentPage, budgetItems.length),

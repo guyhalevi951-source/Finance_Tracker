@@ -122,9 +122,8 @@ export function ExpensesPage() {
 
   useAppHeader({
     title: buildBudgetScopedTitle(
-      resolveBudgetLabel(activeBudget, locale, t),
       t('expense.pageTitle'),
-      isMaster,
+      resolveBudgetLabel(activeBudget, locale, t),
     ),
     actions: headerActions,
   });
